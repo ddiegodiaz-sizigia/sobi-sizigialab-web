@@ -1,0 +1,2430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Ritmo SOBI · Medicina Humana</title>
+<style>
+  :root {
+    color-scheme: light;
+    /* ---- Sizigia Lab — mismos tokens que la landing (grafito / terracota / arena / salvia / mar) ---- */
+    --ink: #1D1D1A;
+    --muted: #6b6558;
+    --line: #e5ded0;
+    --accent: #B86B4B;        /* terracota — antes teal, acento de acción */
+    --accent-dark: #96543a;
+    --accent-bg: rgba(184,107,75,0.09);
+    --gold: #344957;          /* mar — antes ocre, tono reflexivo/secundario (citas, sesiones) */
+    --gold-bg: rgba(52,73,87,0.08);
+    --green: #68705B;         /* salvia — antes verde genérico #16a34a, estado positivo/logrado */
+    --green-bg: rgba(104,112,91,0.10);
+    --amber: #d97706;         /* sin cambio — alerta funcional (pendiente hoy) */
+    --amber-bg: #fffbeb;
+    --red: #dc2626;           /* sin cambio — alerta funcional (atrasado) */
+    --red-bg: #fef2f2;
+    --gray-bg: #F1EAD9;
+    --paper: #FFFDF7;
+    --canvas: #F7F5EF;
+    --shadow-sm: 0 1px 2px rgba(29,29,26,0.05);
+    --shadow-md: 0 8px 22px -6px rgba(29,29,26,0.14), 0 2px 6px rgba(29,29,26,0.05);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { padding: 24px 20px 50px; max-width: 1100px; margin: 0 auto; }
+
+  /* ---- Header ---- */
+  .head-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+  .brand-row { display: flex; align-items: center; gap: 12px; }
+  .brand-mark { width: 40px; height: 40px; border-radius: 10px; background: var(--ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .brand-mark span { color: #F7F5EF; font-size: 11px; font-weight: 800; letter-spacing: 0.04em; }
+  .brand-title h1 { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 21px; margin: 0 0 2px 0; letter-spacing: -0.01em; }
+  .brand-title .sub { font-size: 12px; color: var(--muted); }
+  .patient-chip { background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 12px; color: var(--ink); box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: 8px; }
+  .patient-chip b { font-weight: 700; }
+  .patient-chip .dim { color: var(--muted); }
+
+  .tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--line); margin-bottom: 22px; flex-wrap: wrap; }
+  .tab-btn { background: none; border: none; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--muted); padding: 10px 2px 12px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.12s, border-color 0.12s; }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--accent-dark); border-color: var(--accent); }
+
+  .btn {
+    border: 1px solid var(--line); background: #fff; border-radius: 9px; padding: 8px 14px;
+    font-size: 13px; font-weight: 500; color: var(--ink); cursor: pointer; font-family: inherit;
+    transition: background 0.12s, box-shadow 0.12s, transform 0.12s; box-shadow: var(--shadow-sm);
+  }
+  .btn:hover { background: #f6f5f3; box-shadow: var(--shadow-md); }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+  .btn.danger { color: var(--red); border-color: #fecaca; }
+  .btn.danger:hover { background: var(--red-bg); }
+  .btn.small { padding: 5px 10px; font-size: 12px; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .card { border: 1px solid var(--line); border-radius: 14px; padding: 18px; background: var(--paper); box-shadow: var(--shadow-sm); }
+  .card h3 { font-size: 14.5px; margin: 0 0 4px 0; }
+  .card .card-sub { font-size: 11.5px; color: var(--muted); margin-bottom: 14px; }
+  .grid-2 { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 880px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .section-title { font-weight: 700; font-size: 12px; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+
+  /* ---- Check-in de hoy ---- */
+  .pillar-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .pillar-row:first-child { border-top: none; }
+  .pillar-name { flex: 1.2; min-width: 120px; font-size: 13px; font-weight: 600; }
+  .pillar-name .w { font-weight: 400; color: var(--muted); font-size: 11px; display: block; }
+  .pillar-slider-wrap { flex: 2; min-width: 140px; display: flex; align-items: center; gap: 10px; }
+  .pillar-slider-wrap input[type=range] { flex: 1; accent-color: var(--accent); }
+  .pillar-val { width: 26px; text-align: center; font-weight: 700; font-size: 13px; color: var(--accent-dark); flex-shrink: 0; }
+  .checkin-note { width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; font-size: 13px; font-family: inherit; resize: vertical; min-height: 54px; margin-top: 10px; background: var(--gray-bg); }
+  .checkin-note:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); background: #fff; }
+  .checkin-done-banner { background: var(--green-bg); color: var(--green); border-radius: 10px; padding: 10px 14px; font-size: 12.5px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+  /* ---- Prioridades ---- */
+  .priority-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); }
+  .priority-row:first-child { border-top: none; }
+  .priority-row .pname { flex: 1; font-size: 12.5px; font-weight: 600; }
+  .priority-row input[type=number] { width: 58px; border: 1px solid var(--line); border-radius: 7px; padding: 5px 6px; font-size: 12.5px; font-family: inherit; text-align: right; }
+  .priority-row .pct { font-size: 11.5px; color: var(--muted); }
+  .priority-total { font-size: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); display: flex; justify-content: space-between; font-weight: 700; }
+  .priority-total.ok { color: var(--green); }
+  .priority-total.warn { color: var(--amber); }
+
+  /* ---- Ritmo mensual ---- */
+  .month-nav { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 10px; }
+  .month-nav .mnav-btn { border: 1px solid var(--line); background: #fff; border-radius: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; }
+  .month-nav .mnav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .month-nav .mnav-label { font-weight: 700; font-size: 13.5px; min-width: 150px; text-align: center; text-transform: capitalize; }
+  .rueda-flex { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
+  .rueda-svg-wrap svg { display: block; }
+  .ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .ring-caption { font-size: 11.5px; color: var(--muted); text-align: center; max-width: 190px; }
+  .ring-day { cursor: pointer; }
+  .ring-day:hover { opacity: 0.8; }
+  .rueda-actions { display: flex; gap: 8px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+
+  /* ---- Panel de día (click en el anillo) ---- */
+  .ring-detail-card { border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; background: var(--gray-bg); width: 100%; margin-top: 14px; }
+  .ring-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .ring-detail-head h4 { font-size: 13px; margin: 0; }
+  .rd-badge { font-size: 10.5px; padding: 2px 9px; border-radius: 999px; font-weight: 700; }
+  .rd-badge.ok { background: var(--green-bg); color: var(--green); }
+  .rd-badge.warn { background: var(--amber-bg); color: var(--amber); }
+  .rd-badge.muted { background: #eceae7; color: var(--muted); }
+  .ring-detail-card .pillar-row { padding: 7px 0; }
+  .ring-detail-card .pillar-name { font-size: 12px; }
+  .ring-detail-note { width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font-size: 12.5px; font-family: inherit; resize: vertical; min-height: 44px; margin-top: 8px; background: #fff; }
+  .ring-detail-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .ring-detail-empty { font-size: 12px; color: var(--muted); font-style: italic; padding: 6px 0; }
+
+  /* ---- Tarjeta de día guiado (tipo predefinido) ---- */
+  .daycard-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 2px; }
+  .daycard-type { font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+  .dt-icon { font-size: 15px; }
+  .daycard-sub { font-size: 11.5px; color: var(--muted); margin-bottom: 12px; }
+  .daycard-msg { background: var(--accent-bg); border-left: 3px solid var(--accent); padding: 10px 12px; border-radius: 6px; font-size: 12.5px; color: var(--ink); line-height: 1.5; margin-bottom: 12px; }
+  .daycard-question { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .daycard-quote { font-size: 14px; font-style: italic; color: var(--ink); border-left: 3px solid var(--gold); padding: 10px 14px; background: var(--gold-bg); border-radius: 6px; margin-bottom: 10px; line-height: 1.5; }
+  .daycard-quote span { display: block; font-style: normal; font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .daycard-tip { display: flex; gap: 10px; background: var(--accent-bg); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+  .daycard-tip .dt-num { font-size: 10px; font-weight: 700; color: var(--accent-dark); letter-spacing: 0.05em; flex-shrink: 0; white-space: nowrap; }
+  .daycard-tip .dt-lead { font-size: 12.5px; color: var(--ink); line-height: 1.5; }
+  .daycard-reinforcement { font-size: 13.5px; color: var(--ink); background: var(--gold-bg); border-left: 3px solid var(--gold); padding: 12px 14px; border-radius: 6px; line-height: 1.55; margin-bottom: 10px; }
+
+  .week-preview { display: flex; gap: 6px; margin-bottom: 4px; }
+  .wp-item { flex: 1; text-align: center; border: 1px solid var(--line); border-radius: 9px; padding: 8px 3px; background: #fff; }
+  .wp-item.wp-today { border-color: var(--accent); background: var(--accent-bg); }
+  .wp-item.wp-done { border-style: solid; }
+  .wp-item.wp-done:not(.wp-today) { background: var(--gray-bg); }
+  .wp-item.wp-rest { opacity: 0.55; border-style: dashed; }
+  .wp-icon { font-size: 15px; margin-bottom: 3px; }
+  .wp-day { font-size: 9.5px; color: var(--muted); font-weight: 600; text-transform: capitalize; }
+  .no-data-msg { font-size: 12.5px; color: var(--muted); font-style: italic; text-align: center; padding: 20px; }
+  .radar-point { cursor: pointer; }
+  .radar-point.hl { r: 7; }
+
+  .rueda-detail { width: 100%; margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .rueda-detail-row { display: flex; align-items: center; gap: 10px; padding: 7px 4px; border-radius: 8px; cursor: pointer; }
+  .rueda-detail-row:hover { background: var(--gray-bg); }
+  .rueda-detail-row.active { background: var(--accent-bg); }
+  .rueda-detail-row .rname { flex: 1.1; min-width: 110px; font-size: 12px; font-weight: 600; }
+  .rueda-bar-track { flex: 1.4; min-width: 70px; height: 6px; background: var(--gray-bg); border-radius: 4px; overflow: hidden; }
+  .rueda-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; }
+  .rueda-detail-row .rval { width: 36px; text-align: right; font-size: 12px; font-weight: 700; color: var(--accent-dark); flex-shrink: 0; }
+  .rueda-detail-row .rtrend { width: 42px; text-align: right; font-size: 11px; flex-shrink: 0; }
+  .rtrend.up { color: var(--green); } .rtrend.down { color: var(--red); } .rtrend.flat { color: var(--muted); }
+
+  /* ---- Historial ---- */
+  .stat-chips { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .stat-chip { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px; text-align: left; min-width: 120px; box-shadow: var(--shadow-sm); flex: 1; }
+  .stat-chip .num { font-size: 21px; font-weight: 700; line-height: 1.1; color: var(--accent-dark); }
+  .stat-chip .lbl { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+  .range-toggle { display: inline-flex; gap: 4px; border: 1px solid var(--line); border-radius: 9px; padding: 2px; background: #fff; }
+  .range-toggle button { border: none; background: none; border-radius: 7px; padding: 5px 11px; font-size: 11.5px; cursor: pointer; font-family: inherit; color: var(--muted); font-weight: 600; }
+  .range-toggle button.active { background: var(--ink); color: #fff; }
+  .checkin-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .checkin-item { border: 1px solid var(--line); border-radius: 12px; padding: 11px 14px; background: var(--paper); box-shadow: var(--shadow-sm); }
+  .checkin-item .ci-date { font-size: 11.5px; color: var(--muted); font-weight: 700; margin-bottom: 6px; }
+  .ci-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+  .ci-chip { font-size: 10.5px; background: var(--accent-bg); color: var(--accent-dark); padding: 2px 9px; border-radius: 999px; font-weight: 600; }
+  .ci-note { font-size: 12.5px; color: var(--ink); font-style: italic; }
+  .chart-svg-wrap { width: 100%; overflow-x: auto; }
+
+  /* ---- Medidas ---- */
+  .measure-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .measure-field label { display: block; font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+  .measure-field input { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: inherit; background: var(--gray-bg); box-sizing: border-box; }
+  .measure-field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); background: #fff; }
+
+  /* ---- Recursos ---- */
+  .resource-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .resource-card { border: 1px solid var(--line); border-radius: 14px; padding: 18px; background: var(--paper); box-shadow: var(--shadow-sm); position: relative; }
+  .resource-card .rnum { font-size: 10.5px; color: var(--accent-dark); font-weight: 700; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .resource-card h4 { font-size: 14.5px; margin: 0 0 8px 0; }
+  .resource-card p { font-size: 12.5px; color: var(--muted); line-height: 1.55; margin: 0 0 10px 0; }
+  .resource-min { background: var(--accent-bg); border-left: 3px solid var(--accent); padding: 10px 12px; border-radius: 6px; margin-bottom: 10px; }
+  .resource-min .lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--accent-dark); margin-bottom: 6px; }
+  .resource-min ul { margin: 0; padding-left: 16px; }
+  .resource-min li { font-size: 12px; color: var(--ink); margin-bottom: 4px; line-height: 1.5; }
+  .resource-error { font-size: 11.5px; color: var(--muted); font-style: italic; border-top: 1px solid var(--line); padding-top: 8px; margin-bottom: 10px; }
+  .resource-error strong { font-style: normal; color: var(--ink); }
+  .resource-card.locked { background: var(--gray-bg); }
+  .resource-card.locked h4 { color: var(--muted); }
+  .resource-lock-badge { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 10px; }
+  .resource-blur { filter: blur(3px); opacity: 0.5; user-select: none; pointer-events: none; }
+  .resource-unlock-note { font-size: 11.5px; color: var(--muted); }
+
+  /* ---- Sesiones ---- */
+  .sessions-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 880px) { .sessions-columns { grid-template-columns: 1fr; } }
+  .roadmap-mini { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; background: var(--paper); box-shadow: var(--shadow-sm); border-left: 3px solid var(--gold); }
+  .roadmap-mini .rm-tag { font-size: 10.5px; color: var(--gold); font-weight: 700; letter-spacing: 0.05em; }
+  .roadmap-mini h4 { font-size: 13px; margin: 3px 0; }
+  .roadmap-mini p { font-size: 11.5px; color: var(--muted); margin: 0 0 4px 0; }
+  .roadmap-mini .rm-date { font-size: 11px; color: var(--muted); font-style: italic; }
+  .roadmap-mini.pending { border-left-color: var(--amber); }
+  .roadmap-mini.pending .rm-tag { color: var(--amber); }
+
+  .session-item { border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; margin-bottom: 10px; background: var(--paper); box-shadow: var(--shadow-sm); }
+  .session-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; flex-wrap: wrap; cursor: pointer; }
+  .session-head .sdate { font-size: 11px; color: var(--muted); font-weight: 700; }
+  .session-head h4 { font-size: 13.5px; margin: 3px 0 4px 0; }
+  .session-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .session-badge { font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 700; background: var(--gray-bg); color: var(--muted); }
+  .session-badge.has { background: var(--accent-bg); color: var(--accent-dark); }
+  .session-body { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); display: none; }
+  .session-body.open { display: block; }
+  .session-body h5 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 12px 0 6px 0; }
+  .session-body h5:first-child { margin-top: 0; }
+  .session-body ul { margin: 0; padding-left: 18px; }
+  .session-body li { font-size: 12.5px; margin-bottom: 4px; }
+  .session-body .transcript-box { background: var(--gray-bg); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--ink); white-space: pre-wrap; max-height: 220px; overflow-y: auto; line-height: 1.55; }
+  .session-body .feedback-box { background: var(--gold-bg); border-left: 3px solid var(--gold); border-radius: 8px; padding: 10px 12px; font-size: 12.5px; color: var(--ink); line-height: 1.55; }
+  .session-body .feedback-tag { font-size: 10px; color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 4px; }
+  .video-link { font-size: 12.5px; color: var(--accent-dark); font-weight: 600; text-decoration: none; }
+  .video-link:hover { text-decoration: underline; }
+  .auto-note { font-size: 11px; color: var(--muted); font-style: italic; margin-top: 10px; }
+
+  /* ---- Mi Data ---- */
+  .data-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+  .data-actions label { font-size: 11.5px; color: var(--muted); font-weight: 600; display: block; margin-bottom: 4px; }
+  .data-actions input[type=date] { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font-size: 12.5px; font-family: inherit; }
+  .data-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+  .empty-state { text-align: center; padding: 34px 20px; color: var(--muted); font-size: 13px; border: 1.5px dashed var(--line); border-radius: 14px; background: var(--paper); }
+
+  /* ---- Modal ---- */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(19,26,23,0.4); backdrop-filter: blur(1px); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
+  .modal-overlay.hidden { display: none; }
+  .modal { background: #fff; border-radius: 16px; padding: 22px; max-width: 460px; width: 100%; border: 1px solid var(--line); max-height: 85vh; overflow-y: auto; box-shadow: var(--shadow-md); }
+  .modal h3 { margin: 0 0 14px 0; font-size: 16px; }
+  .modal label { font-size: 12px; color: var(--muted); display: block; margin: 10px 0 4px 0; font-weight: 600; }
+  .modal input[type=text] {
+    width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: inherit; background: var(--gray-bg);
+  }
+  .modal input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); background: #fff; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+  .site-footer { text-align: center; font-size: 11px; color: var(--muted); padding: 26px 0 6px; letter-spacing: 0.02em; }
+  .site-footer b { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="app"></div>
+  <div class="site-footer"><b>SOBI</b> · Medicina Humana — Dr. Manuel Acuña Medina · Tus datos quedan guardados en tu cuenta, accesibles desde cualquier dispositivo</div>
+</div>
+
+<div class="modal-overlay hidden" id="customModalOverlay">
+  <div class="modal">
+    <h3>Agregar item personalizado</h3>
+    <label>Nombre del item</label>
+    <input type="text" id="cmName" placeholder="Ej: Exposición solar diaria">
+    <label>Peso inicial (%)</label>
+    <input type="text" id="cmWeight" placeholder="10" value="10">
+    <div class="modal-actions">
+      <button class="btn" onclick="closeCustomModal()">Cancelar</button>
+      <button class="btn primary" onclick="confirmAddCustom()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<canvas id="hiddenExportCanvas" style="display:none;"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ============================= CONFIG / STORAGE ============================= */
+const STORAGE_KEY = 'sobiPatientPortalV2';
+
+/* ============================= SUPABASE ============================= */
+const SUPABASE_URL = 'https://emrlmvaelixpxrinzzzw.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Nov2WzyA_ez5msRix9xZhQ_GG0NOQCm';
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let pendingAuthEmail = '';
+
+function renderAuthScreen(message, isError) {
+  document.getElementById('app').innerHTML = `
+    <div style="max-width:380px;margin:80px auto;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:center;">
+      <div style="font-weight:800;letter-spacing:2px;color:#96543a;font-size:13px;margin-bottom:6px;">SOBI</div>
+      <h2 style="margin:0 0 4px;font-size:23px;font-family:Georgia,'Times New Roman',serif;font-weight:400;">Mi Ritmo</h2>
+      <p style="color:#6b6558;font-size:14px;margin:0 0 28px;">Medicina Humana · Dr. Manuel Acuña</p>
+      <input id="authEmail" type="email" placeholder="tu@email.com" autocomplete="email"
+        style="width:100%;padding:12px 14px;border:1px solid #e5ded0;border-radius:8px;margin-bottom:12px;font-size:14px;box-sizing:border-box;"
+        onkeydown="if(event.key==='Enter'){ event.preventDefault(); handleMagicLink(); }" />
+      <button onclick="handleMagicLink()"
+        style="width:100%;padding:12px;background:#B86B4B;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">
+        Enviar link de acceso
+      </button>
+      ${message ? `<p style="margin-top:16px;font-size:13px;color:${isError ? '#dc2626' : '#B86B4B'};">${message}</p>` : ''}
+      <p style="margin-top:22px;"><a href="#" onclick="event.preventDefault();enterDemoMode();" style="font-size:12px;color:#9a9484;text-decoration:underline;">Ver demo sin cuenta (datos de prueba)</a></p>
+    </div>`;
+  const emailInput = document.getElementById('authEmail');
+  if (emailInput) emailInput.focus();
+}
+
+function renderCodeScreen(email, message, isError) {
+  pendingAuthEmail = email;
+  document.getElementById('app').innerHTML = `
+    <div style="max-width:380px;margin:80px auto;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:center;">
+      <div style="font-weight:800;letter-spacing:2px;color:#96543a;font-size:13px;margin-bottom:6px;">SOBI</div>
+      <h2 style="margin:0 0 4px;font-size:22px;font-family:Georgia,'Times New Roman',serif;font-weight:400;">Revisa tu correo</h2>
+      <p style="color:#6b6558;font-size:14px;margin:0 0 8px;">Te enviamos un link y un código de 8 dígitos a<br><b>${escapeHtml(email)}</b></p>
+      <p style="color:#6b6558;font-size:13px;margin:0 0 20px;">Si el link del correo no abre o da error, escribe el código acá:</p>
+      <input id="authCode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="12345678" maxlength="8" autocomplete="one-time-code"
+        style="width:100%;padding:12px 14px;border:1px solid #e5ded0;border-radius:8px;margin-bottom:12px;font-size:18px;letter-spacing:4px;text-align:center;box-sizing:border-box;"
+        onkeydown="if(event.key==='Enter'){ event.preventDefault(); handleVerifyCode(); }" />
+      <button onclick="handleVerifyCode()"
+        style="width:100%;padding:12px;background:#B86B4B;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px;">
+        Verificar código
+      </button>
+      <button onclick="renderAuthScreen()"
+        style="width:100%;padding:10px;background:none;color:#6b6558;border:none;font-size:13px;cursor:pointer;text-decoration:underline;">
+        Volver / usar otro correo
+      </button>
+      ${message ? `<p style="margin-top:16px;font-size:13px;color:${isError ? '#dc2626' : '#B86B4B'};">${message}</p>` : ''}
+    </div>`;
+  const codeInput = document.getElementById('authCode');
+  if (codeInput) codeInput.focus();
+}
+
+async function handleMagicLink() {
+  const emailInput = document.getElementById('authEmail');
+  const email = emailInput ? emailInput.value.trim() : '';
+  if (!email) { renderAuthScreen('Ingresa tu email para continuar.', true); return; }
+  renderAuthScreen('Enviando...');
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email: email,
+    options: { emailRedirectTo: window.location.origin + window.location.pathname }
+  });
+  if (error) { renderAuthScreen('Error: ' + error.message, true); }
+  else { renderCodeScreen(email); }
+}
+
+async function handleVerifyCode() {
+  const codeInput = document.getElementById('authCode');
+  const code = codeInput ? codeInput.value.trim() : '';
+  if (!code) { renderCodeScreen(pendingAuthEmail, 'Ingresa el código de 8 dígitos.', true); return; }
+  renderCodeScreen(pendingAuthEmail, 'Verificando...');
+  const { error } = await supabaseClient.auth.verifyOtp({
+    email: pendingAuthEmail,
+    token: code,
+    type: 'email'
+  });
+  if (error) { renderCodeScreen(pendingAuthEmail, 'Código inválido o vencido: ' + error.message, true); }
+  // Si funciona, el listener onAuthStateChange (SIGNED_IN) más abajo toma el control y renderiza la app.
+}
+
+async function handleLogout() {
+  if (!isDemoMode) { await supabaseClient.auth.signOut(); }
+  isDemoMode = false;
+  state = null; currentUser = null; currentPatientId = null;
+  renderAuthScreen();
+}
+
+function renderNotActivated(email) {
+  document.getElementById('app').innerHTML = `
+    <div style="max-width:400px;margin:80px auto;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:center;">
+      <div style="font-weight:800;letter-spacing:2px;color:#96543a;font-size:13px;margin-bottom:6px;">SOBI</div>
+      <h2 style="margin:0 0 4px;font-size:20px;font-family:Georgia,'Times New Roman',serif;font-weight:400;">Tu cuenta aun no esta activada</h2>
+      <p style="color:#6b6558;font-size:14px;margin:0 0 20px;">No encontramos un programa asociado a <b>${escapeHtml(email)}</b>. Esto se activa cuando Manuel confirma tu inscripcion.</p>
+      <p style="color:#6b6558;font-size:13px;margin:0 0 24px;">Si acabas de inscribirte, escribele para que active tu acceso.</p>
+      <button class="btn small" onclick="handleLogout()" style="padding:10px 18px;">Salir</button>
+    </div>`;
+}
+
+function enterDemoMode() {
+  isDemoMode = true;
+  state = generateSeedState();
+  currentUser = null;
+  currentPatientId = null;
+  render();
+}
+
+async function bootstrap() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('demo') === '1') {
+    enterDemoMode();
+    return;
+  }
+  renderAuthScreen('Cargando...');
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (session && session.user) {
+    const ok = await loadStateForUser(session.user);
+    if (ok) render(); else renderNotActivated(session.user.email);
+  } else {
+    renderAuthScreen();
+  }
+}
+
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session && session.user && (!currentUser || currentUser.id !== session.user.id)) {
+    loadStateForUser(session.user).then((ok) => {
+      if (ok) render(); else renderNotActivated(session.user.email);
+    });
+  } else if (event === 'SIGNED_OUT') {
+    state = null; currentUser = null; currentPatientId = null;
+    renderAuthScreen();
+  }
+});
+
+function todayISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function uid(prefix) { return (prefix||'id') + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+function fmtDate(iso) {
+  const [y,m,d] = iso.split('-');
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return d + ' ' + meses[parseInt(m,10)-1] + ' ' + y;
+}
+function monthKey(iso) { return iso.slice(0,7); }
+function monthLabel(mk) {
+  const [y,m] = mk.split('-');
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return meses[parseInt(m,10)-1] + ' ' + y;
+}
+function daysInMonth(mk) {
+  const [y,m] = mk.split('-').map(Number);
+  return new Date(y, m, 0).getDate();
+}
+function addMonths(mk, n) {
+  let [y,m] = mk.split('-').map(Number);
+  m += n;
+  while (m > 12) { m -= 12; y += 1; }
+  while (m < 1) { m += 12; y -= 1; }
+  return y + '-' + String(m).padStart(2,'0');
+}
+function addDaysISO(iso, n) {
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function daysBetween(isoA, isoB) {
+  return Math.floor((new Date(isoB + 'T00:00:00') - new Date(isoA + 'T00:00:00')) / 86400000);
+}
+
+/* Seeded RNG so the demo is stable across reloads */
+function mulberry32(a) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function defaultPillars() {
+  return [
+    { id: 'movimiento', name: 'Movimiento', weight: 20, builtin: true },
+    { id: 'nutricion', name: 'Nutrición Humana', weight: 20, builtin: true },
+    { id: 'sueno', name: 'Descanso y Sueño', weight: 20, builtin: true },
+    { id: 'estres', name: 'Estrés y Recuperación', weight: 15, builtin: true },
+    { id: 'relaciones', name: 'Relaciones Sociales', weight: 15, builtin: true },
+    { id: 'sustancias', name: 'Control de Sustancias', weight: 10, builtin: true }
+  ];
+}
+
+/* Campos de composición corporal / rendimiento — pensados para el perfil de deportista de alto
+   rendimiento, registro semanal. "headline: true" son los 3 que llevan gráfico de tendencia. */
+const MEASURE_FIELDS = [
+  { key: 'weight_kg', label: 'Peso', unit: 'kg', decimals: 1, headline: true, color: '#B86B4B' },
+  { key: 'body_fat_pct', label: '% Grasa corporal', unit: '%', decimals: 1, headline: true, color: '#344957' },
+  { key: 'muscle_mass_kg', label: 'Masa muscular', unit: 'kg', decimals: 1, headline: true, color: '#68705B' },
+  { key: 'waist_cm', label: 'Cintura', unit: 'cm', decimals: 1 },
+  { key: 'hip_cm', label: 'Cadera', unit: 'cm', decimals: 1 },
+  { key: 'arm_cm', label: 'Brazo relajado', unit: 'cm', decimals: 1 },
+  { key: 'thigh_cm', label: 'Muslo', unit: 'cm', decimals: 1 },
+  { key: 'resting_hr', label: 'FC en reposo', unit: 'lpm', decimals: 0 },
+  { key: 'sleep_hours_avg', label: 'Sueño prom.', unit: 'hrs', decimals: 1 },
+  { key: 'hrv_ms', label: 'HRV', unit: 'ms', decimals: 0, advanced: true, headline: true, color: '#1D1D1A' },
+  { key: 'training_load', label: 'Carga de entrenamiento', unit: '/10', decimals: 0, advanced: true }
+];
+/* Campos visibles según el plan del paciente — los "advanced" (HRV, carga) son de los planes
+   Elite/Deportivo y Vitalidad & Longevidad Elite (ver TIERS más abajo). */
+function visibleMeasureFields() {
+  const tier = currentTier();
+  return MEASURE_FIELDS.filter(f => !f.advanced || tier.advancedMetrics);
+}
+
+const ROADMAP = [
+  { tag: 'SEMANA 1', title: 'Diagnóstico inicial (2–3 hrs)', desc: 'Historial de demanda, perfil biológico, laboratorio base, objetivos.', offsetDays: 0 },
+  { tag: 'MES 1', title: 'Control quincenal', desc: 'Ajuste de mínimos reales según primeras 2 semanas de check-ins.', offsetDays: 30 },
+  { tag: 'MES 3', title: 'Reporte de avance', desc: 'Comparativa de biomarcadores y composición corporal vs. línea base.', offsetDays: 90 },
+  { tag: 'MES 6', title: 'Cierre de ciclo biológico', desc: 'Reporte final, siguientes pasos, exportación de toda tu data.', offsetDays: 180 }
+];
+
+const RESOURCES = [
+  { num: '01 · MOVIMIENTO', title: 'El movimiento construye capacidad', pillarId: 'movimiento', unlockDay: 0, level: 1,
+    lead: 'Moverte bien no es evitar una pérdida — es construir algo: más fuerza disponible, más energía, más margen de movimiento para el resto de tu vida.',
+    minimo: ['150 min/semana de movimiento aeróbico moderado, o 75 de intensidad alta', '2 sesiones semanales de fuerza, grandes grupos musculares', 'Romper el sedentarismo cada 60-90 min sentado', 'Aprender la técnica con un kinesiólogo — multiplica el beneficio y previene lesiones'],
+    error: 'Entrenar intenso 1-2 veces por semana y pasar el resto inmóvil. La adaptación depende de la frecuencia, no de la intensidad puntual.' },
+  { num: '02 · NUTRICIÓN HUMANA', title: 'El patrón manda, el detalle ajusta', pillarId: 'nutricion', unlockDay: 14, level: 1,
+    lead: 'Somos organismos heterótrofos: dependemos por completo de consumir materia orgánica de otros seres vivos para obtener energía y materiales de construcción.',
+    minimo: ['Base de vegetales, frutas, proteína de calidad, grasas no refinadas, granos enteros', 'Ultraprocesados como excepción, no como base', 'Proteína suficiente, distribuida durante el día', 'Hidratación regular, sin fórmulas complejas'],
+    error: 'Perseguir el suplemento o superalimento mientras el patrón general de base sigue siendo pobre.' },
+  { num: '03 · DESCANSO Y SUEÑO', title: 'No hay suplemento que lo compense', pillarId: 'sueno', unlockDay: 30, level: 2,
+    lead: 'El sueño no es tiempo de inactividad — es cuando ocurre la consolidación de memoria, la regulación hormonal y la reparación celular.',
+    minimo: ['7-9 horas por noche, horario consistente de acostarse y despertar', 'Oscuridad y temperatura fresca en el dormitorio (18-20°C)', 'Luz tenue en las horas previas a dormir', 'Luz natural en la mañana, para anclar el ritmo circadiano'],
+    error: 'Compensar la falta de sueño en semana con exceso el fin de semana. Ayuda parcialmente, no revierte el costo acumulado.' },
+  { num: '04 · ESTRÉS', title: 'La meta es recuperarse, no eliminarlo', pillarId: 'estres', unlockDay: 60, level: 2,
+    lead: 'El estrés agudo es normal y útil. El problema es el estrés sostenido sin recuperación — ahí es donde el sistema se desregula.',
+    minimo: ['Práctica diaria de regulación: respiración lenta, meditación o silencio sin estímulo', 'NSDR (Non-Sleep Deep Rest) — descanso profundo sin dormir', 'Límites claros entre trabajo y descanso', 'Contacto regular con la naturaleza'],
+    error: 'Intentar eliminar el estrés en vez de mejorar la capacidad de recuperarse de él.' },
+  { num: '05 · RELACIONES SOCIALES', title: 'Comparable en peso a no fumar', pillarId: 'relaciones', unlockDay: 90, level: 3,
+    lead: 'La conexión social no es un lujo emocional — es una de las variables más consistentemente asociadas a longevidad en la literatura científica.',
+    minimo: ['Contacto social significativo regular, presencial', 'Al menos una relación de confianza donde puedas ser honesto sobre cómo estás', 'Pertenencia a un grupo o comunidad sostenida en el tiempo'],
+    error: 'Confundir cantidad de contactos con calidad de vínculo.' },
+  { num: '06 · CONTROL DE SUSTANCIAS', title: 'Decide con la información, no sin ella', pillarId: 'sustancias', unlockDay: 120, level: 4,
+    lead: 'No se trata de prohibición moral — se trata de conocer el costo real de lo que consumes.',
+    minimo: ['Alcohol: límites de bajo riesgo conocidos, con días libres de consumo', 'Tabaco y vapeo: sin nivel seguro de consumo conocido', 'Cafeína: útil en dosis moderadas, problemática cuando reemplaza sueño', 'Sustancias recreativas: decisión informada del riesgo real, antes, no después'],
+    error: 'Evaluar el riesgo por cómo te hace sentir en el momento, no por su evidencia acumulada a largo plazo.' }
+];
+
+/* ============================= PLAN DIARIO — MOTOR SEMANAL FIJO (spec SOBI/Sizigia Lab) ============================= */
+/* Cada día de la SEMANA (no del programa) trae asignado un tipo de interacción fijo, de lunes
+   a viernes, según "Especificación Técnica y Arquitectura de Contenidos — Plataforma SOBI".
+   Sábado y domingo quedan sin ninguna obligación ("Fricción Cero de Fin de Semana"). El único
+   día que se sale de esta regla es el primer día del programa (bienvenida, evaluación base). */
+const DAY_TYPES = {
+  bienvenida:    { label: 'Bienvenida', icon: '👋', kind: 'full' },
+  vitalidad:     { label: 'Vitalidad y Claridad Mental', icon: '🌅', kind: 'vitalidad', pillarId: 'estres' },
+  habito_ancla:  { label: 'Hábito Ancla y Movimiento', icon: '🏃', kind: 'habito3', pillarId: 'movimiento' },
+  psicoed_zb:    { label: 'Psicoeducación Zona Azul', icon: '💡', kind: 'ack' },
+  ikigai:        { label: 'Mente, Stoicismo & Ikigai', icon: '🧭', kind: 'text' },
+  cierre_semana: { label: 'Cierre de Semana', icon: '📅', kind: 'weekly_close' },
+  zona_sagrada:  { label: 'Espacio Sagrado Zona Azul', icon: '🌿', kind: 'weekend' }
+};
+/* JS Date.getDay(): 0=domingo, 1=lunes ... 6=sábado */
+const WEEKDAY_TYPES = { 0: 'zona_sagrada', 1: 'vitalidad', 2: 'habito_ancla', 3: 'psicoed_zb', 4: 'ikigai', 5: 'cierre_semana', 6: 'zona_sagrada' };
+
+const QUOTES = [
+  { text: 'No es que tengamos poco tiempo, sino que perdemos mucho.', author: 'Séneca' },
+  { text: 'No busques que las cosas pasen como quieres, sino desea que pasen como pasan.', author: 'Epicteto' },
+  { text: 'Ten en cuenta que muy poco es necesario para vivir una vida feliz.', author: 'Marco Aurelio' },
+  { text: 'Mover de forma natural, tener propósito y priorizar la tribu — eso comparten los más longevos.', author: 'Dan Buettner' },
+  { text: 'La estabilidad física y la masa muscular son tu seguro de vida para la última década.', author: 'Peter Attia' },
+  { text: 'El sueño es la mejor solución legal que existe para lo que te aqueja.', author: 'Matthew Walker' },
+  { text: 'Lo que se mide, mejora.', author: 'Peter Drucker' },
+  { text: 'No cuentes los días, haz que los días cuenten.', author: 'Muhammad Ali' }
+];
+
+/* --- Micro-dosis de psicoeducación de los miércoles: concepto biológico corto + aplicación
+   práctica, pensado para <60 seg de lectura. Rota por semana (no por día) para no repetirse
+   mecánicamente. Set semilla de 10 — vale la pena que Manuel lo vaya ampliando con el tiempo,
+   porque a las ~10 semanas empieza a repetirse dentro de un programa de 6 meses (26 semanas). */
+const ZONE_BLUE_MICRODOSIS = [
+  { title: 'Estrés Hormético y Exposición a la Luz', read: '45 seg',
+    body: 'Recibir 10 minutos de luz solar directa antes de las 10:00 AM ancla tu ritmo circadiano, optimizando la producción de melatonina para la noche.' },
+  { title: 'Hara Hachi Bu — Comer al 80%', read: '40 seg',
+    body: 'En Okinawa se come hasta sentirse un 80% satisfecho, no 100%. Ese margen reduce la carga metabólica de cada comida sin pasar hambre — es disciplina de ritmo, no de restricción.' },
+  { title: 'Zona 2 — el entrenamiento que más suma', read: '50 seg',
+    body: 'Entrenar a una intensidad donde aún puedes sostener una conversación (Zona 2) mejora la función mitocondrial más que el entrenamiento de alta intensidad puntual. Apunta a 3-4 horas semanales acumuladas.' },
+  { title: 'NEAT — el movimiento que no se nota', read: '45 seg',
+    body: 'El gasto energético de actividad no estructurada (caminar, subir escaleras, moverte en la casa) suele superar el de tu sesión de ejercicio formal. Buscar excusas para moverte más suma tanto como la sesión planificada.' },
+  { title: 'Respiración nasal', read: '40 seg',
+    body: 'Respirar por la nariz filtra, humedece y presuriza el aire mejor que por la boca, y favorece una mejor variabilidad del ritmo cardíaco (HRV). Practícalo en reposo y durante ejercicio suave.' },
+  { title: 'Hábitos de 2 minutos', read: '45 seg',
+    body: 'Todo hábito nuevo puede reducirse a una versión de 2 minutos ("leer un libro" → "leer una página"). Ese es el punto de entrada — la constancia en la versión mínima es lo que construye identidad.' },
+  { title: 'NSDR — descanso profundo sin dormir', read: '50 seg',
+    body: 'El Non-Sleep Deep Rest (protocolos de respiración guiada o yoga nidra de 10-20 min) reduce cortisol y restaura foco, sin necesidad de una siesta completa. Útil a media tarde.' },
+  { title: 'Ikigai — tu razón de ser', read: '45 seg',
+    body: 'En las Zonas Azules, tener un propósito claro (Ikigai) se asocia con años adicionales de vida — no es solo bienestar emocional, es una variable biológica medible.' },
+  { title: 'Masa muscular como seguro de vida', read: '50 seg',
+    body: 'La masa y fuerza muscular a los 40-50 años predicen capacidad funcional e independencia a los 80. Entrenar fuerza hoy es una inversión con retorno a 30 años.' },
+  { title: 'Consistencia de horario de sueño', read: '40 seg',
+    body: 'Acostarte y despertar a la misma hora todos los días (incluido fin de semana) impacta más en la calidad del sueño que dormir una hora extra de forma irregular.' }
+];
+function getZoneBlueTipForDay(iso) {
+  const offset = Math.max(0, daysBetween(state.patient.startDate, iso));
+  return ZONE_BLUE_MICRODOSIS[Math.floor(offset / 7) % ZONE_BLUE_MICRODOSIS.length];
+}
+
+/* --- Biblioteca curada Zona Azul (libros, documentales, podcasts) — acceso por plan, ver TIERS --- */
+const ZONE_BLUE_LIBRARY = [
+  { type: 'Libro', title: 'Outlive: The Science and Art of Longevity', author: 'Dr. Peter Attia', tag: 'Medicina 3.0',
+    blurb: 'Medicina 3.0, prevención proactiva, zona 2 de entrenamiento, estabilidad física y masa muscular como seguro de vida.' },
+  { type: 'Libro', title: 'Why We Sleep', author: 'Matthew Walker', tag: 'Sueño',
+    blurb: 'Higiene del sueño, fases REM y NREM, impacto en el sistema inmune, aprendizaje y regulación metabólica.' },
+  { type: 'Libro', title: 'The Blue Zones', author: 'Dan Buettner', tag: 'Longevidad',
+    blurb: 'Mover de forma natural, tener propósito (Ikigai), comer hasta el 80% de saciedad (Hara Hachi Bu) y priorizar la tribu.' },
+  { type: 'Libro', title: 'Atomic Habits', author: 'James Clear', tag: 'Hábitos',
+    blurb: 'Diseño de ambientes, hábitos de 2 minutos, apilamiento de hábitos y enfoque en la identidad más que en las metas.' },
+  { type: 'Libro', title: 'Breath', author: 'James Nestor', tag: 'Respiración',
+    blurb: 'Respiración nasal vs. bucal, reducción de volumen respiratorio y control de la variabilidad del ritmo cardíaco (HRV).' },
+  { type: 'Documental', title: 'Vivir 100 años: El secreto de las zonas azules', author: 'Netflix', tag: 'Zonas Azules',
+    blurb: 'Dieta, relaciones sociales y hábitos diarios en Nicoya, Okinawa, Cerdeña, Icaria y Loma Linda.' },
+  { type: 'Documental', title: 'Limitless con Chris Hemsworth', author: 'National Geographic / Disney+', tag: 'Estrés hormético',
+    blurb: 'Ayuno, resistencia mental, saunas y exposición al frío para prolongar la vitalidad.' },
+  { type: 'Documental', title: 'Heal', author: 'Documental', tag: 'Estrés crónico',
+    blurb: 'El impacto del cortisol y estrés crónico en la expresión genética y procesos inflamatorios.' },
+  { type: 'Podcast', title: 'Huberman Lab Podcast', author: 'Dr. Andrew Huberman', tag: 'Neurobiología',
+    blurb: 'Protocolos de neurobiología, luz circadiana, fijación de dopamina y descansos profundos sin sueño (NSDR).' },
+  { type: 'Podcast', title: 'The Peter Attia Drive', author: 'Peter Attia', tag: 'Biomarcadores',
+    blurb: 'Biomarcadores, resistencia a la insulina, perfil lipídico y entrenamiento metabólico.' },
+  { type: 'Podcast', title: 'The Rich Roll Podcast', author: 'Rich Roll', tag: 'Nutrición',
+    blurb: 'Longevidad, nutrición basada en alimentos integrales y transformación personal.' }
+];
+
+/* ============================= TIERS / PLANES (spec sección 2) ============================= */
+/* resourceLevel: hasta qué "Nivel" de Recursos se desbloquea (1-4, ver RESOURCES[].level).
+   library: false | 'full' | 'unlimited' — acceso a Biblioteca Zona Azul.
+   advancedMetrics: true habilita HRV / carga de entrenamiento en Medidas.
+   sessionSummaryLimit: null = sin límite; número = tope de resúmenes de sesión visibles.
+   upsell: { day, message } — banner que aparece desde ese día del programa (null = sin upsell, es tier tope). */
+const TIERS = {
+  '3m_essential': { label: '3M · Esencial', months: 3, resourceLevel: 2, library: false, advancedMetrics: false, sessionSummaryLimit: 2,
+    upsell: { day: 60, message: 'Llevas 60 días en el programa. Con 3M Pro desbloqueas el Ritmo SOBI completo (radar de pilares), historial de medidas y tendencias, y la Biblioteca Zona Azul.' } },
+  '3m_pro': { label: '3M · Pro', months: 3, resourceLevel: 4, library: 'full', advancedMetrics: false, sessionSummaryLimit: null,
+    upsell: { day: 75, message: 'Llevas 75 días de buena adherencia. Si tu foco es rendimiento, 3M Elite suma HRV, protocolos de suplementación/recuperación y prioridades semanales dinámicas.' } },
+  '3m_elite': { label: '3M · Elite / Deportivo', months: 3, resourceLevel: 4, library: 'full', advancedMetrics: true, sessionSummaryLimit: null, upsell: null },
+  '6m_transform': { label: '6M · Transformación Integral', months: 6, resourceLevel: 4, library: 'unlimited', advancedMetrics: false, sessionSummaryLimit: null, upsell: null },
+  '6m_longevity': { label: '6M · Vitalidad & Longevidad Elite', months: 6, resourceLevel: 4, library: 'unlimited', advancedMetrics: true, sessionSummaryLimit: null, upsell: null }
+};
+function currentTier() { return TIERS[state.patient.tierPlan] || TIERS['3m_pro']; }
+
+/* Tipo de día: fijo por día de la SEMANA (no por offset del programa) — única excepción es el
+   día 0, que siempre es la bienvenida con evaluación base completa. Versión "pura" (sin leer el
+   estado global) para poder usarla también generando datos semilla antes de que `state` exista. */
+function dayTypeForDate(startDate, iso) {
+  const offset = daysBetween(startDate, iso);
+  if (offset <= 0) return 'bienvenida';
+  const dow = new Date(iso + 'T00:00:00').getDay();
+  return WEEKDAY_TYPES[dow];
+}
+function getDayType(iso) {
+  return dayTypeForDate(state.patient.startDate, iso);
+}
+function getQuoteForDay(iso) {
+  const offset = Math.max(0, daysBetween(state.patient.startDate, iso));
+  return QUOTES[offset % QUOTES.length];
+}
+/* Recordatorio de control próximo — se muestra como banner SECUNDARIO sobre el tipo de día fijo
+   de la semana (no lo reemplaza, para no romper la promesa de "un tipo de día fijo por semana"). */
+function getMilestoneReminder(iso) {
+  const offset = Math.max(0, daysBetween(state.patient.startDate, iso));
+  let hit = null;
+  ROADMAP.forEach(m => { if (m.offsetDays > 0) { const diff = m.offsetDays - offset; if (diff >= 1 && diff <= 4) hit = m; } });
+  return hit;
+}
+
+const KEYWORD_MAP = {
+  movimiento: ['entren', 'caminata', 'ejercicio', 'fuerza', 'movimiento', 'kines'],
+  nutricion: ['comida', 'nutric', 'alimenta', 'proteína', 'proteina', 'dieta', 'desayuno'],
+  sueno: ['sueño', 'sueno', 'dormir', 'descanso', 'insomnio'],
+  estres: ['estrés', 'estres', 'ansied', 'cortisol', 'respira', 'nsdr'],
+  relaciones: ['familia', 'pareja', 'social', 'amigos', 'vínculo', 'vinculo'],
+  sustancias: ['alcohol', 'cafeína', 'cafeina', 'tabaco', 'fumar', 'sustancia']
+};
+
+/* ============================= SEED DEMO DATA ============================= */
+function generateSeedState() {
+  const rng = mulberry32(20260814);
+  const startDate = '2026-05-04';
+  const pillars = defaultPillars();
+  const checkins = {};
+  const notes = [
+    'Buena energía en general.', 'Semana pesada en el trabajo, dormí poco.',
+    'Logré mantener la rutina completa.', 'Costó la caminata, llovió toda la semana.',
+    'Ánimo estable, sin grandes cambios.', 'Dormí mejor después de bajar la cafeína.',
+    'Fin de semana familiar, me hizo bien.', ''
+  ];
+  const start = new Date(startDate + 'T00:00:00');
+  const today = new Date(todayISO() + 'T00:00:00');
+  const totalDays = Math.floor((today - start) / 86400000);
+  function randRating(base) { return Math.max(1, Math.min(10, Math.round(base + (rng()-0.5)*3))); }
+  for (let i = 0; i <= totalDays; i++) {
+    const d = new Date(start); d.setDate(d.getDate() + i);
+    const iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    const type = dayTypeForDate(startDate, iso);
+    if (type === 'zona_sagrada') continue; // fin de semana — sin check-in, por diseño (fricción cero)
+    if (rng() < 0.15) continue; // días L-V sin check-in, adherencia realista
+    const trend = Math.min(1.6, i / totalDays * 1.6); // leve mejora en el tiempo
+    const ratings = {};
+    let note = rng() < 0.3 ? notes[Math.floor(rng()*notes.length)] : '';
+    let ack = false;
+    if (type === 'bienvenida') {
+      pillars.forEach(p => { if (rng() < 0.08) return; ratings[p.id] = randRating(5 + trend); });
+    } else if (type === 'vitalidad') {
+      ratings.estres = randRating(5 + trend);
+    } else if (type === 'habito_ancla') {
+      const roll = rng();
+      if (roll < 0.6) ratings.movimiento = 9;
+      else if (roll < 0.85) ratings.movimiento = 5;
+      // roll >= 0.85: "descanso" — sin rating, no penaliza
+    } else if (type === 'psicoed_zb') {
+      ack = true; note = '';
+    } else if (type === 'cierre_semana') {
+      ratings._semanal = randRating(5 + trend);
+    }
+    // 'ikigai': solo texto opcional, sin rating numérico — nota generada arriba ya sirve de ejemplo
+    checkins[iso] = { type: type, ratings: ratings, note: note, ack: ack };
+  }
+
+  const sessions = [
+    { id: uid('s'), date: startDate, title: 'Diagnóstico inicial', videoLink: '',
+      summary: 'Primera sesión de diagnóstico: historial de demanda, perfil biológico y objetivos del ciclo de 6 meses.',
+      keyPoints: ['Laboratorio base agendado', 'Objetivo principal: mejorar sueño y energía sostenida', 'Caminata diaria de 30 min como hábito ancla'],
+      transcript: 'Manuel: Partamos por entender qué te está exigiendo tu día a día...\nPaciente: Sobre todo el trabajo, duermo poco entre semana...\nManuel: Vamos a partir con mínimos reales, sin sobrecargar...',
+      feedback: '' },
+    { id: uid('s'), date: addDaysISO(startDate, 32), title: 'Control quincenal — mes 1', videoLink: '',
+      summary: 'Revisión de las primeras semanas de check-ins. Ajuste de hábito de sueño y consistencia de movimiento.',
+      keyPoints: ['Buena adherencia a la caminata diaria', 'Ajustar horario de pantallas antes de dormir', 'Mantener desayuno con proteína'],
+      transcript: 'Manuel: Vi tus check-ins, la caminata está muy sólida...\nPaciente: Sí, lo que más me cuesta es el sueño entre semana...\nManuel: Trabajemos el horario de pantallas primero...',
+      feedback: '' },
+    { id: uid('s'), date: addDaysISO(startDate, 91), title: 'Reporte de avance — mes 3', videoLink: '',
+      summary: 'Comparativa de biomarcadores y composición corporal vs. línea base. Mejoras claras en energía sostenida.',
+      keyPoints: ['Mejor perfil metabólico vs. laboratorio inicial', 'Sueño más consistente entre semana', 'Sumar trabajo de respiración para estrés laboral'],
+      transcript: 'Manuel: Comparando tu laboratorio de hoy con el de inicio, hay mejoras claras...\nPaciente: Se ha sentido, sobre todo la energía en las tardes...\nManuel: Para el próximo tramo sumemos regulación de estrés...',
+      feedback: '' }
+  ];
+  sessions.forEach(s => { s.feedback = generateAutoFeedback(s); });
+
+  // Medidas semanales (deportista) — tendencia leve: baja de peso y % grasa, sube masa muscular.
+  const measurements = {};
+  const baseWeight = 78, baseFat = 22, baseMuscle = 34, baseWaist = 86, baseHr = 64, baseSleep = 6.8, baseHrv = 52, baseLoad = 5;
+  for (let i = 0; i <= totalDays; i += 7) {
+    const d = new Date(start); d.setDate(d.getDate() + i);
+    const iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    const t = totalDays > 0 ? i / totalDays : 0;
+    measurements[iso] = {
+      weight_kg: Math.round((baseWeight - t*2.5 + (rng()-0.5)*0.6)*10)/10,
+      body_fat_pct: Math.round((baseFat - t*3.5 + (rng()-0.5)*0.8)*10)/10,
+      muscle_mass_kg: Math.round((baseMuscle + t*1.8 + (rng()-0.5)*0.4)*10)/10,
+      waist_cm: Math.round((baseWaist - t*3 + (rng()-0.5))*10)/10,
+      hip_cm: null,
+      arm_cm: null,
+      thigh_cm: null,
+      resting_hr: Math.round(baseHr - t*4 + (rng()-0.5)*3),
+      sleep_hours_avg: Math.round((baseSleep + t*0.6 + (rng()-0.5)*0.4)*10)/10,
+      hrv_ms: Math.round(baseHrv + t*8 + (rng()-0.5)*4),
+      training_load: Math.max(1, Math.min(10, Math.round(baseLoad + (rng()-0.5)*3))),
+      notes: ''
+    };
+  }
+
+  return {
+    patient: { name: 'Javiera Ossandón (demo)', startDate: startDate, programMonths: 6, tierPlan: '3m_pro' },
+    pillars: pillars,
+    checkins: checkins,
+    measurements: measurements,
+    sessions: sessions,
+    ui: { tab: 'rueda', selectedMonth: monthKey(todayISO()), historialRange: 'all', highlightPillar: null, checkinsExpanded: false, selectedRingDay: null, selectedMeasureDate: todayISO() }
+  };
+}
+
+function generateAutoFeedback(session) {
+  const text = ((session.summary||'') + ' ' + (session.transcript||'') + ' ' + (session.keyPoints||[]).join(' ')).toLowerCase();
+  const touched = [];
+  Object.keys(KEYWORD_MAP).forEach(pid => {
+    if (KEYWORD_MAP[pid].some(k => text.indexOf(k) !== -1)) {
+      const p = defaultPillars().find(x => x.id === pid);
+      if (p) touched.push(p.name);
+    }
+  });
+  const areas = touched.length ? touched.join(', ') : 'seguimiento general del programa';
+  const points = (session.keyPoints || []).slice(0, 3);
+  let body = 'Sesión centrada en: ' + areas + '. ';
+  if (points.length) {
+    body += 'Próximos pasos acordados: ' + points.join('; ') + '. ';
+  }
+  body += 'Se sugiere reforzar la adherencia al check-in diario antes del próximo control para comparar con datos objetivos.';
+  return body;
+}
+
+/* ============================= STATE (Supabase, tablas normalizadas) ============================= */
+let state = null;
+let currentUser = null;
+let currentPatientId = null;
+let isDemoMode = false;
+
+/* Devuelve true si encontro (o pudo reclamar) un paciente activo para este usuario */
+async function loadStateForUser(user) {
+  currentUser = user;
+  const cacheKey = STORAGE_KEY + '_' + user.id;
+
+  let patient = null;
+  try {
+    let { data, error } = await supabaseClient
+      .from('patients').select('*').eq('auth_user_id', user.id).maybeSingle();
+    if (error) throw error;
+    patient = data;
+
+    if (!patient) {
+      // Intenta reclamar un registro pre-creado por Manuel/Diego que coincida con el email
+      await supabaseClient
+        .from('patients')
+        .update({ auth_user_id: user.id })
+        .is('auth_user_id', null)
+        .ilike('email', user.email);
+      const retry = await supabaseClient
+        .from('patients').select('*').eq('auth_user_id', user.id).maybeSingle();
+      patient = retry.data || null;
+    }
+  } catch (e) {
+    console.error('Supabase load error', e);
+  }
+
+  if (!patient) {
+    try { localStorage.removeItem(cacheKey); } catch(e) {}
+    return false;
+  }
+  currentPatientId = patient.id;
+
+  let checkinRows = [], sessionRows = [], measurementRows = [];
+  try {
+    const [ck, tr, ms] = await Promise.all([
+      supabaseClient.from('checkins').select('*').eq('patient_id', patient.id),
+      supabaseClient.from('transcripts').select('*').eq('patient_id', patient.id).order('session_date'),
+      supabaseClient.from('measurements').select('*').eq('patient_id', patient.id)
+    ]);
+    checkinRows = ck.data || [];
+    sessionRows = tr.data || [];
+    measurementRows = ms.data || [];
+  } catch (e) { console.error('Supabase read error', e); }
+
+  const checkins = {};
+  checkinRows.forEach(r => {
+    checkins[r.entry_date] = {
+      type: r.entry_type || 'encuesta',
+      ratings: r.ratings || {},
+      note: r.notes || '',
+      ack: !!r.ack
+    };
+  });
+
+  const measurements = {};
+  measurementRows.forEach(r => {
+    const entry = { notes: r.notes || '' };
+    MEASURE_FIELDS.forEach(f => { entry[f.key] = r[f.key] != null ? Number(r[f.key]) : null; });
+    measurements[r.entry_date] = entry;
+  });
+
+  const sessions = sessionRows.map(r => ({
+    id: r.id,
+    date: r.session_date,
+    title: r.title || 'Sesion',
+    videoLink: r.video_link || '',
+    summary: r.summary || '',
+    keyPoints: r.key_points || [],
+    transcript: r.raw_text || '',
+    feedback: r.feedback || ''
+  }));
+
+  state = {
+    patient: { name: patient.name || '', startDate: patient.start_date || todayISO(), programMonths: patient.program_months || 6, tierPlan: patient.tier_plan || '3m_pro' },
+    pillars: defaultPillars(),
+    checkins: checkins,
+    measurements: measurements,
+    sessions: sessions,
+    ui: { tab: 'rueda', selectedMonth: monthKey(todayISO()), historialRange: 'all', highlightPillar: null, checkinsExpanded: false, selectedRingDay: null, selectedMeasureDate: todayISO() }
+  };
+  try { localStorage.setItem(cacheKey, JSON.stringify(state)); } catch(e) {}
+  return true;
+}
+
+/* Cache local (UI prefs, pesos de pilares). Los check-ins e historial de sesiones
+   se sincronizan aparte, fila por fila, ver syncCheckinUpsert/syncCheckinDelete. */
+function saveState() {
+  if (currentUser) {
+    try { localStorage.setItem(STORAGE_KEY + '_' + currentUser.id, JSON.stringify(state)); } catch(e) {}
+  }
+}
+
+let checkinSyncTimers = {};
+function syncCheckinUpsert(iso) {
+  if (!currentPatientId) return;
+  clearTimeout(checkinSyncTimers[iso]);
+  checkinSyncTimers[iso] = setTimeout(async () => {
+    const c = state.checkins[iso];
+    if (!c) return;
+    try {
+      const { error } = await supabaseClient.from('checkins').upsert({
+        patient_id: currentPatientId,
+        entry_date: iso,
+        ratings: c.ratings || {},
+        notes: c.note || '',
+        entry_type: c.type || null,
+        ack: !!c.ack
+      }, { onConflict: 'patient_id,entry_date' });
+      if (error) console.error('Supabase checkin upsert error', error);
+    } catch (e) { console.error('Supabase checkin upsert error', e); }
+  }, 500);
+}
+async function syncCheckinDelete(iso) {
+  if (!currentPatientId) return;
+  try {
+    const { error } = await supabaseClient.from('checkins').delete()
+      .eq('patient_id', currentPatientId).eq('entry_date', iso);
+    if (error) console.error('Supabase checkin delete error', error);
+  } catch (e) { console.error('Supabase checkin delete error', e); }
+}
+
+let measurementSyncTimers = {};
+function syncMeasurementUpsert(iso) {
+  if (!currentPatientId) return;
+  clearTimeout(measurementSyncTimers[iso]);
+  measurementSyncTimers[iso] = setTimeout(async () => {
+    const m = state.measurements[iso];
+    if (!m) return;
+    try {
+      const payload = { patient_id: currentPatientId, entry_date: iso, notes: m.notes || '' };
+      MEASURE_FIELDS.forEach(f => { payload[f.key] = (m[f.key] === undefined || m[f.key] === null || isNaN(m[f.key])) ? null : Number(m[f.key]); });
+      const { error } = await supabaseClient.from('measurements').upsert(payload, { onConflict: 'patient_id,entry_date' });
+      if (error) console.error('Supabase measurement upsert error', error);
+    } catch (e) { console.error('Supabase measurement upsert error', e); }
+  }, 500);
+}
+async function syncMeasurementDelete(iso) {
+  if (!currentPatientId) return;
+  try {
+    const { error } = await supabaseClient.from('measurements').delete()
+      .eq('patient_id', currentPatientId).eq('entry_date', iso);
+    if (error) console.error('Supabase measurement delete error', error);
+  } catch (e) { console.error('Supabase measurement delete error', e); }
+}
+
+/* ============================= COMPUTATION HELPERS ============================= */
+function pillarById(id) { return state.pillars.find(p => p.id === id); }
+
+function weightedDailyScore(ratings) {
+  const ids = Object.keys(ratings || {});
+  if (!ids.length) return null;
+  let sumW = 0, sumWR = 0;
+  ids.forEach(id => {
+    const p = pillarById(id);
+    if (!p) return;
+    sumW += p.weight;
+    sumWR += p.weight * ratings[id];
+  });
+  if (sumW === 0) return null;
+  return sumWR / sumW;
+}
+
+function checkinsInMonth(mk) {
+  return Object.keys(state.checkins).filter(iso => monthKey(iso) === mk).sort();
+}
+
+function monthAverages(mk) {
+  const isos = checkinsInMonth(mk);
+  const sums = {}, counts = {};
+  state.pillars.forEach(p => { sums[p.id] = 0; counts[p.id] = 0; });
+  isos.forEach(iso => {
+    const r = state.checkins[iso].ratings || {};
+    Object.keys(r).forEach(id => {
+      if (sums[id] === undefined) return;
+      sums[id] += r[id]; counts[id] += 1;
+    });
+  });
+  const avgs = {}, counts2 = {};
+  state.pillars.forEach(p => { avgs[p.id] = counts[p.id] ? sums[p.id] / counts[p.id] : null; counts2[p.id] = counts[p.id]; });
+  return { avgs: avgs, counts: counts2, daysWithData: isos.length };
+}
+
+function getMonthList() {
+  const months = [];
+  let mk = monthKey(state.patient.startDate);
+  const last = monthKey(todayISO());
+  while (true) {
+    months.push(mk);
+    if (mk === last) break;
+    mk = addMonths(mk, 1);
+    if (months.length > 36) break;
+  }
+  return months;
+}
+
+/* ============================= RENDER: SHELL ============================= */
+const TABS = [
+  { id: 'rueda', label: 'Mi Ritmo' },
+  { id: 'progreso', label: 'Progreso' },
+  { id: 'medidas', label: 'Medidas' },
+  { id: 'historial', label: 'Historial' },
+  { id: 'recursos', label: 'Recursos' },
+  { id: 'sesiones', label: 'Sesiones' },
+  { id: 'data', label: 'Mi Data' }
+];
+
+function setTab(id) { state.ui.tab = id; saveState(); render(); }
+function setDemoTier(key) { state.patient.tierPlan = key; saveState(); render(); }
+function dismissUpsell() { state.ui.upsellDismissed = true; saveState(); render(); }
+
+function render() {
+  const app = document.getElementById('app');
+  const daysIn = daysBetween(state.patient.startDate, todayISO());
+  const totalProgramDays = state.patient.programMonths * 30;
+  const dayLabel = daysIn >= 0 ? ('Día ' + (daysIn+1) + ' de ' + totalProgramDays) : 'Programa aún no inicia';
+
+  const tier = currentTier();
+  let html = '';
+  if (isDemoMode) {
+    html += '<div style="background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:12px;font-weight:600;padding:8px 14px;border-radius:10px;margin-bottom:10px;text-align:center;">MODO DEMO — datos de prueba, no se guardan ni afectan pacientes reales</div>';
+    html += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;font-size:12px;color:var(--muted);">';
+    html += 'Previsualizar plan:';
+    html += '<select onchange="setDemoTier(this.value)" style="border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:12px;font-family:inherit;">';
+    Object.keys(TIERS).forEach(key => { html += '<option value="' + key + '"' + (key === state.patient.tierPlan ? ' selected' : '') + '>' + TIERS[key].label + '</option>'; });
+    html += '</select></div>';
+  }
+  if (!isDemoMode && tier.upsell && daysIn >= tier.upsell.day && !state.ui.upsellDismissed) {
+    html += '<div class="card" style="border-left:3px solid var(--gold);background:var(--gold-bg);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">';
+    html += '<div style="font-size:12.5px;color:var(--ink);line-height:1.5;">💡 ' + escapeHtml(tier.upsell.message) + '</div>';
+    html += '<button class="btn small" onclick="dismissUpsell()">Entendido</button>';
+    html += '</div>';
+  }
+  html += '<div class="head-top">';
+  html += '  <div class="brand-row">';
+  html += '    <div class="brand-mark"><span>SOBI</span></div>';
+  html += '    <div class="brand-title"><h1>Mi Ritmo SOBI</h1><div class="sub">Medicina Humana · Dr. Manuel Acuña Medina</div></div>';
+  html += '  </div>';
+  html += '  <div class="patient-chip"><b>' + escapeHtml(state.patient.name || (currentUser ? currentUser.email : '')) + '</b><span class="dim">· ' + dayLabel + ' · ' + escapeHtml(tier.label) + '</span> <button class="btn small" onclick="handleLogout()" style="margin-left:8px;">Salir</button></div>';
+  html += '</div>';
+
+  html += '<div class="tabs">';
+  TABS.forEach(t => {
+    html += '<button class="tab-btn ' + (state.ui.tab === t.id ? 'active' : '') + '" onclick="setTab(\'' + t.id + '\')">' + t.label + '</button>';
+  });
+  html += '</div>';
+
+  html += '<div id="tabContent"></div>';
+  app.innerHTML = html;
+
+  const content = document.getElementById('tabContent');
+  if (state.ui.tab === 'rueda') content.innerHTML = renderRueda();
+  else if (state.ui.tab === 'progreso') content.innerHTML = renderProgreso();
+  else if (state.ui.tab === 'medidas') content.innerHTML = renderMedidas();
+  else if (state.ui.tab === 'historial') content.innerHTML = renderHistorial();
+  else if (state.ui.tab === 'recursos') content.innerHTML = renderRecursos();
+  else if (state.ui.tab === 'sesiones') content.innerHTML = renderSesiones();
+  else if (state.ui.tab === 'data') content.innerHTML = renderData();
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ============================= TAB: MI RITMO ============================= */
+function renderRueda() {
+  const todayIso = todayISO();
+
+  let html = '<div class="grid-2">';
+
+  /* --- Left: Tu semana (mapa guiado) + día de hoy + Prioridades --- */
+  html += '<div>';
+  html += '<div class="card" style="margin-bottom:16px;">';
+  html += '<h3>Tu semana</h3>';
+  html += '<div class="card-sub">Cada día del programa trae una pregunta distinta, ya definida — así seguimos sin que tengas que decidir qué responder.</div>';
+  html += renderWeekPreview();
+  html += '</div>';
+
+  html += '<div class="card" style="margin-bottom:16px;">';
+  html += buildDayCard(todayIso, 'today');
+  html += '</div>';
+
+  html += '<div class="card">';
+  html += '<h3>Prioridades del programa</h3>';
+  html += '<div class="card-sub">Manuel y tú definen cuánto pesa cada pilar según lo que quieren mejorar. Se usa para calcular tu bienestar general ponderado.</div>';
+  state.pillars.forEach(p => {
+    html += '<div class="priority-row">';
+    html += '  <div class="pname">' + escapeHtml(p.name) + (p.builtin ? '' : ' <span style="color:var(--muted);font-weight:400;">(personalizado)</span>') + '</div>';
+    html += '  <input type="number" min="0" max="100" value="' + p.weight + '" id="weight_' + p.id + '" onchange="onWeightChange(\'' + p.id + '\')">';
+    html += '  <span class="pct">%</span>';
+    if (!p.builtin) html += '  <button class="btn small danger" onclick="removeCustomPillar(\'' + p.id + '\')">×</button>';
+    html += '</div>';
+  });
+  const total = state.pillars.reduce((s,p) => s + Number(p.weight||0), 0);
+  html += '<div class="priority-total ' + (Math.abs(total-100) <= 1 ? 'ok' : 'warn') + '">';
+  html += '<span>Total asignado</span><span>' + total + '%' + (Math.abs(total-100) <= 1 ? '' : ' — ajusta para que sume 100%') + '</span>';
+  html += '</div>';
+  const customCount = state.pillars.filter(p => !p.builtin).length;
+  html += '<div style="margin-top:12px;">';
+  if (customCount < 2) {
+    html += '<button class="btn small" onclick="openCustomModal()">+ Agregar item personalizado (' + customCount + '/2)</button>';
+  } else {
+    html += '<span style="font-size:11.5px;color:var(--muted);">Máximo de 2 items personalizados alcanzado.</span>';
+  }
+  html += '</div>';
+  html += '</div>';
+  html += '</div>'; // left col
+
+  /* --- Right: Ritmo mensual + anillo de adherencia --- */
+  html += '<div class="card">';
+  html += '<h3>Ritmo SOBI del mes</h3>';
+  html += '<div class="card-sub">Promedio de cada pilar en el mes seleccionado. Navega mes a mes y toca un pilar para ver el detalle.</div>';
+
+  const months = getMonthList();
+  const idx = months.indexOf(state.ui.selectedMonth);
+  const safeIdx = idx === -1 ? months.length - 1 : idx;
+  if (idx === -1) state.ui.selectedMonth = months[months.length-1];
+
+  html += '<div class="month-nav">';
+  html += '  <button class="mnav-btn" onclick="navMonth(-1)" ' + (safeIdx <= 0 ? 'disabled' : '') + '>‹</button>';
+  html += '  <div class="mnav-label">' + monthLabel(state.ui.selectedMonth) + '</div>';
+  html += '  <button class="mnav-btn" onclick="navMonth(1)" ' + (safeIdx >= months.length-1 ? 'disabled' : '') + '>›</button>';
+  html += '</div>';
+
+  const mstats = monthAverages(state.ui.selectedMonth);
+  const prevMk = safeIdx > 0 ? months[safeIdx-1] : null;
+  const prevStats = prevMk ? monthAverages(prevMk) : null;
+
+  html += '<div class="rueda-flex">';
+  if (mstats.daysWithData === 0) {
+    html += '<div class="no-data-msg" style="width:100%;">Sin check-ins registrados este mes todavía. Navega a un mes anterior o completa el check-in de hoy.</div>';
+  } else {
+    html += '<div class="rueda-svg-wrap">' + buildRadarSVG(mstats) + '</div>';
+  }
+  const selIso = resolveSelectedRingIso();
+  html += '<div class="ring-wrap">';
+  html += monthRingSVG(state.ui.selectedMonth, selIso);
+  html += '<div class="ring-caption">Anillo de adherencia — toca cualquier día para ver o editar ese check-in.</div>';
+  if (selIso) html += renderRingDetailPanel(selIso);
+  html += '</div>';
+  html += '</div>';
+
+  if (mstats.daysWithData > 0) {
+    html += '<div class="rueda-detail" id="ruedaDetail">';
+    state.pillars.forEach(p => {
+      const v = mstats.avgs[p.id];
+      const pv = prevStats ? prevStats.avgs[p.id] : null;
+      let trendHtml = '<span class="rtrend flat">—</span>';
+      if (v !== null && pv !== null) {
+        const diff = v - pv;
+        if (diff > 0.3) trendHtml = '<span class="rtrend up">▲ ' + diff.toFixed(1) + '</span>';
+        else if (diff < -0.3) trendHtml = '<span class="rtrend down">▼ ' + Math.abs(diff).toFixed(1) + '</span>';
+        else trendHtml = '<span class="rtrend flat">≈ igual</span>';
+      }
+      html += '<div class="rueda-detail-row" id="detailRow_' + p.id + '" onclick="highlightPillar(\'' + p.id + '\')">';
+      html += '  <div class="rname">' + escapeHtml(p.name) + '</div>';
+      html += '  <div class="rueda-bar-track"><div class="rueda-bar-fill" style="width:' + (v!==null ? (v*10) : 0) + '%;"></div></div>';
+      html += '  <div class="rval">' + (v !== null ? v.toFixed(1) : '—') + '</div>';
+      html += '  ' + trendHtml;
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  html += '<div class="rueda-actions">';
+  html += '  <button class="btn small" onclick="downloadRadarPNG()" ' + (mstats.daysWithData===0?'disabled':'') + '>Descargar este ritmo (PNG)</button>';
+  html += '  <button class="btn small" onclick="downloadMonthCSV()" ' + (mstats.daysWithData===0?'disabled':'') + '>Descargar data del mes (CSV)</button>';
+  html += '</div>';
+  html += '</div>'; // right col
+
+  html += '</div>'; // grid-2
+  return html;
+}
+
+/* --- Vista semanal: preview de los próximos 7 días y su tipo predefinido --- */
+function renderWeekPreview() {
+  const todayIso = todayISO();
+  let html = '<div class="week-preview">';
+  for (let i = 0; i < 7; i++) {
+    const iso = addDaysISO(todayIso, i);
+    const type = getDayType(iso);
+    const spec = DAY_TYPES[type];
+    const isWeekend = type === 'zona_sagrada';
+    const has = !!state.checkins[iso];
+    const isToday = i === 0;
+    const cls = 'wp-item' + (isToday ? ' wp-today' : '') + (has ? ' wp-done' : '') + (isWeekend ? ' wp-rest' : '');
+    const dayLbl = isToday ? 'Hoy' : fmtDate(iso).split(' ').slice(0,2).join(' ');
+    html += '<div class="' + cls + '" title="' + escapeHtml(spec.label) + '"><div class="wp-icon">' + spec.icon + '</div><div class="wp-day">' + dayLbl + '</div></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+/* --- Tarjeta de día guiada por tipo: se reutiliza para "hoy" y para el detalle del anillo --- */
+function vitalidadMessage(val) {
+  return Number(val) <= 4
+    ? 'Semana de baja presión. Prioriza hidratación, caminatas suaves y descanso temprano.'
+    : 'Excelente punto de partida. Mantén el ritmo sin sobreexigir el sistema nervioso.';
+}
+function habitoAnclaStatus(entry) {
+  if (!entry) return null;
+  const v = entry.ratings ? entry.ratings.movimiento : undefined;
+  if (v === 9) return 'completado';
+  if (v === 5) return 'parcial';
+  return 'descanso';
+}
+
+function buildDayCard(iso, idPrefix) {
+  const todayIso = todayISO();
+  const isFuture = iso > todayIso;
+  const isBeforeStart = daysBetween(state.patient.startDate, iso) < 0;
+  const type = getDayType(iso);
+  const spec = DAY_TYPES[type];
+  const existing = state.checkins[iso];
+  const dayNum = daysBetween(state.patient.startDate, iso) + 1;
+
+  let statusBadge = '<span class="rd-badge muted">Sin completar</span>';
+  if (type === 'zona_sagrada') statusBadge = '<span class="rd-badge muted">Fin de semana libre</span>';
+  else if (existing) statusBadge = '<span class="rd-badge ok">Completado</span>';
+  else if (iso === todayIso) statusBadge = '<span class="rd-badge warn">Hoy · pendiente</span>';
+  else if (isFuture) statusBadge = '<span class="rd-badge muted">Próximamente</span>';
+
+  let html = '<div class="daycard-head"><div class="daycard-type"><span class="dt-icon">' + spec.icon + '</span> ' + escapeHtml(spec.label) + '</div>' + statusBadge + '</div>';
+  html += '<div class="daycard-sub">Día ' + dayNum + ' · ' + fmtDate(iso) + '</div>';
+
+  if (isFuture) {
+    html += '<div class="ring-detail-empty">Este día todavía no llega — no se puede completar por adelantado.</div>';
+    return html;
+  }
+  if (isBeforeStart) {
+    html += '<div class="ring-detail-empty">Este día es anterior al inicio del programa (' + fmtDate(state.patient.startDate) + ').</div>';
+    return html;
+  }
+  if (type === 'zona_sagrada') {
+    html += '<div class="daycard-msg" style="text-align:center;">🌿 Sin tareas ni registros pendientes.<br>Disfruta de la naturaleza, el movimiento libre y la compañía de tu tribu.</div>';
+    return html;
+  }
+
+  if (iso === todayIso) {
+    const milestone = getMilestoneReminder(iso);
+    if (milestone) html += '<div class="daycard-msg" style="margin-bottom:12px;">🧪 <strong>' + escapeHtml(milestone.tag) + '</strong> se acerca — ' + escapeHtml(milestone.title) + ' (estimado ' + fmtDate(addDaysISO(state.patient.startDate, milestone.offsetDays)) + ').</div>';
+  }
+
+  if (type === 'habito_ancla') {
+    const status = habitoAnclaStatus(existing);
+    html += '<div class="daycard-question">¿Lograste completar tu movimiento mínimo o pausa activa hoy?</div>';
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">';
+    html += '  <button class="btn small ' + (status==='completado'?'primary':'') + '" onclick="saveHabitoAncla(\'' + iso + '\',\'completado\')">Completado</button>';
+    html += '  <button class="btn small ' + (status==='parcial'?'primary':'') + '" onclick="saveHabitoAncla(\'' + iso + '\',\'parcial\')">Parcial / pausa activa</button>';
+    html += '  <button class="btn small ' + (status==='descanso'?'primary':'') + '" onclick="saveHabitoAncla(\'' + iso + '\',\'descanso\')">Hoy fue descanso</button>';
+    html += '</div>';
+    if (status === 'completado') html += '<div class="daycard-msg">Sumaste adherencia al pilar Movimiento. 💪</div>';
+    else if (status === 'parcial') html += '<div class="daycard-msg">Progreso medio registrado — cuenta igual.</div>';
+    else if (status === 'descanso') html += '<div class="daycard-msg">El descanso activo también regenera.</div>';
+    if (existing) html += '<div class="ring-detail-actions"><button class="btn small danger" onclick="deleteDayEntry(\'' + iso + '\')">Eliminar</button></div>';
+    return html;
+  }
+
+  if (type === 'psicoed_zb') {
+    const tip = getZoneBlueTipForDay(iso);
+    html += '<div class="daycard-tip"><div class="dt-num">' + escapeHtml(tip.read.toUpperCase()) + ' DE LECTURA</div><div class="dt-lead"><strong>' + escapeHtml(tip.title) + '.</strong> ' + escapeHtml(tip.body) + '</div></div>';
+    if (existing && existing.ack) html += '<div class="daycard-msg">Marcado como entendido y aplicado. ✅</div>';
+    else html += '<div class="ring-detail-actions"><button class="btn small primary" onclick="savePsicoedZB(\'' + iso + '\')">Entendido y aplicado</button></div>';
+    if (existing) html += '<div class="ring-detail-actions" style="margin-top:4px;"><button class="btn small danger" onclick="deleteDayEntry(\'' + iso + '\')">Eliminar</button></div>';
+    return html;
+  }
+
+  if (type === 'bienvenida') {
+    if (!existing) html += '<div class="daycard-msg">Bienvenida al programa. Hoy partimos con tu evaluación base: califica cada pilar del 1 al 10 según cómo te sientes ahora mismo — este es tu punto de partida.</div>';
+    const ratings = (existing && existing.ratings) || {};
+    state.pillars.forEach(p => {
+      const val = ratings[p.id] !== undefined ? ratings[p.id] : 6;
+      html += '<div class="pillar-row">';
+      html += '  <div class="pillar-name">' + escapeHtml(p.name) + '</div>';
+      html += '  <div class="pillar-slider-wrap">';
+      html += '    <input type="range" min="1" max="10" step="1" value="' + val + '" id="' + idPrefix + '_sl_' + p.id + '" oninput="onDaySliderInput(\'' + idPrefix + '\',\'' + p.id + '\')">';
+      html += '    <span class="pillar-val" id="' + idPrefix + '_val_' + p.id + '">' + val + '</span>';
+      html += '  </div>';
+      html += '</div>';
+    });
+    html += '<textarea class="checkin-note" id="' + idPrefix + '_note" placeholder="¿Algo puntual que quieras contarle a Manuel? (opcional)">' + escapeHtml((existing&&existing.note)||'') + '</textarea>';
+  } else if (type === 'vitalidad') {
+    const val = (existing && existing.ratings && existing.ratings[spec.pillarId] !== undefined) ? existing.ratings[spec.pillarId] : 6;
+    html += '<div class="daycard-question">¿Con qué nivel de vitalidad y claridad arrancas esta semana?</div>';
+    html += '<div class="pillar-row" style="border-top:none;">';
+    html += '  <div class="pillar-slider-wrap" style="flex:1;">';
+    html += '    <input type="range" min="1" max="10" step="1" value="' + val + '" id="' + idPrefix + '_sl_' + spec.pillarId + '" oninput="onDaySliderInput(\'' + idPrefix + '\',\'' + spec.pillarId + '\');onVitalidadInput(\'' + idPrefix + '\')">';
+    html += '    <span class="pillar-val" id="' + idPrefix + '_val_' + spec.pillarId + '">' + val + '</span>';
+    html += '  </div>';
+    html += '</div>';
+    html += '<div class="daycard-msg" id="' + idPrefix + '_vitalidad_msg">' + vitalidadMessage(val) + '</div>';
+  } else if (type === 'ikigai') {
+    const q = getQuoteForDay(iso);
+    html += '<div class="daycard-quote">&ldquo;' + escapeHtml(q.text) + '&rdquo;<span>— ' + escapeHtml(q.author) + '</span></div>';
+    html += '<div class="daycard-question" style="margin-top:10px;">¿Qué acción o pensamiento te ayudó a mantener la calma hoy? (opcional)</div>';
+    html += '<input type="text" class="checkin-note" style="min-height:auto;padding:9px 11px;" id="' + idPrefix + '_note" placeholder="Una línea, sin presión..." value="' + escapeHtml((existing&&existing.note)||'') + '">';
+  } else if (type === 'cierre_semana') {
+    const val = (existing && existing.ratings && existing.ratings._semanal !== undefined) ? existing.ratings._semanal : 6;
+    html += '<div class="daycard-question">En general, ¿cómo evalúas tu consistencia biológica esta semana?</div>';
+    html += '<div class="pillar-row" style="border-top:none;">';
+    html += '  <div class="pillar-slider-wrap" style="flex:1;">';
+    html += '    <input type="range" min="1" max="10" step="1" value="' + val + '" id="' + idPrefix + '_sl__semanal" oninput="onDaySliderInput(\'' + idPrefix + '\',\'_semanal\')">';
+    html += '    <span class="pillar-val" id="' + idPrefix + '_val__semanal">' + val + '</span>';
+    html += '  </div>';
+    html += '</div>';
+    html += '<div class="daycard-question" style="margin-top:8px;">¿Cuál fue tu mayor victoria o aprendizaje estos días? (opcional)</div>';
+    html += '<textarea class="checkin-note" id="' + idPrefix + '_note" placeholder="Tu victoria de la semana...">' + escapeHtml((existing&&existing.note)||'') + '</textarea>';
+    if (existing) html += '<div class="daycard-msg" style="margin-top:10px;">Fin de semana activo desbloqueado — sin tareas ni registros hasta el lunes.</div>';
+  }
+
+  html += '<div class="ring-detail-actions">';
+  html += '  <button class="btn small primary" onclick="saveDayEntry(\'' + iso + '\',\'' + idPrefix + '\')">' + (existing ? 'Guardar cambios' : 'Guardar') + '</button>';
+  if (existing) html += '  <button class="btn small danger" onclick="deleteDayEntry(\'' + iso + '\')">Eliminar</button>';
+  html += '</div>';
+  return html;
+}
+
+function onDaySliderInput(idPrefix, pid) {
+  const sl = document.getElementById(idPrefix + '_sl_' + pid);
+  const val = document.getElementById(idPrefix + '_val_' + pid);
+  if (val) val.textContent = sl.value;
+}
+function onVitalidadInput(idPrefix) {
+  const sl = document.getElementById(idPrefix + '_sl_estres');
+  const msg = document.getElementById(idPrefix + '_vitalidad_msg');
+  if (sl && msg) msg.textContent = vitalidadMessage(sl.value);
+}
+function saveDayEntry(iso, idPrefix) {
+  const type = getDayType(iso);
+  const spec = DAY_TYPES[type];
+  const ratings = {};
+  if (spec.kind === 'full') {
+    state.pillars.forEach(p => {
+      const sl = document.getElementById(idPrefix + '_sl_' + p.id);
+      if (sl) ratings[p.id] = parseInt(sl.value, 10);
+    });
+  } else if (spec.kind === 'vitalidad') {
+    const sl = document.getElementById(idPrefix + '_sl_' + spec.pillarId);
+    if (sl) ratings[spec.pillarId] = parseInt(sl.value, 10);
+  } else if (type === 'cierre_semana') {
+    const sl = document.getElementById(idPrefix + '_sl__semanal');
+    if (sl) ratings['_semanal'] = parseInt(sl.value, 10);
+  }
+  const noteEl = document.getElementById(idPrefix + '_note');
+  const note = noteEl ? noteEl.value : '';
+  state.checkins[iso] = { type: type, ratings: ratings, note: note, ack: false };
+  state.ui.selectedMonth = monthKey(iso);
+  if (idPrefix === 'ring') state.ui.selectedRingDay = iso;
+  saveState();
+  syncCheckinUpsert(iso);
+  render();
+}
+/* Martes — 3 botones, auto-guarda al toque (sin paso extra de "Guardar", fricción cero) */
+function saveHabitoAncla(iso, status) {
+  const ratings = {};
+  if (status === 'completado') ratings.movimiento = 9;
+  else if (status === 'parcial') ratings.movimiento = 5;
+  // 'descanso': sin rating — válido, no penaliza el promedio del pilar
+  state.checkins[iso] = { type: 'habito_ancla', ratings: ratings, note: '', ack: false };
+  state.ui.selectedMonth = monthKey(iso);
+  saveState();
+  syncCheckinUpsert(iso);
+  render();
+}
+/* Miércoles — "Entendido y aplicado", auto-guarda al toque */
+function savePsicoedZB(iso) {
+  state.checkins[iso] = { type: 'psicoed_zb', ratings: {}, note: '', ack: true };
+  state.ui.selectedMonth = monthKey(iso);
+  saveState();
+  syncCheckinUpsert(iso);
+  render();
+}
+function deleteDayEntry(iso) {
+  if (!confirm('¿Eliminar el registro de este día?')) return;
+  delete state.checkins[iso];
+  saveState();
+  syncCheckinDelete(iso);
+  render();
+}
+
+function onWeightChange(pid) {
+  const el = document.getElementById('weight_' + pid);
+  const p = pillarById(pid);
+  if (p) p.weight = Math.max(0, Math.min(100, Number(el.value) || 0));
+  saveState();
+  render();
+}
+
+function openCustomModal() {
+  document.getElementById('cmName').value = '';
+  document.getElementById('cmWeight').value = '10';
+  document.getElementById('customModalOverlay').classList.remove('hidden');
+}
+function closeCustomModal() { document.getElementById('customModalOverlay').classList.add('hidden'); }
+function confirmAddCustom() {
+  const name = document.getElementById('cmName').value.trim();
+  const weight = Math.max(0, Math.min(100, Number(document.getElementById('cmWeight').value) || 0));
+  if (!name) { alert('Ponle un nombre al item.'); return; }
+  if (state.pillars.filter(p => !p.builtin).length >= 2) { alert('Máximo 2 items personalizados.'); return; }
+  state.pillars.push({ id: uid('custom'), name: name, weight: weight, builtin: false });
+  saveState();
+  closeCustomModal();
+  render();
+}
+function removeCustomPillar(pid) {
+  if (!confirm('¿Quitar este item personalizado? Se conservará en el historial de días ya registrados.')) return;
+  state.pillars = state.pillars.filter(p => p.id !== pid);
+  saveState();
+  render();
+}
+
+function navMonth(delta) {
+  const months = getMonthList();
+  const idx = months.indexOf(state.ui.selectedMonth);
+  const newIdx = Math.max(0, Math.min(months.length-1, idx + delta));
+  state.ui.selectedMonth = months[newIdx];
+  state.ui.selectedRingDay = null;
+  saveState();
+  render();
+}
+
+/* Resuelve qué día del mes mostrar en el panel de detalle del anillo */
+function resolveSelectedRingIso() {
+  const mk = state.ui.selectedMonth;
+  if (state.ui.selectedRingDay && monthKey(state.ui.selectedRingDay) === mk) return state.ui.selectedRingDay;
+  const todayIso = todayISO();
+  if (monthKey(todayIso) === mk) return todayIso;
+  const isos = checkinsInMonth(mk);
+  if (isos.length) return isos[isos.length-1];
+  return mk + '-01';
+}
+function selectRingDay(iso) {
+  state.ui.selectedRingDay = iso;
+  saveState();
+  render();
+}
+
+function highlightPillar(pid) {
+  state.ui.highlightPillar = state.ui.highlightPillar === pid ? null : pid;
+  document.querySelectorAll('.rueda-detail-row').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.radar-point').forEach(el => el.setAttribute('r', '4.5'));
+  if (state.ui.highlightPillar) {
+    const row = document.getElementById('detailRow_' + pid);
+    if (row) row.classList.add('active');
+    const pt = document.getElementById('radarpt_' + pid);
+    if (pt) pt.setAttribute('r', '7');
+  }
+}
+
+/* --- Ritmo radar: SVG dibujado a mano, sin dependencias externas --- */
+function buildRadarSVG(mstats) {
+  const pillars = state.pillars;
+  const n = pillars.length;
+  const size = 280, cx = 140, cy = 140, maxR = 96;
+  let svg = '<svg id="radarSvg" width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '" xmlns="http://www.w3.org/2000/svg">';
+
+  // grid rings
+  [2,4,6,8,10].forEach(level => {
+    const r = maxR * level / 10;
+    let pts = '';
+    for (let i = 0; i < n; i++) {
+      const angle = (-90 + i * 360 / n) * Math.PI / 180;
+      pts += (cx + r*Math.cos(angle)).toFixed(1) + ',' + (cy + r*Math.sin(angle)).toFixed(1) + ' ';
+    }
+    svg += '<polygon points="' + pts.trim() + '" fill="none" stroke="#e5ded0" stroke-width="1"/>';
+  });
+
+  // axis lines + labels
+  for (let i = 0; i < n; i++) {
+    const angle = (-90 + i * 360 / n) * Math.PI / 180;
+    const x = cx + maxR*Math.cos(angle), y = cy + maxR*Math.sin(angle);
+    svg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="#e5ded0" stroke-width="1"/>';
+    const lx = cx + (maxR+22)*Math.cos(angle), ly = cy + (maxR+22)*Math.sin(angle);
+    const anchor = Math.cos(angle) > 0.3 ? 'start' : (Math.cos(angle) < -0.3 ? 'end' : 'middle');
+    const shortName = pillars[i].name.split(' ').slice(0,2).join(' ');
+    svg += '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + anchor + '" font-size="9.5" fill="#6b6558" font-family="-apple-system,sans-serif" dominant-baseline="middle">' + escapeHtml(shortName) + '</text>';
+  }
+
+  // data polygon
+  let dataPts = '';
+  const coords = [];
+  for (let i = 0; i < n; i++) {
+    const v = mstats.avgs[pillars[i].id];
+    const val = v === null ? 0 : v;
+    const r = maxR * val / 10;
+    const angle = (-90 + i * 360 / n) * Math.PI / 180;
+    const x = cx + r*Math.cos(angle), y = cy + r*Math.sin(angle);
+    coords.push([x,y]);
+    dataPts += x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+  }
+  svg += '<polygon points="' + dataPts.trim() + '" fill="rgba(184,107,75,0.22)" stroke="#B86B4B" stroke-width="2"/>';
+
+  // points (interactive)
+  for (let i = 0; i < n; i++) {
+    const p = pillars[i];
+    const v = mstats.avgs[p.id];
+    const cnt = mstats.counts[p.id];
+    const label = v !== null ? (p.name + ': ' + v.toFixed(1) + '/10 (' + cnt + ' check-ins)') : (p.name + ': sin datos este mes');
+    svg += '<circle id="radarpt_' + p.id + '" class="radar-point" cx="' + coords[i][0].toFixed(1) + '" cy="' + coords[i][1].toFixed(1) + '" r="4.5" fill="#96543a" stroke="#fff" stroke-width="1.5" onclick="highlightPillar(\'' + p.id + '\')"><title>' + label + '</title></circle>';
+  }
+
+  svg += '</svg>';
+  return svg;
+}
+
+function monthRingSVG(mk, selectedIso) {
+  const n = daysInMonth(mk);
+  const done = {};
+  Object.keys(state.checkins).forEach(iso => { if (monthKey(iso) === mk) done[Number(iso.split('-')[2])] = true; });
+  const today = todayISO();
+  const isCurrentMonth = monthKey(today) === mk;
+  const todayNum = isCurrentMonth ? Number(today.split('-')[2]) : -1;
+  const selectedNum = (selectedIso && monthKey(selectedIso) === mk) ? Number(selectedIso.split('-')[2]) : -1;
+  const size = 190, cx = 95, cy = 95, r = 78;
+  let dots = '';
+  for (let i = 1; i <= n; i++) {
+    const angle = (-90 + (i-1) / n * 360) * Math.PI / 180;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    const future = isCurrentMonth && i > todayNum;
+    let fill = '#e5ded0';
+    if (done[i]) fill = '#68705B';
+    else if (future) fill = '#F2ECDD';
+    let stroke = 'none', strokeW = '0', radius = 5;
+    if (i === selectedNum) { stroke = '#1D1D1A'; strokeW = '2.5'; radius = 6.5; }
+    else if (i === todayNum) { stroke = '#d97706'; strokeW = '2'; }
+    const iso = mk + '-' + String(i).padStart(2,'0');
+    const label = done[i] ? ('Día ' + i + ': check-in registrado — toca para ver') : (future ? ('Día ' + i + ': aún no llega') : ('Día ' + i + ': sin check-in — toca para agregarlo'));
+    dots += '<circle class="ring-day" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + radius + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + strokeW + '" onclick="selectRingDay(\'' + iso + '\')"><title>' + label + '</title></circle>';
+  }
+  const doneCount = Object.keys(done).length;
+  return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 190 190">' + dots +
+    '<text x="95" y="90" text-anchor="middle" font-size="20" font-weight="700" fill="#1D1D1A" font-family="-apple-system,sans-serif" style="pointer-events:none;">' + doneCount + '</text>' +
+    '<text x="95" y="107" text-anchor="middle" font-size="10" fill="#6b6558" font-family="-apple-system,sans-serif" style="pointer-events:none;">de ' + n + ' días</text>' +
+    '</svg>';
+}
+
+/* Panel de detalle del día seleccionado en el anillo — reutiliza la misma tarjeta guiada por tipo */
+function renderRingDetailPanel(iso) {
+  return '<div class="ring-detail-card">' + buildDayCard(iso, 'ring') + '</div>';
+}
+
+function downloadRadarPNG() {
+  const svgEl = document.getElementById('radarSvg');
+  if (!svgEl) { alert('No hay datos suficientes este mes para exportar el ritmo.'); return; }
+  svgToPng(svgEl, 'ritmo-sobi-' + state.ui.selectedMonth + '.png');
+}
+function svgToPng(svgEl, filename) {
+  const xml = new XMLSerializer().serializeToString(svgEl);
+  const svgBlob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+  const img = new Image();
+  img.onload = function() {
+    const w = svgEl.viewBox.baseVal.width || svgEl.width.baseVal.value;
+    const h = svgEl.viewBox.baseVal.height || svgEl.height.baseVal.value;
+    const canvas = document.getElementById('hiddenExportCanvas');
+    canvas.width = w * 2; canvas.height = h * 2;
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(2,0,0,2,0,0);
+    ctx.fillStyle = '#fffffe';
+    ctx.fillRect(0,0,w,h);
+    ctx.drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(url);
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = filename;
+    a.click();
+  };
+  img.onerror = function() { URL.revokeObjectURL(url); alert('No se pudo generar la imagen.'); };
+  img.src = url;
+}
+function downloadMonthCSV() {
+  const isos = checkinsInMonth(state.ui.selectedMonth);
+  if (!isos.length) { alert('No hay check-ins este mes para exportar.'); return; }
+  const headers = ['fecha', 'tipo_dia', ...state.pillars.map(p => p.name), 'bienestar_ponderado', 'nota'];
+  const rows = isos.map(iso => {
+    const c = state.checkins[iso];
+    const wscore = weightedDailyScore(c.ratings);
+    return [iso, c.type || '', ...state.pillars.map(p => c.ratings[p.id] !== undefined ? c.ratings[p.id] : ''), wscore !== null ? wscore.toFixed(2) : '', (c.note||'').replace(/\n/g,' ')];
+  });
+  downloadCSV('sobi-data-' + state.ui.selectedMonth + '.csv', headers, rows);
+}
+
+/* ============================= TAB: PROGRESO ============================= */
+function computeCurrentStreak() {
+  let streak = 0;
+  let iso = todayISO();
+  if (!state.checkins[iso]) iso = addDaysISO(iso, -1);
+  while (state.checkins[iso]) { streak++; iso = addDaysISO(iso, -1); }
+  return streak;
+}
+
+function weightedAvgFromPillarAverages(avgs) {
+  let sumW = 0, sumWR = 0;
+  state.pillars.forEach(p => {
+    const v = avgs[p.id];
+    if (v === null || v === undefined) return;
+    sumW += p.weight; sumWR += p.weight * v;
+  });
+  return sumW ? sumWR / sumW : null;
+}
+
+function renderProgreso() {
+  const months = getMonthList();
+  const allIsos = Object.keys(state.checkins).sort();
+  const daysSinceStart = Math.max(1, daysBetween(state.patient.startDate, todayISO()) + 1);
+  const adherence = Math.round(allIsos.length / daysSinceStart * 100);
+  const streak = computeCurrentStreak();
+  const totalProgramDays = state.patient.programMonths * 30;
+  const progPct = Math.max(0, Math.min(100, Math.round(daysSinceStart / totalProgramDays * 100)));
+
+  const baselineAvg = months.length ? weightedAvgFromPillarAverages(monthAverages(months[0]).avgs) : null;
+  const last30cut = addDaysISO(todayISO(), -30);
+  const last30Scores = allIsos.filter(iso => iso >= last30cut).map(iso => weightedDailyScore(state.checkins[iso].ratings)).filter(s => s !== null);
+  const currentAvg = last30Scores.length ? last30Scores.reduce((a,b) => a+b, 0) / last30Scores.length : null;
+
+  let deltaHtml = '';
+  if (baselineAvg !== null && currentAvg !== null && months.length > 1) {
+    const d = currentAvg - baselineAvg;
+    const sign = d > 0 ? '+' : '';
+    const cls = d > 0.2 ? 'up' : (d < -0.2 ? 'down' : 'flat');
+    deltaHtml = '<div class="rtrend ' + cls + '" style="margin-top:2px;">' + sign + d.toFixed(1) + ' vs. mes 1</div>';
+  }
+
+  let html = '';
+  html += '<div class="stat-chips">';
+  html += statChip(adherence + '%', 'Adherencia global');
+  html += statChip(streak + (streak === 1 ? ' día' : ' días'), 'Racha actual');
+  html += '<div class="stat-chip"><div class="num">' + (currentAvg !== null ? currentAvg.toFixed(1) : '—') + '</div><div class="lbl">Bienestar (últ. 30d)</div>' + deltaHtml + '</div>';
+  html += statChip(progPct + '%', 'Avance del programa');
+  html += '</div>';
+
+  html += renderWeeklySummaryCard();
+
+  html += '<div class="card" style="margin-bottom:18px;">';
+  html += '<h3 style="margin:0 0 2px;">Comparación mes a mes</h3>';
+  html += '<div class="card-sub">Promedio de bienestar general por mes desde el inicio del programa — para ver si el trabajo con Manuel se traduce en avance sostenido, no solo en el mes en curso.</div>';
+  if (months.length < 2) {
+    html += '<div class="no-data-msg">Necesitas al menos 2 meses de historial para comparar. Vuelve acá el próximo mes.</div>';
+  } else {
+    const monthlyOverall = months.map(mk => ({ mk: mk, avg: weightedAvgFromPillarAverages(monthAverages(mk).avgs) }));
+    html += '<div class="chart-svg-wrap">' + buildMonthlyOverallSVG(monthlyOverall) + '</div>';
+    html += '<div style="overflow-x:auto;margin-top:14px;">';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+    html += '<thead><tr><th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);">Pilar</th>';
+    months.forEach(mk => { html += '<th style="text-align:right;padding:6px 8px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap;">' + monthLabel(mk).slice(0,3) + '.' + mk.slice(2,4) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    state.pillars.forEach(p => {
+      html += '<tr><td style="padding:6px 8px;font-weight:600;border-bottom:1px solid var(--line);">' + escapeHtml(p.name) + '</td>';
+      months.forEach(mk => {
+        const v = monthAverages(mk).avgs[p.id];
+        html += '<td style="text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);color:' + (v === null ? 'var(--muted)' : 'var(--ink)') + ';">' + (v === null ? '—' : v.toFixed(1)) + '</td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+  }
+  html += '</div>';
+
+  html += renderCrossChartCard();
+
+  const mIsos = Object.keys(state.measurements).sort();
+  if (mIsos.length >= 2) html += renderAthleteDeltasCard(mIsos);
+
+  return html;
+}
+
+function renderWeeklySummaryCard() {
+  const todayIso = todayISO();
+  const weekStart = addDaysISO(todayIso, -6);
+  const prevWeekStart = addDaysISO(todayIso, -13);
+  const prevWeekEnd = addDaysISO(todayIso, -7);
+
+  const thisWeekIsos = Object.keys(state.checkins).filter(iso => iso >= weekStart && iso <= todayIso);
+  const prevWeekIsos = Object.keys(state.checkins).filter(iso => iso >= prevWeekStart && iso <= prevWeekEnd);
+
+  const thisWeekAdherence = Math.round(thisWeekIsos.length / 7 * 100);
+  const prevWeekAdherence = Math.round(prevWeekIsos.length / 7 * 100);
+  const adherenceDelta = thisWeekAdherence - prevWeekAdherence;
+
+  const thisScores = thisWeekIsos.map(iso => weightedDailyScore(state.checkins[iso].ratings)).filter(s => s !== null);
+  const prevScores = prevWeekIsos.map(iso => weightedDailyScore(state.checkins[iso].ratings)).filter(s => s !== null);
+  const thisAvg = thisScores.length ? thisScores.reduce((a,b) => a+b, 0) / thisScores.length : null;
+  const prevAvg = prevScores.length ? prevScores.reduce((a,b) => a+b, 0) / prevScores.length : null;
+
+  let insight;
+  if (thisWeekIsos.length === 0) {
+    insight = 'Esta semana no registraste check-ins todavía. Retomar hoy, aunque sea con uno, corta la racha en cero.';
+  } else if (prevAvg !== null && thisAvg !== null) {
+    const d = thisAvg - prevAvg;
+    if (d > 0.4) insight = 'Tu bienestar general subió ' + d.toFixed(1) + ' pts vs. la semana pasada. Vas en la dirección correcta.';
+    else if (d < -0.4) insight = 'Tu bienestar general bajó ' + Math.abs(d).toFixed(1) + ' pts vs. la semana pasada — vale la pena revisar qué cambió, sobre todo en los pilares con nota más baja.';
+    else insight = 'Tu bienestar general se mantuvo estable vs. la semana pasada.';
+  } else {
+    insight = 'Sigue completando check-ins esta semana para tener una comparación con la semana anterior.';
+  }
+
+  let weakest = null;
+  if (thisWeekIsos.length) {
+    const sums = {}, counts = {};
+    state.pillars.forEach(p => { sums[p.id] = 0; counts[p.id] = 0; });
+    thisWeekIsos.forEach(iso => {
+      const r = state.checkins[iso].ratings || {};
+      Object.keys(r).forEach(id => { if (sums[id] !== undefined) { sums[id] += r[id]; counts[id]++; } });
+    });
+    let minAvg = Infinity, minId = null;
+    state.pillars.forEach(p => { if (counts[p.id]) { const a = sums[p.id] / counts[p.id]; if (a < minAvg) { minAvg = a; minId = p.id; } } });
+    if (minId) weakest = { name: pillarById(minId).name, avg: minAvg };
+  }
+
+  let html = '<div class="card" style="margin-bottom:18px;border-left:3px solid var(--accent);">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">';
+  html += '<h3 style="margin:0;">Sprint Semanal SOBI</h3>';
+  html += '<span style="font-size:10.5px;color:var(--muted);background:var(--gray-bg);padding:3px 9px;border-radius:999px;">Generado automáticamente</span>';
+  html += '</div>';
+  html += '<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px;">';
+  html += '<div><div style="font-size:20px;font-weight:700;color:var(--accent-dark);">' + thisWeekAdherence + '%</div><div style="font-size:11px;color:var(--muted);">Adherencia esta semana' + (prevWeekIsos.length || thisWeekIsos.length ? ' (' + (adherenceDelta >= 0 ? '+' : '') + adherenceDelta + ' pts vs. anterior)' : '') + '</div></div>';
+  if (weakest) html += '<div><div style="font-size:20px;font-weight:700;color:var(--amber);">' + weakest.avg.toFixed(1) + '/10</div><div style="font-size:11px;color:var(--muted);">Pilar con nota más baja: ' + escapeHtml(weakest.name) + '</div></div>';
+  html += '</div>';
+  html += '<p style="font-size:13px;line-height:1.5;margin:0;">' + insight + '</p>';
+  html += '</div>';
+  return html;
+}
+
+function renderCrossChartCard() {
+  const fields = visibleMeasureFields();
+  const pillarId = state.ui.crossPillar || (state.pillars[0] && state.pillars[0].id);
+  const measureKey = fields.some(f => f.key === state.ui.crossMeasure) ? state.ui.crossMeasure : fields[0].key;
+  const pillar = pillarById(pillarId) || state.pillars[0];
+  const measureField = fields.find(f => f.key === measureKey) || fields[0];
+
+  const seriesA = Object.keys(state.checkins).sort()
+    .filter(iso => state.checkins[iso].ratings && state.checkins[iso].ratings[pillarId] !== undefined)
+    .map(iso => ({ iso: iso, value: state.checkins[iso].ratings[pillarId] }));
+  const seriesB = Object.keys(state.measurements).sort()
+    .filter(iso => state.measurements[iso][measureKey] != null)
+    .map(iso => ({ iso: iso, value: Number(state.measurements[iso][measureKey]) }));
+
+  let html = '<div class="card" style="margin-bottom:18px;">';
+  html += '<h3 style="margin:0 0 2px;">Cruce de variables</h3>';
+  html += '<div class="card-sub">Compara la tendencia de un pilar SOBI con una medición física — útil para ver, por ejemplo, si dormir más se refleja en tu pilar de sueño, o si el movimiento se traduce en composición corporal.</div>';
+  html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">';
+  html += '<select onchange="setCrossPillar(this.value)" style="border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:12.5px;font-family:inherit;">';
+  state.pillars.forEach(p => { html += '<option value="' + p.id + '"' + (p.id === pillarId ? ' selected' : '') + '>' + escapeHtml(p.name) + '</option>'; });
+  html += '</select>';
+  html += '<select onchange="setCrossMeasure(this.value)" style="border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:12.5px;font-family:inherit;">';
+  fields.forEach(f => { html += '<option value="' + f.key + '"' + (f.key === measureKey ? ' selected' : '') + '>' + f.label + '</option>'; });
+  html += '</select>';
+  html += '</div>';
+  if (seriesA.length < 2 || seriesB.length < 2) {
+    html += '<div class="no-data-msg">Necesitas al menos 2 datos de cada variable para cruzarlas. Sigue registrando check-ins y mediciones.</div>';
+  } else {
+    html += '<div class="chart-svg-wrap">' + buildDualTrendSVG(seriesA, seriesB, {
+      colorA: '#B86B4B', colorB: '#344957',
+      labelA: pillar.name, labelB: measureField.label + ' (' + measureField.unit + ')',
+      decimalsA: 1, decimalsB: measureField.decimals,
+      unitA: '/10', unitB: measureField.unit
+    }) + '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+function setCrossPillar(id) { state.ui.crossPillar = id; saveState(); render(); }
+function setCrossMeasure(key) { state.ui.crossMeasure = key; saveState(); render(); }
+
+function renderAthleteDeltasCard(mIsos) {
+  const first = state.measurements[mIsos[0]];
+  const last = state.measurements[mIsos[mIsos.length - 1]];
+  let html = '<div class="card" style="margin-bottom:18px;">';
+  html += '<h3 style="margin:0 0 2px;">Composición corporal — inicio vs. ahora</h3>';
+  html += '<div class="card-sub">Desde ' + fmtDate(mIsos[0]) + ' hasta ' + fmtDate(mIsos[mIsos.length - 1]) + '.</div>';
+  html += '<div class="measure-grid">';
+  MEASURE_FIELDS.filter(f => f.headline).forEach(f => {
+    const fv = first[f.key], lv = last[f.key];
+    if (fv == null || lv == null) return;
+    const d = lv - fv;
+    const sign = d > 0 ? '+' : '';
+    let goodDir = null;
+    if (f.key === 'body_fat_pct') goodDir = d < 0;
+    if (f.key === 'muscle_mass_kg') goodDir = d > 0;
+    const color = goodDir === null ? 'var(--ink)' : (goodDir ? 'var(--green)' : 'var(--amber)');
+    html += '<div style="border:1px solid var(--line);border-radius:10px;padding:12px;">';
+    html += '<div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;">' + f.label + '</div>';
+    html += '<div style="font-size:18px;font-weight:700;color:' + color + ';">' + sign + d.toFixed(f.decimals) + ' ' + f.unit + '</div>';
+    html += '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + fv.toFixed(f.decimals) + ' → ' + lv.toFixed(f.decimals) + '</div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+function buildMonthlyOverallSVG(monthlyOverall) {
+  const w = Math.max(420, Math.min(900, monthlyOverall.length * 90)), h = 180;
+  const padL = 34, padR = 14, padT = 14, padB = 26;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const step = monthlyOverall.length > 1 ? plotW / (monthlyOverall.length - 1) : 0;
+
+  let svg = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
+  [0,2,4,6,8,10].forEach(v => {
+    const y = padT + plotH - (v/10)*plotH;
+    svg += '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (w-padR) + '" y2="' + y.toFixed(1) + '" stroke="#e5ded0" stroke-width="1"/>';
+    svg += '<text x="' + (padL-8) + '" y="' + (y+3).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="#6b6558" font-family="-apple-system,sans-serif">' + v + '</text>';
+  });
+  const pts = [];
+  monthlyOverall.forEach((m, i) => {
+    if (m.avg === null) return;
+    const x = padL + i*step;
+    const y = padT + plotH - (m.avg/10)*plotH;
+    pts.push([x, y, m.mk, m.avg]);
+  });
+  if (pts.length > 1) {
+    let path = 'M ' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
+    for (let i = 1; i < pts.length; i++) path += ' L ' + pts[i][0].toFixed(1) + ' ' + pts[i][1].toFixed(1);
+    svg += '<path d="' + path + '" fill="none" stroke="#B86B4B" stroke-width="2.2"/>';
+  }
+  pts.forEach(p => { svg += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="4" fill="#96543a"><title>' + monthLabel(p[2]) + ': ' + p[3].toFixed(1) + '/10</title></circle>'; });
+  monthlyOverall.forEach((m, i) => {
+    const x = padL + i*step;
+    svg += '<text x="' + x.toFixed(1) + '" y="' + (h-8) + '" text-anchor="middle" font-size="9" fill="#6b6558" font-family="-apple-system,sans-serif">' + monthLabel(m.mk).slice(0,3) + '</text>';
+  });
+  svg += '</svg>';
+  return svg;
+}
+
+function buildDualTrendSVG(seriesA, seriesB, opts) {
+  opts = opts || {};
+  const w = 720, h = 240;
+  const padL = 44, padR = 44, padT = 20, padB = 30;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+
+  const allIsos = seriesA.map(p => p.iso).concat(seriesB.map(p => p.iso));
+  if (!allIsos.length) return '<div class="no-data-msg">Sin datos suficientes para cruzar todavía.</div>';
+  const minIso = allIsos.reduce((a,b) => a < b ? a : b);
+  const maxIso = allIsos.reduce((a,b) => a > b ? a : b);
+  const totalSpan = Math.max(1, daysBetween(minIso, maxIso));
+  function xFor(iso) { return padL + (daysBetween(minIso, iso) / totalSpan) * plotW; }
+
+  function normSeries(series) {
+    const vals = series.map(p => p.value);
+    let lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    if (lo === hi) { lo -= 1; hi += 1; }
+    const pad = (hi - lo) * 0.12 || 1;
+    lo -= pad; hi += pad;
+    return series.map(p => ({ iso: p.iso, value: p.value, x: xFor(p.iso), y: padT + plotH - ((p.value - lo) / (hi - lo)) * plotH }));
+  }
+
+  const ptsA = seriesA.length ? normSeries(seriesA) : [];
+  const ptsB = seriesB.length ? normSeries(seriesB) : [];
+
+  let svg = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
+  [0, 0.5, 1].forEach(t => {
+    const y = padT + plotH - t*plotH;
+    svg += '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (w-padR) + '" y2="' + y.toFixed(1) + '" stroke="#e5ded0" stroke-width="1"/>';
+  });
+
+  function drawLine(pts, color) {
+    if (pts.length > 1) {
+      let path = 'M ' + pts[0].x.toFixed(1) + ' ' + pts[0].y.toFixed(1);
+      for (let i = 1; i < pts.length; i++) path += ' L ' + pts[i].x.toFixed(1) + ' ' + pts[i].y.toFixed(1);
+      svg += '<path d="' + path + '" fill="none" stroke="' + color + '" stroke-width="2.2"/>';
+    }
+  }
+  drawLine(ptsA, opts.colorA || '#B86B4B');
+  drawLine(ptsB, opts.colorB || '#344957');
+  ptsA.forEach(p => { svg += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="' + (opts.colorA || '#B86B4B') + '"><title>' + escapeHtml(opts.labelA || 'A') + ' · ' + fmtDate(p.iso) + ': ' + p.value.toFixed(opts.decimalsA || 1) + ' ' + (opts.unitA || '') + '</title></circle>'; });
+  ptsB.forEach(p => { svg += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="' + (opts.colorB || '#344957') + '"><title>' + escapeHtml(opts.labelB || 'B') + ' · ' + fmtDate(p.iso) + ': ' + p.value.toFixed(opts.decimalsB || 1) + ' ' + (opts.unitB || '') + '</title></circle>'; });
+
+  svg += '<text x="' + padL + '" y="' + (h-8) + '" text-anchor="start" font-size="9.5" fill="#6b6558" font-family="-apple-system,sans-serif">' + fmtDate(minIso) + '</text>';
+  svg += '<text x="' + (w-padR) + '" y="' + (h-8) + '" text-anchor="end" font-size="9.5" fill="#6b6558" font-family="-apple-system,sans-serif">' + fmtDate(maxIso) + '</text>';
+  svg += '</svg>';
+
+  let legend = '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--muted);">';
+  legend += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + (opts.colorA || '#B86B4B') + ';margin-right:5px;"></span>' + escapeHtml(opts.labelA || 'Serie A') + '</span>';
+  legend += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + (opts.colorB || '#344957') + ';margin-right:5px;"></span>' + escapeHtml(opts.labelB || 'Serie B') + '</span>';
+  legend += '<span style="font-style:italic;">Cada serie normalizada a su propio rango — compara la forma de la tendencia, no la escala.</span>';
+  legend += '</div>';
+  return svg + legend;
+}
+
+/* ============================= TAB: MEDIDAS ============================= */
+function renderMedidas() {
+  const isos = Object.keys(state.measurements).sort();
+  const latestIso = isos[isos.length - 1];
+  const prevIso = isos[isos.length - 2];
+  const latest = latestIso ? state.measurements[latestIso] : null;
+  const prev = prevIso ? state.measurements[prevIso] : null;
+
+  let html = '';
+  const fields = visibleMeasureFields();
+  const tier = currentTier();
+
+  html += '<div class="stat-chips">';
+  fields.filter(f => f.headline).forEach(f => {
+    const has = latest && latest[f.key] != null;
+    const val = has ? Number(latest[f.key]).toFixed(f.decimals) : '—';
+    let deltaHtml = '';
+    if (has && prev && prev[f.key] != null) {
+      const d = Number(latest[f.key]) - Number(prev[f.key]);
+      const sign = d > 0 ? '+' : '';
+      deltaHtml = '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + sign + d.toFixed(f.decimals) + ' ' + f.unit + ' vs. medición anterior</div>';
+    }
+    html += '<div class="stat-chip"><div class="num">' + val + (has ? ' <span style="font-size:12px;font-weight:600;color:var(--muted);">' + f.unit + '</span>' : '') + '</div><div class="lbl">' + f.label + '</div>' + deltaHtml + '</div>';
+  });
+  html += '</div>';
+
+  const selDate = state.ui.selectedMeasureDate || todayISO();
+  const existing = state.measurements[selDate] || {};
+  const isEditing = !!state.measurements[selDate];
+  html += '<div class="card" style="margin-bottom:18px;">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:4px;">';
+  html += '<h3 style="margin:0;">Registrar medición</h3>';
+  html += '<input type="date" id="measureDate" value="' + selDate + '" onchange="setMeasureDate(this.value)" style="border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;">';
+  html += '</div>';
+  html += '<div class="card-sub">' + (isEditing ? 'Ya hay una medición para esta fecha — guardar la va a actualizar.' : 'Una vez a la semana es suficiente. Deja en blanco lo que no midas esta vez.') + '</div>';
+  html += '<div class="measure-grid">';
+  fields.forEach(f => {
+    const v = existing[f.key] != null ? existing[f.key] : '';
+    html += '<div class="measure-field"><label>' + f.label + ' (' + f.unit + ')</label><input type="number" step="0.1" id="mf_' + f.key + '" value="' + v + '"></div>';
+  });
+  html += '</div>';
+  html += '<textarea class="checkin-note" id="mf_notes" placeholder="Nota (opcional)">' + escapeHtml(existing.notes || '') + '</textarea>';
+  html += '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">';
+  html += '<button class="btn primary" onclick="saveMeasurementForm()">Guardar medición</button>';
+  if (isEditing) html += '<button class="btn danger" onclick="deleteMeasurement(\'' + selDate + '\')">Eliminar esta medición</button>';
+  html += '</div>';
+  if (!tier.advancedMetrics) html += '<div class="resource-unlock-note" style="margin-top:10px;">🔒 HRV y carga de entrenamiento están disponibles en los planes Elite/Deportivo y Vitalidad &amp; Longevidad Elite.</div>';
+  html += '</div>';
+
+  if (isos.length === 0) {
+    html += '<div class="card"><div class="no-data-msg">Aún no hay mediciones registradas. Agrega la primera arriba.</div></div>';
+    return html;
+  }
+
+  fields.filter(f => f.headline).forEach(f => {
+    const vals = isos.map(iso => state.measurements[iso][f.key] != null ? Number(state.measurements[iso][f.key]) : null);
+    const withData = vals.filter(v => v !== null);
+    html += '<div class="card" style="margin-bottom:18px;">';
+    html += '<h3 style="margin:0 0 2px;">' + f.label + '</h3>';
+    html += '<div class="card-sub">Tendencia · ' + f.unit + '</div>';
+    if (withData.length < 2) {
+      html += '<div class="no-data-msg">Necesitas al menos 2 mediciones con este dato para ver la tendencia.</div>';
+    } else {
+      html += '<div class="chart-svg-wrap">' + buildTrendSVG(isos, vals, f) + '</div>';
+    }
+    html += '</div>';
+  });
+
+  html += '<div class="card">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
+  html += '<h3 style="margin:0;">Historial de mediciones</h3>';
+  html += '<button class="btn small" onclick="downloadMeasurementsCSV()">Descargar (CSV)</button>';
+  html += '</div>';
+  html += '<div class="checkin-list">';
+  isos.slice().reverse().forEach(iso => {
+    const m = state.measurements[iso];
+    html += '<div class="checkin-item">';
+    html += '<div class="ci-date">' + fmtDate(iso) + '</div>';
+    html += '<div class="ci-chips">';
+    fields.forEach(f => {
+      if (m[f.key] != null) html += '<span class="ci-chip">' + f.label + ': ' + Number(m[f.key]).toFixed(f.decimals) + ' ' + f.unit + '</span>';
+    });
+    html += '</div>';
+    if (m.notes) html += '<div class="ci-note">"' + escapeHtml(m.notes) + '"</div>';
+    html += '<div style="margin-top:8px;"><button class="btn small" onclick="setMeasureDate(\'' + iso + '\')">Editar</button></div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+
+  return html;
+}
+
+function setMeasureDate(iso) { state.ui.selectedMeasureDate = iso; saveState(); render(); }
+
+function saveMeasurementForm() {
+  const iso = state.ui.selectedMeasureDate || todayISO();
+  const prev = state.measurements[iso] || {};
+  const entry = Object.assign({}, prev, { notes: document.getElementById('mf_notes').value.trim() });
+  let hasAny = !!entry.notes;
+  visibleMeasureFields().forEach(f => {
+    const el = document.getElementById('mf_' + f.key);
+    if (!el) return; // campo no visible en este plan — no tocar su valor previo (si existía)
+    const raw = el.value;
+    if (raw === '') { entry[f.key] = null; }
+    else { entry[f.key] = Number(raw); hasAny = true; }
+  });
+  if (!hasAny) { alert('Ingresa al menos un dato para guardar.'); return; }
+  state.measurements[iso] = entry;
+  saveState();
+  syncMeasurementUpsert(iso);
+  render();
+}
+
+function deleteMeasurement(iso) {
+  if (!confirm('¿Eliminar la medición del ' + fmtDate(iso) + '?')) return;
+  delete state.measurements[iso];
+  saveState();
+  syncMeasurementDelete(iso);
+  render();
+}
+
+function buildTrendSVG(isos, values, opts) {
+  opts = opts || {};
+  const w = Math.max(360, Math.min(900, isos.length * 34)), h = 160;
+  const padL = 40, padR = 14, padT = 14, padB = 24;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const nums = values.filter(v => v !== null && v !== undefined && !isNaN(v));
+  let lo = Math.min.apply(null, nums), hi = Math.max.apply(null, nums);
+  if (lo === hi) { lo -= 1; hi += 1; }
+  const pad = (hi - lo) * 0.15 || 1;
+  lo -= pad; hi += pad;
+  const step = isos.length > 1 ? plotW / (isos.length - 1) : 0;
+  const color = opts.color || '#B86B4B';
+  const decimals = opts.decimals || 0;
+
+  let svg = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
+  [0, 0.5, 1].forEach(t => {
+    const v = lo + (hi - lo) * t;
+    const y = padT + plotH - t * plotH;
+    svg += '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (w - padR) + '" y2="' + y.toFixed(1) + '" stroke="#e5ded0" stroke-width="1"/>';
+    svg += '<text x="' + (padL - 8) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="#6b6558" font-family="-apple-system,sans-serif">' + v.toFixed(decimals) + '</text>';
+  });
+
+  const pts = [];
+  isos.forEach((iso, i) => {
+    const v = values[i];
+    if (v === null || v === undefined || isNaN(v)) return;
+    const x = padL + i * step;
+    const y = padT + plotH - ((v - lo) / (hi - lo)) * plotH;
+    pts.push([x, y, iso, v]);
+  });
+
+  if (pts.length > 1) {
+    let path = 'M ' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
+    for (let i = 1; i < pts.length; i++) path += ' L ' + pts[i][0].toFixed(1) + ' ' + pts[i][1].toFixed(1);
+    svg += '<path d="' + path + '" fill="none" stroke="' + color + '" stroke-width="2"/>';
+  }
+  pts.forEach(p => {
+    svg += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3.2" fill="' + color + '"><title>' + fmtDate(p[2]) + ': ' + p[3].toFixed(decimals) + ' ' + (opts.unit || '') + '</title></circle>';
+  });
+
+  if (pts.length) {
+    svg += '<text x="' + pts[0][0].toFixed(1) + '" y="' + (h - 6) + '" text-anchor="start" font-size="9.5" fill="#6b6558" font-family="-apple-system,sans-serif">' + fmtDate(pts[0][2]) + '</text>';
+    const lastP = pts[pts.length - 1];
+    if (pts.length > 1) svg += '<text x="' + lastP[0].toFixed(1) + '" y="' + (h - 6) + '" text-anchor="end" font-size="9.5" fill="#6b6558" font-family="-apple-system,sans-serif">' + fmtDate(lastP[2]) + '</text>';
+  }
+
+  svg += '</svg>';
+  return svg;
+}
+
+function downloadMeasurementsCSV() {
+  const isos = Object.keys(state.measurements).sort();
+  if (!isos.length) { alert('No hay mediciones para exportar.'); return; }
+  const headers = ['fecha', ...MEASURE_FIELDS.map(f => f.label + ' (' + f.unit + ')'), 'nota'];
+  const rows = isos.map(iso => {
+    const m = state.measurements[iso];
+    return [iso, ...MEASURE_FIELDS.map(f => m[f.key] != null ? m[f.key] : ''), (m.notes || '').replace(/\n/g, ' ')];
+  });
+  downloadCSV('sobi-mediciones.csv', headers, rows);
+}
+
+/* ============================= TAB: HISTORIAL ============================= */
+function renderHistorial() {
+  const allIsos = Object.keys(state.checkins).sort();
+  const range = state.ui.historialRange;
+  let filtered = allIsos;
+  if (range !== 'all') {
+    const days = { '30': 30, '90': 90, '180': 180 }[range];
+    const cutoffIso = addDaysISO(todayISO(), -days);
+    filtered = allIsos.filter(iso => iso >= cutoffIso);
+  }
+  const scores = filtered.map(iso => weightedDailyScore(state.checkins[iso].ratings)).filter(s => s !== null);
+  const avg = scores.length ? (scores.reduce((a,b) => a+b, 0) / scores.length) : null;
+  const daysSinceStart = Math.max(1, daysBetween(state.patient.startDate, todayISO()) + 1);
+  const adherence = Math.round(allIsos.length / daysSinceStart * 100);
+
+  let html = '<div class="stat-chips">';
+  html += statChip(avg !== null ? avg.toFixed(1) : '—', 'Bienestar general prom.');
+  html += statChip(allIsos.length, 'Check-ins totales');
+  html += statChip(adherence + '%', 'Adherencia al programa');
+  html += statChip(state.sessions.length, 'Sesiones registradas');
+  html += '</div>';
+
+  html += '<div class="card" style="margin-bottom:18px;">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">';
+  html += '<div><h3 style="margin:0;">Bienestar general</h3><div class="card-sub" style="margin-bottom:0;">Promedio ponderado diario (rating × peso de cada pilar)</div></div>';
+  html += '<div class="range-toggle">';
+  ['30','90','180','all'].forEach(r => {
+    const lbl = r === 'all' ? 'Todo' : 'Últ. ' + r + 'd';
+    html += '<button class="' + (range===r?'active':'') + '" onclick="setHistorialRange(\'' + r + '\')">' + lbl + '</button>';
+  });
+  html += '</div>';
+  html += '</div>';
+  if (filtered.length === 0) {
+    html += '<div class="no-data-msg">Sin check-ins en este rango. Prueba con "Todo" o registra tu check-in de hoy en Mi Ritmo.</div>';
+  } else {
+    html += '<div class="chart-svg-wrap">' + buildHistorialSVG(filtered) + '</div>';
+  }
+  html += '</div>';
+
+  html += '<div class="card">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
+  html += '<h3 style="margin:0;">Check-ins recientes</h3>';
+  html += '<button class="btn small" onclick="downloadAllCSV()">Descargar historial (CSV)</button>';
+  html += '</div>';
+  html += '<div class="checkin-list">';
+  const reversedAll = filtered.slice().reverse();
+  const expanded = !!state.ui.checkinsExpanded;
+  const visible = expanded ? reversedAll.slice(0, 25) : reversedAll.slice(0, 5);
+  if (!visible.length) html += '<div class="no-data-msg">Nada que mostrar todavía.</div>';
+  visible.forEach(iso => {
+    const c = state.checkins[iso];
+    const typeSpec = c.type && DAY_TYPES[c.type] ? DAY_TYPES[c.type] : null;
+    html += '<div class="checkin-item">';
+    html += '<div class="ci-date">' + fmtDate(iso) + (typeSpec ? ' · ' + typeSpec.icon + ' ' + escapeHtml(typeSpec.label) : '') + '</div>';
+    const ratingKeys = Object.keys(c.ratings || {}).filter(k => k !== '_semanal');
+    html += '<div class="ci-chips">';
+    ratingKeys.forEach(pid => {
+      const p = pillarById(pid);
+      if (p) html += '<span class="ci-chip">' + escapeHtml(p.name) + ': ' + c.ratings[pid] + '/10</span>';
+    });
+    if (c.ratings && c.ratings._semanal !== undefined) html += '<span class="ci-chip">Semana: ' + c.ratings._semanal + '/10</span>';
+    html += '</div>';
+    if (!ratingKeys.length && (!c.ratings || c.ratings._semanal === undefined) && !c.note) {
+      html += '<div class="ci-note" style="font-style:normal;">Actividad completada, sin evaluación numérica.</div>';
+    }
+    if (c.note) html += '<div class="ci-note">"' + escapeHtml(c.note) + '"</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  if (reversedAll.length > 5) {
+    html += '<div style="text-align:center;margin-top:12px;">';
+    html += '<button class="btn small" onclick="toggleCheckinsExpanded()">' + (expanded ? 'Ver menos' : 'Ver más (' + Math.min(reversedAll.length,25) + ')') + '</button>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  return html;
+}
+function statChip(num, lbl) {
+  return '<div class="stat-chip"><div class="num">' + num + '</div><div class="lbl">' + lbl + '</div></div>';
+}
+function setHistorialRange(r) { state.ui.historialRange = r; saveState(); render(); }
+function toggleCheckinsExpanded() { state.ui.checkinsExpanded = !state.ui.checkinsExpanded; saveState(); render(); }
+
+function buildHistorialSVG(isos) {
+  const w = Math.max(560, Math.min(1000, isos.length * 26)), h = 220;
+  const padL = 34, padR = 14, padT = 14, padB = 26;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const scores = isos.map(iso => weightedDailyScore(state.checkins[iso].ratings));
+  const step = isos.length > 1 ? plotW / (isos.length - 1) : 0;
+
+  let svg = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
+  // grid + y labels
+  [0,2,4,6,8,10].forEach(v => {
+    const y = padT + plotH - (v/10)*plotH;
+    svg += '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (w-padR) + '" y2="' + y.toFixed(1) + '" stroke="#e5ded0" stroke-width="1"/>';
+    svg += '<text x="' + (padL-8) + '" y="' + (y+3).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="#6b6558" font-family="-apple-system,sans-serif">' + v + '</text>';
+  });
+
+  // build path over available points
+  const pts = [];
+  isos.forEach((iso, i) => {
+    const s = scores[i];
+    if (s === null) return;
+    const x = padL + i*step;
+    const y = padT + plotH - (s/10)*plotH;
+    pts.push([x,y,iso,s]);
+  });
+
+  if (pts.length > 1) {
+    let path = 'M ' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
+    for (let i = 1; i < pts.length; i++) path += ' L ' + pts[i][0].toFixed(1) + ' ' + pts[i][1].toFixed(1);
+    let areaPath = path + ' L ' + pts[pts.length-1][0].toFixed(1) + ' ' + (padT+plotH) + ' L ' + pts[0][0].toFixed(1) + ' ' + (padT+plotH) + ' Z';
+    svg += '<path d="' + areaPath + '" fill="rgba(184,107,75,0.14)" stroke="none"/>';
+    svg += '<path d="' + path + '" fill="none" stroke="#B86B4B" stroke-width="2"/>';
+  }
+  pts.forEach(pt => {
+    svg += '<circle cx="' + pt[0].toFixed(1) + '" cy="' + pt[1].toFixed(1) + '" r="3" fill="#96543a"><title>' + fmtDate(pt[2]) + ': ' + pt[3].toFixed(1) + '/10</title></circle>';
+  });
+
+  // x labels (thin out to avoid clutter)
+  const labelEvery = Math.max(1, Math.ceil(isos.length / 8));
+  isos.forEach((iso, i) => {
+    if (i % labelEvery !== 0 && i !== isos.length-1) return;
+    const x = padL + i*step;
+    svg += '<text x="' + x.toFixed(1) + '" y="' + (h-8) + '" text-anchor="middle" font-size="9" fill="#6b6558" font-family="-apple-system,sans-serif">' + iso.slice(5) + '</text>';
+  });
+
+  svg += '</svg>';
+  return svg;
+}
+
+/* ============================= TAB: RECURSOS ============================= */
+function renderRecursos() {
+  const daysIn = Math.max(0, daysBetween(state.patient.startDate, todayISO()));
+  const tier = currentTier();
+  let html = '<div class="section-title">Guías por pilar SOBI — se van desbloqueando a medida que avanzas en el programa y según tu plan</div>';
+  html += '<div class="resource-grid">';
+  RESOURCES.forEach(r => {
+    const lockedByPlan = r.level > tier.resourceLevel;
+    const lockedByTime = !lockedByPlan && daysIn < r.unlockDay;
+    const unlocked = !lockedByPlan && !lockedByTime;
+    html += '<div class="resource-card ' + (unlocked ? '' : 'locked') + '">';
+    html += '<div class="rnum">' + r.num + '</div>';
+    if (lockedByPlan) {
+      html += '<div class="resource-lock-badge">🔒 Nivel ' + r.level + ' — disponible desde tu próximo plan</div>';
+      html += '<h4>' + r.title + '</h4>';
+      html += '<div class="resource-blur">';
+      html += '<p>' + r.lead + '</p>';
+      html += '<div class="resource-min"><div class="lbl">MÍNIMO REAL</div><ul>' + r.minimo.map(m => '<li>' + m + '</li>').join('') + '</ul></div>';
+      html += '</div>';
+      html += '<div class="resource-unlock-note">Este contenido (Nivel ' + r.level + ') está incluido a partir de planes superiores — pregúntale a Manuel por el upgrade.</div>';
+    } else if (lockedByTime) {
+      const unlockDate = addDaysISO(state.patient.startDate, r.unlockDay);
+      const remaining = r.unlockDay - daysIn;
+      html += '<div class="resource-lock-badge">🔒 Se desbloquea en ' + remaining + ' día' + (remaining===1?'':'s') + ' (' + fmtDate(unlockDate) + ')</div>';
+      html += '<h4>' + r.title + '</h4>';
+      html += '<div class="resource-blur">';
+      html += '<p>' + r.lead + '</p>';
+      html += '<div class="resource-min"><div class="lbl">MÍNIMO REAL</div><ul>' + r.minimo.map(m => '<li>' + m + '</li>').join('') + '</ul></div>';
+      html += '</div>';
+      html += '<div class="resource-unlock-note">Este contenido se activa según tu avance en el programa, junto con Manuel.</div>';
+    } else {
+      html += '<h4>' + r.title + '</h4>';
+      html += '<p>' + r.lead + '</p>';
+      html += '<div class="resource-min"><div class="lbl">MÍNIMO REAL</div><ul>' + r.minimo.map(m => '<li>' + m + '</li>').join('') + '</ul></div>';
+      html += '<div class="resource-error"><strong>Error más común:</strong> ' + r.error + '</div>';
+      html += '<button class="btn small" onclick="downloadResourceStub(\'' + r.pillarId + '\')">Descargar información</button>';
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+
+  html += '<div class="section-title" style="margin-top:24px;">Biblioteca Curada Zona Azul — libros, documentales y podcasts</div>';
+  if (!tier.library) {
+    html += '<div class="resource-card locked" style="max-width:520px;">';
+    html += '<div class="resource-lock-badge">🔒 Biblioteca Zona Azul</div>';
+    html += '<h4>Disponible desde 3M Pro</h4>';
+    html += '<p>Resúmenes e insights de los libros, documentales y podcasts de referencia en longevidad y Zonas Azules (Attia, Buettner, Walker, Huberman y más).</p>';
+    html += '<div class="resource-unlock-note">Habla con Manuel sobre subir de plan para desbloquearla.</div>';
+    html += '</div>';
+  } else {
+    const items = tier.library === 'unlimited' ? ZONE_BLUE_LIBRARY : ZONE_BLUE_LIBRARY.slice(0, 8);
+    html += '<div class="resource-grid">';
+    items.forEach(item => {
+      html += '<div class="resource-card">';
+      html += '<div class="rnum">' + escapeHtml(item.type.toUpperCase()) + ' · ' + escapeHtml(item.tag.toUpperCase()) + '</div>';
+      html += '<h4>' + escapeHtml(item.title) + '</h4>';
+      html += '<div class="card-sub" style="margin-bottom:8px;">' + escapeHtml(item.author) + '</div>';
+      html += '<p>' + escapeHtml(item.blurb) + '</p>';
+      html += '</div>';
+    });
+    html += '</div>';
+    if (tier.library !== 'unlimited' && ZONE_BLUE_LIBRARY.length > items.length) {
+      html += '<div class="resource-unlock-note" style="margin-top:10px;">+' + (ZONE_BLUE_LIBRARY.length - items.length) + ' títulos más con Biblioteca Zona Azul ilimitada (planes 6M).</div>';
+    }
+  }
+  return html;
+}
+function downloadResourceStub(pillarId) {
+  alert('La descarga de esta guía en PDF estará disponible próximamente. Por ahora puedes revisar el contenido acá mismo.');
+}
+
+/* ============================= TAB: SESIONES ============================= */
+function renderSesiones() {
+  const startIso = state.patient.startDate;
+  const todayIso = todayISO();
+  const tier = currentTier();
+  const allRealSessions = state.sessions.slice().sort((a,b) => b.date.localeCompare(a.date));
+  const cap = tier.sessionSummaryLimit;
+  const realSessions = cap ? allRealSessions.slice(0, cap) : allRealSessions;
+  const hiddenCount = cap ? Math.max(0, allRealSessions.length - cap) : 0;
+
+  // roadmap items not already represented by a real session close in date (+/-5 días)
+  const roadmapPast = [], roadmapFuture = [];
+  ROADMAP.forEach(m => {
+    const dueDate = addDaysISO(startIso, m.offsetDays);
+    const hasRealSession = state.sessions.some(s => Math.abs(daysBetween(s.date, dueDate)) <= 5);
+    if (dueDate <= todayIso) {
+      if (!hasRealSession) roadmapPast.push({ m: m, dueDate: dueDate, pending: true });
+    } else {
+      roadmapFuture.push({ m: m, dueDate: dueDate });
+    }
+  });
+
+  let html = '<div class="sessions-columns">';
+
+  /* --- Sesiones Pasadas --- */
+  html += '<div>';
+  html += '<div class="section-title">Sesiones Pasadas</div>';
+  if (!realSessions.length && !roadmapPast.length) {
+    html += '<div class="empty-state">Aún no hay sesiones registradas. Se registrarán automáticamente después de cada control con Manuel.</div>';
+  }
+  roadmapPast.forEach(rp => {
+    html += '<div class="roadmap-mini pending">';
+    html += '<div class="rm-tag">' + rp.m.tag + ' · PENDIENTE DE REGISTRO</div>';
+    html += '<h4>' + rp.m.title + '</h4>';
+    html += '<p>' + rp.m.desc + '</p>';
+    html += '<div class="rm-date">Estimada: ' + fmtDate(rp.dueDate) + '</div>';
+    html += '</div>';
+  });
+  realSessions.forEach(s => {
+    html += '<div class="session-item">';
+    html += '<div class="session-head" onclick="toggleSession(\'' + s.id + '\')">';
+    html += '  <div><div class="sdate">' + fmtDate(s.date) + '</div><h4>' + escapeHtml(s.title) + '</h4></div>';
+    html += '  <div class="session-badges">';
+    if (s.videoLink) html += '<span class="session-badge has">Video</span>';
+    if (s.transcript) html += '<span class="session-badge has">Transcript</span>';
+    if (s.feedback) html += '<span class="session-badge has">Feedback</span>';
+    html += '  </div>';
+    html += '</div>';
+    html += '<div class="session-body" id="sessionBody_' + s.id + '">';
+    if (s.summary) html += '<h5>Resumen</h5><p style="font-size:12.5px;margin:0;">' + escapeHtml(s.summary) + '</p>';
+    if (s.keyPoints && s.keyPoints.length) html += '<h5>Puntos clave</h5><ul>' + s.keyPoints.map(k => '<li>' + escapeHtml(k) + '</li>').join('') + '</ul>';
+    if (s.videoLink) html += '<h5>Video</h5><a class="video-link" href="' + escapeHtml(s.videoLink) + '" target="_blank" rel="noopener">Ver grabación de la sesión →</a>';
+    if (s.transcript) html += '<h5>Transcript / notas</h5><div class="transcript-box">' + escapeHtml(s.transcript) + '</div>';
+    if (s.feedback) html += '<h5>Feedback post-sesión</h5><div class="feedback-box"><span class="feedback-tag">Generado automáticamente</span>' + escapeHtml(s.feedback) + '</div>';
+    html += '</div>';
+    html += '</div>';
+  });
+  if (hiddenCount > 0) {
+    html += '<div class="resource-card locked" style="margin-top:4px;">';
+    html += '<div class="resource-lock-badge">🔒 ' + hiddenCount + ' resumen' + (hiddenCount===1?'':'es') + ' de sesión más</div>';
+    html += '<div class="resource-unlock-note">Tu plan (' + escapeHtml(tier.label) + ') incluye hasta ' + cap + ' resúmenes de sesión visibles. Con 3M Pro o superior quedan disponibles todos, sin límite.</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  /* --- Próximas Sesiones --- */
+  html += '<div>';
+  html += '<div class="section-title">Próximas Sesiones</div>';
+  if (!roadmapFuture.length) {
+    html += '<div class="empty-state">No hay controles agendados por delante — programa cerrado o completo.</div>';
+  }
+  roadmapFuture.forEach(rf => {
+    html += '<div class="roadmap-mini">';
+    html += '<div class="rm-tag">' + rf.m.tag + '</div>';
+    html += '<h4>' + rf.m.title + '</h4>';
+    html += '<p>' + rf.m.desc + '</p>';
+    html += '<div class="rm-date">Estimada: ' + fmtDate(rf.dueDate) + '</div>';
+    html += '</div>';
+  });
+  html += '<div class="auto-note">Las sesiones se registran automáticamente al finalizar cada videollamada — fecha, resumen, transcript y feedback quedan guardados sin que tengas que hacer nada.</div>';
+  html += '</div>';
+
+  html += '</div>'; // sessions-columns
+  return html;
+}
+
+function toggleSession(id) {
+  const el = document.getElementById('sessionBody_' + id);
+  if (el) el.classList.toggle('open');
+}
+
+/* ============================= TAB: MI DATA ============================= */
+function renderData() {
+  const allIsos = Object.keys(state.checkins).sort();
+  const scores = allIsos.map(iso => weightedDailyScore(state.checkins[iso].ratings)).filter(s => s !== null);
+  const avg = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length) : null;
+  const daysSinceStart = Math.max(1, daysBetween(state.patient.startDate, todayISO()) + 1);
+  const adherence = Math.round(allIsos.length / daysSinceStart * 100);
+
+  let html = '<div class="stat-chips">';
+  html += statChip(allIsos.length, 'Check-ins registrados');
+  html += statChip(avg !== null ? avg.toFixed(1) : '—', 'Bienestar general prom.');
+  html += statChip(adherence + '%', 'Adherencia');
+  html += statChip(state.sessions.length, 'Sesiones');
+  html += '</div>';
+
+  html += '<div class="card">';
+  html += '<h3>Exportar mi data</h3>';
+  html += '<div class="card-sub">Toda tu información queda en tus manos. Descárgala cuando quieras, completa o hasta una fecha específica.</div>';
+
+  html += '<div class="data-actions">';
+  html += '<div class="data-row">';
+  html += '<button class="btn primary" onclick="downloadAllJSON()">Descargar todo (JSON)</button>';
+  html += '<button class="btn" onclick="downloadAllCSV()">Descargar check-ins (CSV)</button>';
+  html += '<button class="btn" onclick="downloadMeasurementsCSV()">Descargar mediciones (CSV)</button>';
+  html += '<button class="btn" onclick="downloadSessionsCSV()">Descargar sesiones (CSV)</button>';
+  html += '</div>';
+  html += '<div style="border-top:1px solid var(--line); padding-top:14px; margin-top:6px;">';
+  html += '<label>Descargar solo hasta esta fecha</label>';
+  html += '<div class="data-row">';
+  html += '<input type="date" id="uptoDate" value="' + todayISO() + '" max="' + todayISO() + '">';
+  html += '<button class="btn" onclick="downloadUpTo()">Descargar hasta esta fecha (JSON)</button>';
+  html += '</div>';
+  html += '</div>';
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+
+function downloadBlob(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function downloadCSV(filename, headers, rows) {
+  const esc = v => { v = String(v === undefined || v === null ? '' : v); return '"' + v.replace(/"/g,'""') + '"'; };
+  const lines = [headers.map(esc).join(',')].concat(rows.map(r => r.map(esc).join(',')));
+  downloadBlob(filename, lines.join('\n'), 'text/csv;charset=utf-8');
+}
+
+function downloadAllJSON() {
+  downloadBlob('sobi-data-completa.json', JSON.stringify(state, null, 2), 'application/json');
+}
+function downloadAllCSV() {
+  const allIsos = Object.keys(state.checkins).sort();
+  const headers = ['fecha', 'tipo_dia', ...state.pillars.map(p => p.name), 'bienestar_ponderado', 'nota'];
+  const rows = allIsos.map(iso => {
+    const c = state.checkins[iso];
+    const wscore = weightedDailyScore(c.ratings);
+    return [iso, c.type || '', ...state.pillars.map(p => c.ratings[p.id] !== undefined ? c.ratings[p.id] : ''), wscore !== null ? wscore.toFixed(2) : '', (c.note||'').replace(/\n/g,' ')];
+  });
+  downloadCSV('sobi-checkins-completo.csv', headers, rows);
+}
+function downloadSessionsCSV() {
+  const headers = ['fecha', 'titulo', 'resumen', 'puntos_clave', 'video', 'feedback'];
+  const rows = state.sessions.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(s => [s.date, s.title, s.summary, (s.keyPoints||[]).join(' | '), s.videoLink, s.feedback]);
+  downloadCSV('sobi-sesiones.csv', headers, rows);
+}
+function downloadUpTo() {
+  const upto = document.getElementById('uptoDate').value || todayISO();
+  const filteredCheckins = {};
+  Object.keys(state.checkins).filter(iso => iso <= upto).forEach(iso => filteredCheckins[iso] = state.checkins[iso]);
+  const filteredMeasurements = {};
+  Object.keys(state.measurements || {}).filter(iso => iso <= upto).forEach(iso => filteredMeasurements[iso] = state.measurements[iso]);
+  const filteredSessions = state.sessions.filter(s => s.date <= upto);
+  const snapshot = { patient: state.patient, pillars: state.pillars, checkins: filteredCheckins, measurements: filteredMeasurements, sessions: filteredSessions, exportadoHasta: upto };
+  downloadBlob('sobi-data-hasta-' + upto + '.json', JSON.stringify(snapshot, null, 2), 'application/json');
+}
+
+/* ============================= INIT ============================= */
+bootstrap();
+</script>
+</body>
+</html>
