@@ -10,3 +10,4 @@ Sitio en producción (`sizigialab.cl`), antes desplegado a mano vía Netlify Dro
 Netlify, sitio `rueda-sobi-adherencia`. Hasta ahora: Netlify Drop manual — riesgo confirmado el 24-08-2026 (subir un solo archivo pisó el sitio completo).
 
 Pendiente: conectar este repo a Netlify (Site settings -> Build & deploy -> Link repository) para que cada push haga deploy automático del sitio completo.
+Prueba GitHub Desktop 31-08-2026
