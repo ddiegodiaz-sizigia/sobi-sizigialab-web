@@ -623,15 +623,10 @@ const ZONE_BLUE_LIBRARY = [
    sessionSummaryLimit: null = sin límite; número = tope de resúmenes de sesión visibles.
    upsell: { day, message } — banner que aparece desde ese día del programa (null = sin upsell, es tier tope). */
 const TIERS = {
-  '3m_essential': { label: '3M · Esencial', months: 3, resourceLevel: 2, library: false, advancedMetrics: false, sessionSummaryLimit: 2,
-    upsell: { day: 60, message: 'Llevas 60 días en el programa. Con 3M Pro desbloqueas el Ritmo SOBI completo (radar de pilares), historial de medidas y tendencias, y la Biblioteca Zona Azul.' } },
-  '3m_pro': { label: '3M · Pro', months: 3, resourceLevel: 4, library: 'full', advancedMetrics: false, sessionSummaryLimit: null,
-    upsell: { day: 75, message: 'Llevas 75 días de buena adherencia. Si tu foco es rendimiento, 3M Elite suma HRV, protocolos de suplementación/recuperación y prioridades semanales dinámicas.' } },
-  '3m_elite': { label: '3M · Elite / Deportivo', months: 3, resourceLevel: 4, library: 'full', advancedMetrics: true, sessionSummaryLimit: null, upsell: null },
-  '6m_transform': { label: '6M · Transformación Integral', months: 6, resourceLevel: 4, library: 'unlimited', advancedMetrics: false, sessionSummaryLimit: null, upsell: null },
-  '6m_longevity': { label: '6M · Vitalidad & Longevidad Elite', months: 6, resourceLevel: 4, library: 'unlimited', advancedMetrics: true, sessionSummaryLimit: null, upsell: null }
+  '3m': { label: '3M · Programa Base', months: 3, resourceLevel: 4, library: 'full', advancedMetrics: true, sessionSummaryLimit: null, upsell: null },
+  '6m': { label: '6M · Flagship / Longevidad', months: 6, resourceLevel: 4, library: 'unlimited', advancedMetrics: true, sessionSummaryLimit: null, upsell: null }
 };
-function currentTier() { return TIERS[state.patient.tierPlan] || TIERS['3m_pro']; }
+function currentTier() { return TIERS[state.patient.tierPlan] || TIERS['3m']; }
 
 /* Tipo de día: fijo por día de la SEMANA (no por offset del programa) — única excepción es el
    día 0, que siempre es la bienvenida con evaluación base completa. Versión "pura" (sin leer el
@@ -754,7 +749,7 @@ function generateSeedState() {
   }
 
   return {
-    patient: { name: 'Javiera Ossandón (demo)', startDate: startDate, programMonths: 6, tierPlan: '3m_pro' },
+    patient: { name: 'Javiera Ossandón (demo)', startDate: startDate, programMonths: 6, tierPlan: '3m' },
     pillars: pillars,
     checkins: checkins,
     measurements: measurements,
@@ -862,7 +857,7 @@ async function loadStateForUser(user) {
   }));
 
   state = {
-    patient: { name: patient.name || '', startDate: patient.start_date || todayISO(), programMonths: patient.program_months || 6, tierPlan: patient.tier_plan || '3m_pro' },
+    patient: { name: patient.name || '', startDate: patient.start_date || todayISO(), programMonths: patient.program_months || 6, tierPlan: patient.tier_plan || '3m' },
     pillars: defaultPillars(),
     checkins: checkins,
     measurements: measurements,
