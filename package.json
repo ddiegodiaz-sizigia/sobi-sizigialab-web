@@ -1,0 +1,7 @@
+{
+  "name": "sobi-sizigialab-web",
+  "private": true,
+  "devDependencies": {
+    "wrangler": "4.129.0"
+  }
+}
