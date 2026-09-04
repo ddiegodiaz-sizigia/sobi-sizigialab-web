@@ -1,0 +1,8 @@
+node_modules
+.git
+wrangler.jsonc
+package.json
+bun.lock
+package-lock.json
+.gitignore
+Claude outputs
