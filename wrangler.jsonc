@@ -1,9 +1,9 @@
+// Config para servir el sitio estatico. Deploy command en Cloudflare: npx wrangler deploy
 {
-  "name": "sobi-sizigialab-web",
-  "compatibility_date": "2026-09-04",
-  "assets": {
-    "directory": "./",
-    "not_found_handling": "404-page"
-  }
-
-// deploy: npx wrangler deploy (config para servir el sitio estatico)}
+"name": "sobi-sizigialab-web",
+"compatibility_date": "2026-09-04",
+"assets": {
+"directory": "./",
+"not_found_handling": "404-page"
+}
+}
