@@ -5,4 +5,5 @@
     "directory": "./",
     "not_found_handling": "404-page"
   }
-}
+
+// deploy: npx wrangler deploy (config para servir el sitio estatico)}
