@@ -307,7 +307,6 @@ function renderAuthScreen(message, isError) {
         Enviar link de acceso
       </button>
       ${message ? `<p style="margin-top:16px;font-size:13px;color:${isError ? '#dc2626' : '#B86B4B'};">${message}</p>` : ''}
-      <p style="margin-top:22px;"><a href="#" onclick="event.preventDefault();enterDemoMode();" style="font-size:12px;color:#9a9484;text-decoration:underline;">Ver demo sin cuenta (datos de prueba)</a></p>
     </div>`;
   const emailInput = document.getElementById('authEmail');
   if (emailInput) emailInput.focus();
