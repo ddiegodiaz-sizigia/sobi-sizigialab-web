@@ -1,0 +1,1036 @@
+<!DOCTYPE html><html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rueda de Adherencia SOBI · Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #131a17; --muted: #6b7280; --line: #e6e4e1; --accent: #0d9488; --accent-dark: #0f766e; --accent-bg: #f0fdfa;
+    --green: #16a34a; --green-bg: #ecfdf5; --amber: #d97706; --amber-bg: #fffbeb; --red: #dc2626; --red-bg: #fef2f2;
+    --gray-bg: #f8f7f5; --paper: #fffffe; --canvas: #faf9f7;
+    --shadow-sm: 0 1px 2px rgba(19,26,23,0.05); --shadow-md: 0 8px 22px -6px rgba(19,26,23,0.14), 0 2px 6px rgba(19,26,23,0.05);
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--canvas); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; font-size:14px; -webkit-font-smoothing:antialiased; }
+  .wrap { padding: 22px 20px 40px; max-width: 1080px; margin: 0 auto; }
+  .login-wrap { max-width: 380px; margin: 80px auto; }
+
+  .top { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; gap:10px; flex-wrap:wrap; padding-bottom:16px; border-bottom:1px solid var(--line); }
+  .top-brand { display:flex; align-items:center; gap:10px; }
+  .top h1 { font-size:19px; margin:0 0 2px 0; letter-spacing:-0.01em; }
+  .top .tagline { font-size:12px; color:var(--muted); }
+  .top-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .btn { border:1px solid var(--line); background:#fff; border-radius:9px; padding:8px 14px; font-size:13px; font-weight:500; color:var(--ink); cursor:pointer; font-family:inherit; transition:background .12s,box-shadow .12s,transform .12s; box-shadow:var(--shadow-sm); }
+  .btn:hover { background:#f6f5f3; box-shadow:var(--shadow-md); }
+  .btn:active { transform:translateY(1px); }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btn.primary:hover { background:var(--accent-dark); border-color:var(--accent-dark); }
+  .btn.danger { color:var(--red); border-color:#fecaca; }
+  .btn.danger:hover { background:var(--red-bg); }
+  .btn.small { padding:5px 10px; font-size:12px; }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  .btn.block { width:100%; }
+
+  .brand-mark { flex-shrink:0; }
+  .site-footer { text-align:center; font-size:11px; color:var(--muted); padding:22px 0 6px; letter-spacing:.02em; }
+  .site-footer b { color:var(--ink); }
+
+  .today-section { margin-bottom:24px; }
+  .today-title { font-weight:700; font-size:13px; margin-bottom:2px; }
+  .today-sub { font-size:11.5px; color:var(--muted); margin-bottom:10px; }
+  .today-empty { font-size:12.5px; color:var(--muted); font-style:italic; padding:14px 16px; background:var(--gray-bg); border-radius:10px; }
+  .today-list { display:flex; flex-direction:column; gap:8px; }
+  .today-item { display:flex; align-items:center; gap:10px; border:1px solid var(--line); border-radius:10px; padding:10px 12px; background:var(--paper); flex-wrap:wrap; box-shadow:var(--shadow-sm); border-left:3px solid var(--line); }
+  .today-item.overdue { border-left-color:var(--red); background:var(--red-bg); }
+  .today-item.due { border-left-color:var(--amber); background:var(--amber-bg); }
+  .today-item .who { font-weight:700; font-size:13px; flex-shrink:0; min-width:120px; }
+  .today-item .msg { flex:1; font-size:12.5px; color:var(--ink); min-width:160px; }
+  .today-item .msg.empty { color:var(--muted); font-style:italic; }
+  .today-item .day-tag { font-size:10.5px; color:var(--muted); flex-shrink:0; text-transform:uppercase; letter-spacing:.03em; }
+  .today-item .acts { display:flex; gap:6px; flex-shrink:0; }
+
+  .section-title { font-weight:700; font-size:13px; margin:4px 0 10px 0; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  .patients-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; margin-bottom:20px; }
+  .patient-card { border:1px solid var(--line); border-radius:14px; padding:13px; background:var(--paper); cursor:pointer; text-align:left; display:flex; gap:11px; align-items:center; font-family:inherit; box-shadow:var(--shadow-sm); transition:box-shadow .15s,transform .15s,border-color .15s; }
+  .patient-card:hover { border-color:#d7d4cf; box-shadow:var(--shadow-md); transform:translateY(-1px); }
+  .mini-ring { flex-shrink:0; }
+  .patient-info { flex:1; min-width:0; }
+  .patient-name { font-weight:700; font-size:13.5px; margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .patient-sub { font-size:11px; color:var(--muted); }
+  .patient-badge { font-size:10.5px; padding:2px 8px; border-radius:999px; margin-top:5px; display:inline-block; font-weight:600; }
+  .badge-due { background:var(--amber-bg); color:var(--amber); }
+  .badge-overdue { background:var(--red-bg); color:var(--red); }
+  .badge-ok { background:var(--accent-bg); color:var(--accent-dark); }
+  .badge-done { background:#f3f4f6; color:var(--muted); }
+  .badge-nolink { background:#f3f4f6; color:var(--muted); }
+
+  .empty-state { text-align:center; padding:44px 20px; color:var(--muted); font-size:13px; border:1.5px dashed var(--line); border-radius:14px; margin-bottom:20px; background:var(--paper); }
+  .empty-state .empty-icon { font-size:22px; display:block; margin-bottom:8px; opacity:.5; }
+  .archived-toggle { font-size:12px; color:var(--accent-dark); cursor:pointer; background:none; border:none; padding:0; margin-bottom:10px; font-family:inherit; font-weight:600; }
+
+  .detail-back { font-size:12.5px; color:var(--accent-dark); cursor:pointer; background:none; border:none; padding:0; margin-bottom:12px; font-family:inherit; font-weight:600; }
+  .detail-back:hover { text-decoration:underline; }
+  .detail-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .detail-head h2 { font-size:19px; margin:0 0 3px 0; letter-spacing:-0.01em; }
+  .detail-head .sub { font-size:12px; color:var(--muted); }
+  .detail-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+  .program-toggle { display:inline-flex; gap:4px; border:1px solid var(--line); border-radius:9px; padding:2px; background:#fff; }
+  .program-toggle button { border:none; background:none; border-radius:7px; padding:5px 10px; font-size:11.5px; cursor:pointer; font-family:inherit; color:var(--muted); font-weight:600; transition:background .12s,color .12s; }
+  .program-toggle button.active { background:var(--ink); color:#fff; }
+
+  .tabbar { display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:16px; flex-wrap:wrap; }
+  .tabbar button { border:none; background:none; padding:9px 14px; font-size:12.5px; font-weight:600; color:var(--muted); cursor:pointer; font-family:inherit; border-bottom:2px solid transparent; margin-bottom:-1px; }
+  .tabbar button.active { color:var(--ink); border-bottom-color:var(--accent); }
+
+  .profile-layout { display:flex; gap:22px; align-items:flex-start; flex-wrap:wrap; }
+  .month-grid { flex:2; min-width:300px; display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+  .month-cell { border:1px solid var(--line); border-radius:14px; padding:12px 10px 10px; text-align:center; background:var(--paper); box-shadow:var(--shadow-sm); transition:box-shadow .15s; }
+  .month-cell:hover { box-shadow:var(--shadow-md); }
+  .month-cell-title { display:flex; align-items:center; justify-content:center; gap:6px; font-weight:700; font-size:11.5px; margin-bottom:4px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  .month-cell-title .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .month-cell svg { width:100%; height:auto; max-width:300px; }
+  .month-cell-caption { font-size:11.5px; color:var(--muted); margin-top:6px; }
+  .editor-wrap { flex:1; min-width:260px; position:sticky; top:12px; align-self:flex-start; }
+
+  .legend-bar { display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:11px; color:var(--muted); background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:9px 14px; margin-bottom:16px; }
+  .legend-bar .legend-label { font-weight:700; color:var(--ink); text-transform:uppercase; letter-spacing:.04em; font-size:10px; }
+  .legend-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; vertical-align:middle; }
+
+  .day-dot { cursor:pointer; }
+  .day-dot:hover path { filter:brightness(.94); }
+  .day-label { pointer-events:none; }
+
+  .editor { border:1px solid var(--line); border-radius:14px; padding:16px; background:var(--paper); box-shadow:var(--shadow-sm); }
+  .editor h3 { font-size:14.5px; margin:0 0 3px 0; }
+  .editor .editor-sub { font-size:11.5px; color:var(--muted); margin-bottom:12px; }
+  .editor select.template-select { width:100%; border:1px solid var(--line); border-radius:8px; padding:7px 9px; font-size:12.5px; font-family:inherit; margin-bottom:8px; background:var(--gray-bg); }
+  .editor textarea { width:100%; min-height:100px; border:1px solid var(--line); border-radius:9px; padding:9px 11px; font-size:13px; font-family:inherit; resize:vertical; margin-bottom:10px; background:var(--gray-bg); }
+  .editor textarea:focus, .editor select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); background:#fff; }
+  .editor-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+  .editor-placeholder { color:var(--muted); font-size:12.5px; font-style:italic; padding:30px 10px; text-align:center; line-height:1.5; }
+
+  .bitacora-stats { display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+  .stat-chip { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:10px 16px; text-align:left; min-width:110px; box-shadow:var(--shadow-sm); }
+  .stat-chip .num { font-size:21px; font-weight:700; line-height:1.1; }
+  .stat-chip .lbl { font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-top:2px; }
+  .bitacora-timeline { position:relative; padding-left:26px; }
+  .bitacora-timeline::before { content:''; position:absolute; left:8px; top:6px; bottom:6px; width:2px; background:var(--line); }
+  .bitacora-item { position:relative; border:1px solid var(--line); border-radius:12px; padding:11px 14px; margin-bottom:10px; background:var(--paper); box-shadow:var(--shadow-sm); }
+  .bitacora-item::before { content:''; position:absolute; left:-22px; top:16px; width:11px; height:11px; border-radius:50%; background:#fff; border:2.5px solid var(--line); z-index:1; }
+  .bitacora-item.is-sent::before { border-color:var(--green); }
+  .bitacora-item.is-pending::before { border-color:var(--amber); }
+  .bitacora-date { font-size:11px; color:var(--muted); display:flex; justify-content:space-between; gap:8px; margin-bottom:5px; flex-wrap:wrap; }
+  .bitacora-tag { font-size:10.5px; background:var(--accent-bg); color:var(--accent-dark); padding:2px 9px; border-radius:999px; font-weight:600; }
+  .bitacora-text { font-size:13px; color:var(--ink); white-space:pre-wrap; line-height:1.45; }
+  .bitacora-sent { font-size:10.5px; color:var(--green); font-weight:700; text-transform:uppercase; letter-spacing:.03em; }
+  .bitacora-pending { font-size:10.5px; color:var(--amber); font-weight:700; text-transform:uppercase; letter-spacing:.03em; }
+
+  .template-row { border:1px solid var(--line); border-radius:12px; padding:11px 14px; margin-bottom:8px; display:flex; justify-content:space-between; gap:10px; align-items:flex-start; background:var(--paper); box-shadow:var(--shadow-sm); }
+  .template-row .tname { font-weight:700; font-size:13px; margin-bottom:3px; display:flex; align-items:center; gap:7px; }
+  .template-row .ttext { font-size:12px; color:var(--muted); white-space:pre-wrap; }
+  .template-row .tacts { display:flex; gap:6px; flex-shrink:0; }
+  .tpl-badge { font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; padding:1px 7px; border-radius:999px; }
+  .tpl-badge.base { background:var(--accent-bg); color:var(--accent-dark); }
+  .tpl-badge.custom { background:var(--amber-bg); color:var(--amber); }
+
+  .modal-overlay { position:fixed; inset:0; background:rgba(19,26,23,.4); backdrop-filter:blur(1px); display:flex; align-items:center; justify-content:center; z-index:50; padding:20px; }
+  .modal-overlay.hidden { display:none; }
+  .modal { background:#fff; border-radius:16px; padding:22px; max-width:420px; width:100%; border:1px solid var(--line); max-height:85vh; overflow-y:auto; box-shadow:var(--shadow-md); }
+  .modal h3 { margin:0 0 14px 0; font-size:16px; }
+  .modal label { font-size:12px; color:var(--muted); display:block; margin:10px 0 4px 0; font-weight:600; }
+  .modal input[type=text], .modal input[type=email], .modal input[type=date], .modal input[type=tel], .modal select, .modal textarea { width:100%; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; background:var(--gray-bg); }
+  .modal textarea { min-height:80px; resize:vertical; }
+  .modal input:focus, .modal select:focus, .modal textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); background:#fff; }
+  .modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+  .modal-months { display:flex; gap:8px; margin-top:4px; }
+  .modal-months button { flex:1; border:1px solid var(--line); background:#fff; border-radius:8px; padding:9px; font-size:12.5px; cursor:pointer; font-family:inherit; font-weight:600; transition:background .12s; }
+  .modal-months button.active { border-color:var(--ink); background:var(--ink); color:#fff; }
+
+  .checkin-row { border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:8px; background:var(--paper); }
+  .checkin-row .cdate { font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-bottom:6px; }
+  .checkin-tags { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+  .checkin-tags .tag { font-size:11px; background:var(--accent-bg); color:var(--accent-dark); padding:2px 9px; border-radius:999px; font-weight:600; }
+  .transcript-box { border:1px solid var(--line); border-radius:14px; padding:16px; background:var(--paper); margin-bottom:16px; }
+  .transcript-item { border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:8px; background:var(--paper); }
+  .transcript-item .tdate { font-size:11.5px; font-weight:700; color:var(--muted); margin-bottom:6px; }
+  .msg-inline { font-size:12.5px; padding:8px 10px; border-radius:8px; margin-top:8px; }
+  .msg-inline.ok { background:var(--accent-bg); color:var(--accent-dark); }
+  .msg-inline.err { background:var(--red-bg); color:var(--red); }
+
+  .status-table { width:100%; border-collapse:collapse; margin-bottom:20px; background:var(--paper); border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:var(--shadow-sm); }
+  .status-table th, .status-table td { text-align:left; padding:10px 14px; border-bottom:1px solid var(--line); font-size:12.5px; }
+  .status-table tr:last-child td { border-bottom:none; }
+  .status-table th { font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; background:var(--gray-bg); }
+  .status-table td.muted { color:var(--muted); }
+  .status-pill { font-size:10.5px; padding:2px 8px; border-radius:999px; font-weight:600; white-space:nowrap; }
+  .status-pill.ok { background:var(--green-bg); color:var(--green); }
+  .status-pill.warn { background:var(--amber-bg); color:var(--amber); }
+  .status-pill.no { background:#f3f4f6; color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="app"></div>
+  <div class="site-footer"><b>SOBI</b> · Sistema de Adherencia — comunicación clínica planificada, mes a mes</div>
+</div>
+
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal">
+    <h3>Nuevo paciente</h3>
+    <label>Nombre</label>
+    <input type="text" id="npName" placeholder="Nombre del paciente">
+    <label>Email (para que pueda entrar a su Rueda)</label>
+    <input type="email" id="npEmail" placeholder="paciente@ejemplo.com">
+    <label>WhatsApp (opcional, con código país. Ej: 56912345678)</label>
+    <input type="tel" id="npPhone" placeholder="56912345678">
+    <label>Inicio del programa (día 1)</label>
+    <input type="date" id="npDate">
+    <label>Duración del programa</label>
+    <div class="modal-months" id="npMonthsToggle">
+      <button type="button" data-months="3" onclick="setNpMonths(3)">3 meses</button>
+      <button type="button" data-months="6" onclick="setNpMonths(6)">6 meses</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn primary" onclick="confirmCreatePatient()">Crear</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="tplModalOverlay">
+  <div class="modal">
+    <h3 id="tplModalTitle">Nueva plantilla</h3>
+    <label>Nombre de la plantilla</label>
+    <input type="text" id="tplName" placeholder="Ej: Encuesta de percepción de salud">
+    <label>Texto por defecto</label>
+    <textarea id="tplText" placeholder="Texto que se sugiere al aplicar esta plantilla a un día..."></textarea>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeTplModal()">Cancelar</button>
+      <button class="btn primary" onclick="confirmSaveTemplate()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createClient } = supabase;
+const sb = createClient(window.SOBI_CONFIG.SUPABASE_URL, window.SOBI_CONFIG.SUPABASE_ANON_KEY);
+const DAYS_PER_MONTH = 30;
+
+let session = null;
+let isAdmin = false;
+let state = { clients: [], templates: [] };
+let view = { mode: 'dashboard', clientId: null, month: 1, selectedDay: null, showArchived: false, detailTab: 'rueda', checkins: [], transcripts: [] };
+
+function todayISO() { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function escapeHtml(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function emptyDaysRange(n) { const d={}; for (let i=1;i<=n;i++) d[i]={text:'',sent:false,sentAt:null,templateId:null}; return d; }
+
+// ============ AUTH ============
+
+async function initAuth() {
+  const { data } = await sb.auth.getSession();
+  session = data.session;
+  sb.auth.onAuthStateChange((_e, sess) => { session = sess; bootAuth(); });
+  await bootAuth();
+}
+
+async function bootAuth() {
+  if (!session) { isAdmin = false; renderLoginScreen(); return; }
+  const { data, error } = await sb.rpc('is_admin');
+  isAdmin = !!data && !error;
+  if (!isAdmin) { renderNotAdminScreen(); return; }
+  document.getElementById('app').innerHTML = `<div class="empty-state">Cargando pacientes…</div>`;
+  await loadAll();
+  render();
+}
+
+function renderLoginScreen() {
+  document.getElementById('app').innerHTML = `
+    <div class="login-wrap">
+      <div class="top-brand" style="margin-bottom:20px;">
+        <div><h1 style="margin:0;font-size:19px;">Rueda de Adherencia SOBI</h1><div class="tagline">Panel del equipo clínico</div></div>
+      </div>
+      <div class="editor">
+        <h3>Entrar</h3>
+        <div class="editor-sub">Acceso solo para el equipo (Manuel / Diego). Sin contraseña: te enviamos un link a tu correo.</div>
+        <input type="email" id="adminEmail" placeholder="tucorreo@ejemplo.com" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;background:var(--gray-bg);margin-bottom:10px;">
+        <button class="btn primary block" id="adminLoginBtn" onclick="sendAdminMagicLink()">Enviar link de acceso</button>
+        <div id="adminLoginMsg"></div>
+      </div>
+    </div>
+  `;
+}
+
+async function sendAdminMagicLink() {
+  const email = document.getElementById('adminEmail').value.trim();
+  const msgEl = document.getElementById('adminLoginMsg');
+  if (!email) { msgEl.innerHTML = `<div class="msg-inline err">Ingresa tu email.</div>`; return; }
+  document.getElementById('adminLoginBtn').disabled = true;
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
+  document.getElementById('adminLoginBtn').disabled = false;
+  msgEl.innerHTML = error ? `<div class="msg-inline err">${escapeHtml(error.message)}</div>` : `<div class="msg-inline ok">Revisa tu correo y abre el link para entrar.</div>`;
+}
+
+function renderNotAdminScreen() {
+  document.getElementById('app').innerHTML = `
+    <div class="login-wrap">
+      <div class="editor">
+        <h3>Sin acceso</h3>
+        <div class="editor-sub">Esta cuenta (${escapeHtml(session.user.email)}) no está habilitada como administrador. Agrégala en la tabla <b>admins</b> en Supabase si corresponde.</div>
+        <button class="btn block" onclick="sb.auth.signOut()">Cerrar sesión</button>
+      </div>
+    </div>
+  `;
+}
+
+// ============ DATA LOAD ============
+
+async function loadAll() {
+  const [{ data: patients }, { data: days }, { data: templates }] = await Promise.all([
+    sb.from('patients').select('*').order('created_at', { ascending: true }),
+    sb.from('program_days').select('*'),
+    sb.from('templates').select('*').order('name')
+  ]);
+  const byPatient = {};
+  (days || []).forEach(r => { (byPatient[r.patient_id] = byPatient[r.patient_id] || []).push(r); });
+  state.clients = (patients || []).map(p => {
+    const d = emptyDaysRange(p.program_months * DAYS_PER_MONTH);
+    (byPatient[p.id] || []).forEach(r => {
+      if (r.abs_day >= 1 && r.abs_day <= p.program_months * DAYS_PER_MONTH) {
+        d[r.abs_day] = { text: r.message_text || '', sent: !!r.sent, sentAt: r.sent_at || null, templateId: r.template_id || null };
+      }
+    });
+    return { id: p.id, name: p.name, phone: p.phone || '', email: p.email || '', linked: !!p.auth_user_id, startDate: p.start_date, programMonths: p.program_months, days: d, archived: !!p.archived };
+  });
+  state.templates = (templates || []).map(t => ({ id: t.id, name: t.name, defaultText: t.default_text || '', builtin: !!t.builtin }));
+}
+
+// ============ RENDER ROOT ============
+
+function render() {
+  const app = document.getElementById('app');
+  if (view.mode === 'detail') app.innerHTML = renderDetailHTML();
+  else if (view.mode === 'bitacora') app.innerHTML = renderBitacoraHTML();
+  else if (view.mode === 'templates') app.innerHTML = renderTemplatesHTML();
+  else if (view.mode === 'status') app.innerHTML = renderStatusHTML();
+  else app.innerHTML = renderDashboardHTML();
+}
+
+function todayISOClient() { return todayISO(); }
+
+function programDayOffset(client) {
+  const start = new Date(client.startDate + 'T00:00:00');
+  const today = new Date(todayISO() + 'T00:00:00');
+  return Math.round((today - start) / 86400000) + 1;
+}
+function dateForAbsDay(client, absDay) {
+  const start = new Date(client.startDate + 'T00:00:00');
+  const d = new Date(start.getTime() + (absDay-1)*86400000);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function dayStatus(client, absDay) {
+  const day = client.days[absDay];
+  const offset = programDayOffset(client);
+  if (!day) return 'future';
+  if (day.sent) return 'sent';
+  if (absDay === offset) return day.text ? 'due' : 'due-empty';
+  if (absDay < offset) return day.text ? 'overdue' : 'past-empty';
+  return day.text ? 'scheduled' : 'future';
+}
+function statusColor(status) {
+  switch(status) {
+    case 'sent': return { fill:'#dcfce7', stroke:'#16a34a' };
+    case 'due': case 'due-empty': return { fill:'#fef3c7', stroke:'#d97706' };
+    case 'overdue': return { fill:'#fee2e2', stroke:'#dc2626' };
+    case 'past-empty': return { fill:'#f3f4f6', stroke:'#d1d5db' };
+    case 'scheduled': return { fill:'#ccfbf1', stroke:'#0d9488' };
+    default: return { fill:'#ffffff', stroke:'#d1d5db' };
+  }
+}
+function monthRange(m) { return [(m-1)*DAYS_PER_MONTH+1, m*DAYS_PER_MONTH]; }
+function monthStatus(client, m) {
+  const [start,end] = monthRange(m);
+  const offset = programDayOffset(client);
+  if (offset > end) {
+    let overdue = 0;
+    for (let i=start;i<=end;i++) if (client.days[i] && !client.days[i].sent && client.days[i].text) overdue++;
+    return overdue>0 ? 'overdue' : 'done';
+  }
+  if (offset < start) return 'future';
+  return 'current';
+}
+function monthStatusColor(status) {
+  switch(status) { case 'overdue': return '#dc2626'; case 'done': return '#16a34a'; case 'current': return '#d97706'; default: return '#9ca3af'; }
+}
+function activeClients() { return state.clients.filter(p => !p.archived); }
+function archivedClients() { return state.clients.filter(p => p.archived); }
+function getTemplate(id) { return state.templates.find(t => t.id === id); }
+function getClient(id) { return state.clients.find(p => p.id === id); }
+function clientPendingToday(client) {
+  const offset = programDayOffset(client);
+  if (offset<1 || offset>totalDays(client)) return null;
+  const day = client.days[offset];
+  if (!day || day.sent) return null;
+  return { absDay: offset, day };
+}
+function clientOverdueDays(client) {
+  const offset = programDayOffset(client);
+  const out = [];
+  for (let i=1;i<offset && i<=totalDays(client);i++) if (client.days[i] && !client.days[i].sent && client.days[i].text) out.push(i);
+  return out;
+}
+function totalDays(client) { return client.programMonths * DAYS_PER_MONTH; }
+
+// ============ DASHBOARD ============
+
+function renderDashboardHTML() {
+  const active = activeClients();
+  const pendingToday = [];
+  active.forEach(c => {
+    const pend = clientPendingToday(c);
+    if (pend) pendingToday.push({ c, absDay: pend.absDay, text: pend.day.text, overdue:false });
+    clientOverdueDays(c).forEach(absDay => pendingToday.push({ c, absDay, text: c.days[absDay].text, overdue:true }));
+  });
+
+  let html = `<div class="top">
+    <div class="top-brand">
+      <svg class="brand-mark" width="34" height="34" viewBox="0 0 34 34">
+        <circle cx="17" cy="17" r="15" fill="none" stroke="#e6e4e1" stroke-width="2"/>
+        <circle cx="17" cy="17" r="15" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="15 79" stroke-linecap="round"/>
+        <circle cx="17" cy="17" r="4.5" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+      </svg>
+      <div><h1>Rueda de Adherencia SOBI</h1><div class="tagline">${escapeHtml(session.user.email)} · datos en vivo, compartidos con todo el equipo</div></div>
+    </div>
+    <div class="top-actions">
+      <button class="btn" onclick="openStatusView()">Estado</button>
+      <button class="btn" onclick="openTemplates()">Plantillas</button>
+      <button class="btn primary" onclick="openModal()">+ Nuevo paciente</button>
+      <button class="btn" onclick="sb.auth.signOut()">Salir</button>
+    </div>
+  </div>`;
+
+  html += `<div class="today-section"><div class="today-title">Hoy — pendientes de enviar</div>
+    <div class="today-sub">Mensajes que tocan hoy o quedaron atrasados, de todos tus pacientes activos.</div>`;
+  if (pendingToday.length === 0) {
+    html += `<div class="today-empty">Nada pendiente para hoy. ${active.length===0?'Agrega un paciente para empezar.':''}</div>`;
+  } else {
+    html += `<div class="today-list">`;
+    pendingToday.forEach(item => {
+      const cls = item.overdue ? 'overdue' : 'due';
+      const tag = item.overdue ? `Día ${item.absDay} · atrasado` : `Día ${item.absDay} · hoy`;
+      const waHref = item.c.phone ? waLink(item.c.phone, item.text) : null;
+      html += `<div class="today-item ${cls}">
+        <div class="who">${escapeHtml(item.c.name)}</div>
+        <div class="msg">${escapeHtml(item.text)}</div>
+        <div class="day-tag">${tag}</div>
+        <div class="acts">
+          <button class="btn small" onclick="copyText(${JSON.stringify(item.text)}, this)">Copiar</button>
+          ${waHref ? `<a class="btn small" href="${waHref}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+          <button class="btn small" onclick="markSent('${item.c.id}', ${item.absDay})">Marcar enviado</button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="section-title">Pacientes activos (${active.length})</div>`;
+  if (active.length === 0) {
+    html += `<div class="empty-state"><span class="empty-icon">○</span>No tienes pacientes en seguimiento todavía.<br>Crea uno con "+ Nuevo paciente" para armar su programa de adherencia.</div>`;
+  } else {
+    html += `<div class="patients-grid">`;
+    active.forEach(c => html += renderPatientCard(c));
+    html += `</div>`;
+  }
+
+  const archived = archivedClients();
+  if (archived.length > 0) {
+    html += `<button class="archived-toggle" onclick="toggleArchived()">${view.showArchived?'Ocultar':'Ver'} archivados (${archived.length})</button>`;
+    if (view.showArchived) { html += `<div class="patients-grid">`; archived.forEach(c => html += renderPatientCard(c)); html += `</div>`; }
+  }
+  return html;
+}
+
+function toggleArchived() { view.showArchived = !view.showArchived; render(); }
+
+function renderPatientCard(client) {
+  const total = totalDays(client);
+  const offset = programDayOffset(client);
+  const clamped = Math.max(1, Math.min(total, offset));
+  const progressPct = Math.max(0, Math.min(100, (clamped/total)*100));
+  const overdue = clientOverdueDays(client).length;
+  const pend = clientPendingToday(client);
+  const currentMonth = Math.min(client.programMonths, Math.max(1, Math.ceil(offset/DAYS_PER_MONTH)));
+
+  let badge = '';
+  if (offset > total) badge = `<span class="patient-badge badge-done">Programa completo</span>`;
+  else if (overdue > 0) badge = `<span class="patient-badge badge-overdue">${overdue} atrasado${overdue>1?'s':''}</span>`;
+  else if (pend) badge = `<span class="patient-badge badge-due">Pendiente hoy</span>`;
+  else badge = `<span class="patient-badge badge-ok">Al día</span>`;
+  const linkBadge = client.linked ? '' : `<span class="patient-badge badge-nolink">Paciente aún no ha entrado</span>`;
+
+  const ringColor = offset>total ? '#9ca3af' : (overdue>0 ? '#dc2626' : '#0d9488');
+  const ring = `<div class="mini-ring" style="width:46px;height:46px;border-radius:50%;background:conic-gradient(${ringColor} ${progressPct}%, #ece9e5 0);display:flex;align-items:center;justify-content:center;">
+    <div style="width:36px;height:36px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:${ringColor};text-align:center;line-height:1.1;">${offset<1?'pronto':(offset>total?'fin':'M'+currentMonth)}</div>
+  </div>`;
+
+  return `<button class="patient-card" onclick="openDetail('${client.id}')" title="Mes ${currentMonth} de ${client.programMonths}">
+    ${ring}
+    <div class="patient-info">
+      <div class="patient-name">${escapeHtml(client.name)}</div>
+      <div class="patient-sub">${client.programMonths} meses · inicio ${client.startDate}</div>
+      ${badge} ${linkBadge}
+    </div>
+  </button>`;
+}
+
+// ============ DETAIL / WHEEL ============
+
+async function openDetail(id) {
+  view.mode = 'detail'; view.clientId = id; view.selectedDay = null; view.detailTab = 'rueda';
+  render();
+}
+
+function backToDashboard() { view.mode='dashboard'; view.clientId=null; render(); }
+
+function setDetailTab(tab) {
+  view.detailTab = tab;
+  if (tab === 'checkins') loadCheckinsForClient(view.clientId).then(render);
+  else if (tab === 'transcripts') loadTranscriptsForClient(view.clientId).then(render);
+  else render();
+}
+
+async function loadCheckinsForClient(id) {
+  const { data } = await sb.from('checkins').select('*').eq('patient_id', id).order('entry_date', { ascending: false });
+  view.checkins = data || [];
+}
+async function loadTranscriptsForClient(id) {
+  const { data } = await sb.from('transcripts').select('*').eq('patient_id', id).order('session_date', { ascending: false });
+  view.transcripts = data || [];
+}
+
+function renderDetailHTML() {
+  const c = getClient(view.clientId);
+  if (!c) { view.mode='dashboard'; return renderDashboardHTML(); }
+  const offset = programDayOffset(c);
+  const total = totalDays(c);
+  let statusLine;
+  if (offset<1) statusLine='Aún no comienza';
+  else if (offset>total) statusLine='Programa completo';
+  else statusLine = `mes ${Math.ceil(offset/DAYS_PER_MONTH)} de ${c.programMonths} · día ${offset} de ${total} del programa`;
+
+  let html = `<button class="detail-back" onclick="backToDashboard()">&larr; Volver</button>`;
+  html += `<div class="detail-head">
+    <div><h2>${escapeHtml(c.name)}</h2><div class="sub">Inicio: ${c.startDate}${c.phone?' · '+escapeHtml(c.phone):''}${c.email?' · '+escapeHtml(c.email):''} · ${statusLine}${c.linked?'':' · <b>paciente aún no ha entrado a su Rueda</b>'}</div></div>
+    <div class="detail-actions">
+      <div class="program-toggle">
+        <button class="${c.programMonths===3?'active':''}" onclick="changeProgramLength('${c.id}',3)">3 meses</button>
+        <button class="${c.programMonths===6?'active':''}" onclick="changeProgramLength('${c.id}',6)">6 meses</button>
+      </div>
+      <button class="btn small" onclick="archiveToggle('${c.id}')">${c.archived?'Reactivar':'Archivar'}</button>
+      <button class="btn small danger" onclick="deletePatient('${c.id}')">Eliminar</button>
+    </div>
+  </div>`;
+
+  html += `<div class="tabbar">
+    <button class="${view.detailTab==='rueda'?'active':''}" onclick="setDetailTab('rueda')">Rueda de mensajes</button>
+    <button class="${view.detailTab==='checkins'?'active':''}" onclick="setDetailTab('checkins')">Check-ins del paciente</button>
+    <button class="${view.detailTab==='transcripts'?'active':''}" onclick="setDetailTab('transcripts')">Transcripciones</button>
+    <button class="${view.detailTab==='bitacora'?'active':''}" onclick="openBitacora('${c.id}')">Bitácora de mensajes</button>
+  </div>`;
+
+  if (view.detailTab === 'checkins') { html += renderCheckinsTab(c); return html; }
+  if (view.detailTab === 'transcripts') { html += renderTranscriptsTab(c); return html; }
+
+  html += `<div class="legend-bar">
+    <span class="legend-label">Estado</span>
+    <span><span class="legend-dot" style="background:#dcfce7;border:1px solid #16a34a;"></span>Enviado</span>
+    <span><span class="legend-dot" style="background:#fef3c7;border:1px solid #d97706;"></span>Hoy / pendiente</span>
+    <span><span class="legend-dot" style="background:#fee2e2;border:1px solid #dc2626;"></span>Atrasado</span>
+    <span><span class="legend-dot" style="background:#ccfbf1;border:1px solid #0d9488;"></span>Programado</span>
+    <span><span class="legend-dot" style="background:#fff;border:1px solid #d1d5db;"></span>Sin definir</span>
+  </div>`;
+
+  html += `<div class="profile-layout"><div class="month-grid">`;
+  for (let m=1; m<=c.programMonths; m++) {
+    const st = monthStatus(c,m);
+    const col = monthStatusColor(st);
+    const [mStart] = monthRange(m);
+    let caption;
+    if (st==='overdue') caption = `<span style="color:#dc2626;font-weight:600;">Atrasado</span>`;
+    else if (st==='done') caption = `<span style="color:#16a34a;font-weight:600;">Completado ✓</span>`;
+    else if (st==='current') caption = `<span style="color:#d97706;font-weight:600;">En curso — día ${offset-mStart+1} de 30</span>`;
+    else caption = `<span style="color:#9ca3af;">Por comenzar</span>`;
+    html += `<div class="month-cell"><div class="month-cell-title"><span class="dot" style="background:${col};"></span>Mes ${m}</div>${renderWheelSVG(c,m,{size:300,showNotes:false})}<div class="month-cell-caption">${caption}</div></div>`;
+  }
+  html += `</div><div class="editor-wrap">${renderEditorHTML(c)}</div></div>`;
+  return html;
+}
+
+function renderCheckinsTab(c) {
+  const items = view.checkins || [];
+  let html = `<div class="section-title">Check-ins registrados por ${escapeHtml(c.name)} (${items.length})</div>`;
+  if (items.length === 0) {
+    html += `<div class="empty-state"><span class="empty-icon">○</span>${c.linked ? 'Todavía no ha registrado ningún check-in.' : 'El paciente aún no ha entrado a su Rueda, así que no hay check-ins.'}</div>`;
+    return html;
+  }
+  items.forEach(ci => {
+    html += `<div class="checkin-row">
+      <div class="cdate">${ci.entry_date}</div>
+      <div class="checkin-tags">
+        <span class="tag">Ánimo ${ci.mood ?? '—'}</span>
+        <span class="tag">Energía ${ci.energy ?? '—'}</span>
+        <span class="tag">Sueño ${ci.sleep_hours ?? '—'}h</span>
+      </div>
+      ${ci.adherence ? `<div style="font-size:13px;margin-bottom:4px;"><b>Adherencia:</b> ${escapeHtml(ci.adherence)}</div>` : ''}
+      ${ci.notes ? `<div style="font-size:13px;white-space:pre-wrap;">${escapeHtml(ci.notes)}</div>` : ''}
+    </div>`;
+  });
+  return html;
+}
+
+function renderTranscriptsTab(c) {
+  let html = `<div class="transcript-box">
+    <h3 style="margin:0 0 3px 0;font-size:14.5px;">Pegar transcripción de una sesión</h3>
+    <div class="editor-sub">Pega acá el texto de Fireflies/Otter u otra fuente. El paciente podrá revisarla en su Rueda.</div>
+    <label style="font-size:12px;color:var(--muted);display:block;margin:8px 0 4px;font-weight:600;">Fecha de la sesión</label>
+    <input type="date" id="tsDate" value="${todayISO()}" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;background:var(--gray-bg);margin-bottom:8px;">
+    <label style="font-size:12px;color:var(--muted);display:block;margin:8px 0 4px;font-weight:600;">Resumen para el paciente (lo que va a ver)</label>
+    <textarea id="tsSummary" placeholder="Resumen breve: cómo estuvo, qué se acordó, próximos pasos..." style="width:100%;min-height:80px;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13px;font-family:inherit;resize:vertical;margin-bottom:8px;background:var(--gray-bg);"></textarea>
+    <label style="font-size:12px;color:var(--muted);display:block;margin:8px 0 4px;font-weight:600;">Transcripción completa (uso interno, opcional)</label>
+    <textarea id="tsRaw" placeholder="Pega acá la transcripción completa si la tienes..." style="width:100%;min-height:120px;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13px;font-family:inherit;resize:vertical;margin-bottom:8px;background:var(--gray-bg);"></textarea>
+    <button class="btn primary" onclick="saveTranscript('${c.id}')">Guardar transcripción</button>
+    <div id="transcriptMsg"></div>
+  </div>`;
+  html += `<div class="section-title">Transcripciones guardadas (${(view.transcripts||[]).length})</div>`;
+  if (!view.transcripts || view.transcripts.length === 0) {
+    html += `<div class="empty-state"><span class="empty-icon">○</span>Todavía no hay transcripciones guardadas para este paciente.</div>`;
+  } else {
+    view.transcripts.forEach(t => {
+      html += `<div class="transcript-item">
+        <div class="tdate">${t.session_date}</div>
+        ${t.summary ? `<div style="font-size:13px;margin-bottom:6px;white-space:pre-wrap;"><b>Resumen:</b> ${escapeHtml(t.summary)}</div>` : ''}
+        ${t.raw_text ? `<details><summary style="font-size:12px;color:var(--muted);cursor:pointer;">Ver transcripción completa</summary><div style="font-size:12.5px;white-space:pre-wrap;margin-top:6px;color:var(--muted);">${escapeHtml(t.raw_text)}</div></details>` : ''}
+        <div style="margin-top:8px;"><button class="btn small danger" onclick="deleteTranscript('${t.id}','${c.id}')">Eliminar</button></div>
+      </div>`;
+    });
+  }
+  return html;
+}
+
+async function saveTranscript(clientId) {
+  const session_date = document.getElementById('tsDate').value || todayISO();
+  const summary = document.getElementById('tsSummary').value.trim();
+  const raw_text = document.getElementById('tsRaw').value.trim();
+  const msgEl = document.getElementById('transcriptMsg');
+  if (!summary && !raw_text) { msgEl.innerHTML = `<div class="msg-inline err">Agrega al menos un resumen o la transcripción.</div>`; return; }
+  const { error } = await sb.from('transcripts').insert({ patient_id: clientId, session_date, summary, raw_text });
+  if (error) { msgEl.innerHTML = `<div class="msg-inline err">${escapeHtml(error.message)}</div>`; return; }
+  await loadTranscriptsForClient(clientId);
+  render();
+}
+
+async function deleteTranscript(id, clientId) {
+  if (!confirm('¿Eliminar esta transcripción?')) return;
+  await sb.from('transcripts').delete().eq('id', id);
+  await loadTranscriptsForClient(clientId);
+  render();
+}
+
+function polarToCart(cx,cy,r,angle) { return { x: cx + r*Math.cos(angle), y: cy + r*Math.sin(angle) }; }
+function wedgePath(cx,cy,rIn,rOut,startA,endA) {
+  const p1o=polarToCart(cx,cy,rOut,startA), p2o=polarToCart(cx,cy,rOut,endA), p1i=polarToCart(cx,cy,rIn,endA), p2i=polarToCart(cx,cy,rIn,startA);
+  return `M ${p1o.x} ${p1o.y} A ${rOut} ${rOut} 0 0 1 ${p2o.x} ${p2o.y} L ${p1i.x} ${p1i.y} A ${rIn} ${rIn} 0 0 0 ${p2i.x} ${p2i.y} Z`;
+}
+function renderWheelSVG(client, month, opts) {
+  opts = opts || {};
+  const size = opts.size || 440;
+  const showNotes = opts.showNotes !== false;
+  const scale = size/440;
+  const cx=size/2, cy=size/2, rOut=208*scale, rIn=62*scale;
+  const offset = programDayOffset(client);
+  const [monthStart] = monthRange(month);
+  const gap = 0.012;
+  let slices = '';
+  for (let local=1; local<=DAYS_PER_MONTH; local++) {
+    const absDay = monthStart+local-1;
+    const startA = ((local-1)/DAYS_PER_MONTH)*2*Math.PI - Math.PI/2 + gap/2;
+    const endA = (local/DAYS_PER_MONTH)*2*Math.PI - Math.PI/2 - gap/2;
+    const midA = (startA+endA)/2;
+    const status = dayStatus(client, absDay);
+    const col = statusColor(status);
+    const isToday = absDay === offset;
+    const selected = view.selectedDay === absDay;
+    const path = wedgePath(cx,cy,rIn,rOut,startA,endA);
+    const strokeColor = selected ? '#111827' : (isToday ? '#111827' : col.stroke);
+    const strokeWidth = (selected?3:(isToday?2.25:1)) * Math.max(scale,.65);
+    const day = client.days[absDay] || { text:'' };
+    const snippet = day.text ? (day.text.length>14 ? day.text.slice(0,14)+'…' : day.text) : '';
+    const midDeg = midA*180/Math.PI;
+    const normDeg = ((midDeg%360)+360)%360;
+    const flip = normDeg>90 && normDeg<270;
+    let anchor, labelR;
+    if (flip) { labelR = rOut-10*scale; anchor='end'; } else { labelR = rIn+10*scale; anchor='start'; }
+    const rot = flip ? midDeg+180 : midDeg;
+    const tp = polarToCart(cx,cy,labelR,midA);
+    const numFontSize = Math.max(7,9.5*scale).toFixed(1);
+    const labelText = `<text class="day-label" x="${tp.x}" y="${tp.y}" transform="rotate(${rot.toFixed(2)} ${tp.x.toFixed(2)} ${tp.y.toFixed(2)})" text-anchor="${anchor}" font-size="${numFontSize}" font-weight="700" fill="#1f2937">${local}</text>`;
+    let noteText = '';
+    if (showNotes && snippet) {
+      const noteR = flip ? rOut-22*scale : rIn+22*scale;
+      const np = polarToCart(cx,cy,noteR,midA);
+      const noteFontSize = Math.max(6,8*scale).toFixed(1);
+      noteText = `<text class="day-label" x="${np.x}" y="${np.y}" transform="rotate(${rot.toFixed(2)} ${np.x.toFixed(2)} ${np.y.toFixed(2)})" text-anchor="${anchor}" font-size="${noteFontSize}" fill="#374151">${escapeHtml(snippet)}</text>`;
+    }
+    slices += `<g class="day-dot" onclick="selectDay(${absDay})"><path d="${path}" fill="${col.fill}" stroke="${strokeColor}" stroke-width="${strokeWidth}"/>${labelText}${noteText}</g>`;
+  }
+  const [mStart, mEnd] = monthRange(month);
+  let centerLabel;
+  if (offset < mStart) centerLabel = ['Mes '+month, 'aún no llega'];
+  else if (offset > mEnd) centerLabel = ['Mes '+month, 'completado'];
+  else centerLabel = ['Día '+(offset-mStart+1), 'de este mes'];
+  const titleFont = Math.max(10,15*scale).toFixed(1);
+  const subFont = Math.max(8,11*scale).toFixed(1);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${cx}" cy="${cy}" r="${rIn-6*scale}" fill="#fafafa" stroke="#e5e7eb" stroke-width="1"/>
+    ${slices}
+    <text x="${cx}" y="${cy-5*scale}" text-anchor="middle" font-size="${titleFont}" font-weight="700" fill="#1f2937">${centerLabel[0]}</text>
+    <text x="${cx}" y="${cy+13*scale}" text-anchor="middle" font-size="${subFont}" fill="#6b7280">${centerLabel[1]}</text>
+  </svg>`;
+}
+
+function renderEditorHTML(client) {
+  const absDay = view.selectedDay;
+  if (!absDay) return `<div class="editor"><div class="editor-placeholder">Haz clic en un gajo de la rueda para escribir, revisar o asignar una plantilla a ese día.</div></div>`;
+  const day = client.days[absDay];
+  const status = dayStatus(client, absDay);
+  const dateStr = dateForAbsDay(client, absDay);
+  const month = Math.ceil(absDay/DAYS_PER_MONTH);
+  const localDay = absDay - (month-1)*DAYS_PER_MONTH;
+  const statusLabel = { sent:'Enviado ✓', due:'Pendiente — hoy', 'due-empty':'Hoy — aún sin redactar', overdue:'Atrasado', 'past-empty':'Pasado — sin mensaje', scheduled:'Programado', future:'Futuro' }[status] || '';
+  const waHref = client.phone && day.text ? waLink(client.phone, day.text) : null;
+  let tplOptions = `<option value="">— Sin plantilla —</option>`;
+  state.templates.forEach(t => { tplOptions += `<option value="${t.id}" ${day.templateId===t.id?'selected':''}>${escapeHtml(t.name)}</option>`; });
+  return `<div class="editor">
+    <h3>Mes ${month} · Día ${localDay}</h3>
+    <div class="editor-sub">${dateStr} · ${statusLabel}${day.sentAt?' · enviado '+day.sentAt:''}</div>
+    <select class="template-select" id="dayTemplate" onchange="applyTemplateToEditor()">${tplOptions}</select>
+    <textarea id="dayText" placeholder="Escribe la indicación o recordatorio para este día...">${escapeHtml(day.text)}</textarea>
+    <div class="editor-row">
+      <button class="btn small primary" onclick="saveDayText('${client.id}', ${absDay})">Guardar</button>
+      <button class="btn small" onclick="copyText(document.getElementById('dayText').value, this)">Copiar texto</button>
+      ${waHref ? `<a class="btn small" href="${waHref}" target="_blank" rel="noopener">Abrir WhatsApp</a>` : ''}
+    </div>
+    <div class="editor-row">
+      ${day.sent ? `<button class="btn small" onclick="unmarkSent('${client.id}', ${absDay})">Deshacer "enviado"</button>` : `<button class="btn small" onclick="markSent('${client.id}', ${absDay})">Marcar como enviado</button>`}
+    </div>
+  </div>`;
+}
+
+function applyTemplateToEditor() {
+  const sel = document.getElementById('dayTemplate');
+  const ta = document.getElementById('dayText');
+  if (!sel.value) return;
+  const tpl = getTemplate(sel.value);
+  if (!tpl) return;
+  if (!ta.value.trim() || confirm(`¿Reemplazar el texto actual con la plantilla "${tpl.name}"?`)) ta.value = tpl.defaultText;
+}
+
+function selectDay(absDay) { view.selectedDay = (view.selectedDay===absDay) ? null : absDay; render(); }
+
+async function upsertDay(clientId, absDay, patch) {
+  const c = getClient(clientId);
+  const day = c.days[absDay];
+  const row = {
+    patient_id: clientId, abs_day: absDay,
+    message_text: patch.text !== undefined ? patch.text : day.text,
+    sent: patch.sent !== undefined ? patch.sent : day.sent,
+    sent_at: patch.sentAt !== undefined ? patch.sentAt : day.sentAt,
+    template_id: patch.templateId !== undefined ? patch.templateId : day.templateId
+  };
+  await sb.from('program_days').upsert(row, { onConflict: 'patient_id,abs_day' });
+}
+
+async function saveDayText(clientId, absDay) {
+  const c = getClient(clientId);
+  const text = document.getElementById('dayText').value;
+  const tplId = document.getElementById('dayTemplate').value || null;
+  c.days[absDay].text = text;
+  c.days[absDay].templateId = tplId;
+  render();
+  await upsertDay(clientId, absDay, { text, templateId: tplId });
+}
+
+async function markSent(clientId, absDay) {
+  const c = getClient(clientId);
+  c.days[absDay].sent = true;
+  c.days[absDay].sentAt = new Date().toLocaleDateString('es-CL');
+  render();
+  await upsertDay(clientId, absDay, { sent: true, sentAt: c.days[absDay].sentAt });
+}
+async function unmarkSent(clientId, absDay) {
+  const c = getClient(clientId);
+  c.days[absDay].sent = false;
+  c.days[absDay].sentAt = null;
+  render();
+  await upsertDay(clientId, absDay, { sent: false, sentAt: null });
+}
+
+function waLink(phone, text) { const digits = String(phone).replace(/[^0-9]/g,''); return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`; }
+function copyText(text, btn) {
+  const done = () => { if (btn) { const o=btn.textContent; btn.textContent='Copiado ✓'; setTimeout(()=>btn.textContent=o,1400); } };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
+  else fallbackCopy(text, done);
+}
+function fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta); if (cb) cb();
+}
+
+async function changeProgramLength(clientId, months) {
+  const c = getClient(clientId);
+  if (c.programMonths === months) return;
+  const currentTotal = totalDays(c);
+  const newTotal = months * DAYS_PER_MONTH;
+  if (newTotal < currentTotal) {
+    let hasData = false;
+    for (let i=newTotal+1; i<=currentTotal; i++) if (c.days[i] && (c.days[i].text || c.days[i].sent)) { hasData=true; break; }
+    if (hasData && !confirm(`Ya hay días con contenido después del mes ${months}. Cambiar a ${months} meses eliminará ese contenido. ¿Continuar?`)) return;
+    for (let i=newTotal+1; i<=currentTotal; i++) delete c.days[i];
+    await sb.from('program_days').delete().eq('patient_id', clientId).gt('abs_day', newTotal);
+  } else {
+    for (let i=currentTotal+1; i<=newTotal; i++) if (!c.days[i]) c.days[i] = { text:'', sent:false, sentAt:null, templateId:null };
+  }
+  c.programMonths = months;
+  render();
+  await sb.from('patients').update({ program_months: months }).eq('id', clientId);
+}
+
+async function archiveToggle(id) {
+  const c = getClient(id);
+  c.archived = !c.archived;
+  backToDashboard();
+  await sb.from('patients').update({ archived: c.archived }).eq('id', id);
+}
+
+async function deletePatient(id) {
+  if (!confirm('¿Eliminar este paciente y toda su rueda, check-ins y transcripciones? Esta acción no se puede deshacer.')) return;
+  state.clients = state.clients.filter(p => p.id !== id);
+  backToDashboard();
+  await sb.from('patients').delete().eq('id', id);
+}
+
+// ============ BITÁCORA ============
+
+function openBitacora(id) { view.mode='bitacora'; view.clientId=id; render(); }
+
+function renderBitacoraHTML() {
+  const c = getClient(view.clientId);
+  if (!c) { view.mode='dashboard'; return renderDashboardHTML(); }
+  const total = totalDays(c);
+  const entries = [];
+  for (let i=1;i<=total;i++) { const day = c.days[i]; if (day && day.text) entries.push({ absDay:i, day }); }
+  let html = `<button class="detail-back" onclick="openDetail('${c.id}')">&larr; Volver a la rueda</button>`;
+  html += `<div class="detail-head"><div><h2>Bitácora — ${escapeHtml(c.name)}</h2><div class="sub">Programa de ${c.programMonths} meses · inicio ${c.startDate}</div></div>
+    <div class="detail-actions"><button class="btn small" onclick="copyBitacora('${c.id}')" id="copyBitacoraBtn">Copiar bitácora completa</button></div></div>`;
+  const sentCount = entries.filter(e=>e.day.sent).length;
+  const pendingCount = entries.length - sentCount;
+  html += `<div class="bitacora-stats">
+    <div class="stat-chip"><div class="num">${entries.length}</div><div class="lbl">Mensajes en total</div></div>
+    <div class="stat-chip"><div class="num" style="color:var(--green);">${sentCount}</div><div class="lbl">Enviados</div></div>
+    <div class="stat-chip"><div class="num" style="color:var(--amber);">${pendingCount}</div><div class="lbl">Pendientes</div></div>
+  </div>`;
+  if (entries.length === 0) {
+    html += `<div class="empty-state"><span class="empty-icon">○</span>Todavía no hay mensajes redactados en este programa.</div>`;
+  } else {
+    html += `<div class="bitacora-timeline">`;
+    entries.forEach(e => {
+      const month = Math.ceil(e.absDay/DAYS_PER_MONTH);
+      const localDay = e.absDay-(month-1)*DAYS_PER_MONTH;
+      const dateStr = dateForAbsDay(c, e.absDay);
+      const tpl = e.day.templateId ? getTemplate(e.day.templateId) : null;
+      html += `<div class="bitacora-item ${e.day.sent?'is-sent':'is-pending'}">
+        <div class="bitacora-date"><span>${dateStr} · Mes ${month}, día ${localDay}</span><span>${e.day.sent?`<span class="bitacora-sent">Enviado${e.day.sentAt?' · '+e.day.sentAt:''}</span>`:`<span class="bitacora-pending">Pendiente</span>`}</span></div>
+        ${tpl?`<span class="bitacora-tag">${escapeHtml(tpl.name)}</span>`:''}
+        <div class="bitacora-text" style="margin-top:6px;">${escapeHtml(e.day.text)}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  return html;
+}
+function buildBitacoraText(client) {
+  const total = totalDays(client);
+  let out = `Bitácora de comunicación — ${client.name}\nPrograma: ${client.programMonths} meses · inicio ${client.startDate}\n\n`;
+  for (let i=1;i<=total;i++) {
+    const day = client.days[i]; if (!day || !day.text) continue;
+    const month = Math.ceil(i/DAYS_PER_MONTH); const localDay = i-(month-1)*DAYS_PER_MONTH;
+    const dateStr = dateForAbsDay(client, i);
+    const tpl = day.templateId ? getTemplate(day.templateId) : null;
+    out += `[${dateStr}] Mes ${month}, día ${localDay}${tpl?' — '+tpl.name:''} — ${day.sent?'enviado'+(day.sentAt?' ('+day.sentAt+')':''):'no enviado'}\n${day.text}\n\n`;
+  }
+  return out;
+}
+function copyBitacora(clientId) { const c = getClient(clientId); copyText(buildBitacoraText(c), document.getElementById('copyBitacoraBtn')); }
+
+// ============ ESTADO (vista de solo lectura, sin CRUD) ============
+// Objetivo: dejar de mirar Supabase a mano para saber cómo va cada paciente activo.
+// Adherencia = check-ins con fecha en los últimos 7 días (no distingue tipo de día).
+// Próximo control = próximo hito del ROADMAP clínico (mismo criterio que rueda_final.html:
+// día 30 control quincenal, día 90 reporte de avance, día 180 cierre de ciclo).
+const STATUS_MILESTONES = [
+  { offsetDays: 30, label: 'Control quincenal (mes 1)' },
+  { offsetDays: 90, label: 'Reporte de avance (mes 3)' },
+  { offsetDays: 180, label: 'Cierre de ciclo (mes 6)' }
+];
+let statusData = { checkinsByPatient: {}, lastExamByPatient: {}, loaded: false, error: null };
+
+function openStatusView() { view.mode = 'status'; render(); loadStatusData().then(render); }
+
+async function loadStatusData() {
+  const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 6);
+  const sevenAgoISO = sevenAgo.getFullYear()+'-'+String(sevenAgo.getMonth()+1).padStart(2,'0')+'-'+String(sevenAgo.getDate()).padStart(2,'0');
+  try {
+    const [{ data: checkins, error: e1 }, { data: exams, error: e2 }] = await Promise.all([
+      sb.from('checkins').select('patient_id, entry_date').gte('entry_date', sevenAgoISO),
+      sb.from('patient_exams').select('patient_id, exam_date').order('exam_date', { ascending: false })
+    ]);
+    if (e1 || e2) throw (e1 || e2);
+    const byPatient = {};
+    (checkins || []).forEach(r => { (byPatient[r.patient_id] = byPatient[r.patient_id] || new Set()).add(r.entry_date); });
+    const lastExam = {};
+    (exams || []).forEach(r => { if (!lastExam[r.patient_id]) lastExam[r.patient_id] = r.exam_date; });
+    statusData = { checkinsByPatient: byPatient, lastExamByPatient: lastExam, loaded: true, error: null };
+  } catch (e) {
+    statusData = { checkinsByPatient: {}, lastExamByPatient: {}, loaded: true, error: e.message || 'Error cargando estado' };
+  }
+}
+
+function nextControlLabel(client) {
+  const start = new Date(client.startDate + 'T00:00:00');
+  const today = new Date(todayISO() + 'T00:00:00');
+  for (const m of STATUS_MILESTONES) {
+    const d = new Date(start.getTime() + m.offsetDays * 86400000);
+    if (d >= today) {
+      const iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      return { label: m.label, date: iso, overdue: false };
+    }
+  }
+  return { label: 'Ciclo de 6 meses cumplido', date: '', overdue: false };
+}
+
+function renderStatusHTML() {
+  let html = `<button class="detail-back" onclick="backToDashboard()">&larr; Volver</button>`;
+  html += `<div class="detail-head"><div><h2>Estado de pacientes</h2><div class="sub">Solo lectura — adherencia de la semana, examen subido y próximo control. No reemplaza la ficha completa.</div></div></div>`;
+  if (!statusData.loaded) { html += `<div class="empty-state">Cargando estado…</div>`; return html; }
+  if (statusData.error) { html += `<div class="msg-inline err">No se pudo cargar el estado: ${escapeHtml(statusData.error)}</div>`; return html; }
+  const active = activeClients();
+  if (active.length === 0) { html += `<div class="empty-state"><span class="empty-icon">○</span>No hay pacientes activos.</div>`; return html; }
+  html += `<table class="status-table"><thead><tr>
+    <th>Paciente</th><th>Adherencia (7 días)</th><th>Examen</th><th>Próximo control</th>
+  </tr></thead><tbody>`;
+  active.forEach(c => {
+    const days = statusData.checkinsByPatient[c.id] ? statusData.checkinsByPatient[c.id].size : 0;
+    const adhClass = days >= 5 ? 'ok' : (days >= 2 ? 'warn' : 'no');
+    const lastExam = statusData.lastExamByPatient[c.id];
+    const control = nextControlLabel(c);
+    html += `<tr>
+      <td>${escapeHtml(c.name)}</td>
+      <td><span class="status-pill ${adhClass}">${days}/7 días con check-in</span></td>
+      <td>${lastExam ? `<span class="status-pill ok">Sí · ${escapeHtml(lastExam)}</span>` : `<span class="status-pill no">Sin exámenes</span>`}</td>
+      <td>${escapeHtml(control.label)}${control.date ? ' · ' + escapeHtml(control.date) : ''}</td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+  return html;
+}
+
+// ============ PLANTILLAS ============
+
+let editingTemplateId = null;
+function openTemplates() { view.mode='templates'; render(); }
+function renderTemplatesHTML() {
+  let html = `<button class="detail-back" onclick="backToDashboard()">&larr; Volver</button>`;
+  html += `<div class="detail-head"><div><h2>Biblioteca de plantillas</h2><div class="sub">Mensajes pre-diseñados que puedes asignar a cualquier día de cualquier paciente</div></div>
+    <div class="detail-actions"><button class="btn small primary" onclick="openTplModal(null)">+ Nueva plantilla</button></div></div>`;
+  if (state.templates.length === 0) {
+    html += `<div class="empty-state"><span class="empty-icon">○</span>No hay plantillas todavía.</div>`;
+  } else {
+    state.templates.forEach(t => {
+      html += `<div class="template-row"><div>
+        <div class="tname">${escapeHtml(t.name)} <span class="tpl-badge ${t.builtin?'base':'custom'}">${t.builtin?'Base':'Personalizada'}</span></div>
+        <div class="ttext">${escapeHtml(t.defaultText)}</div></div>
+        <div class="tacts"><button class="btn small" onclick="openTplModal('${t.id}')">Editar</button><button class="btn small danger" onclick="deleteTemplate('${t.id}')">Eliminar</button></div>
+      </div>`;
+    });
+  }
+  return html;
+}
+function openTplModal(id) {
+  editingTemplateId = id;
+  const isNew = !id;
+  document.getElementById('tplModalTitle').textContent = isNew ? 'Nueva plantilla' : 'Editar plantilla';
+  if (isNew) { document.getElementById('tplName').value=''; document.getElementById('tplText').value=''; }
+  else { const t = getTemplate(id); document.getElementById('tplName').value=t.name; document.getElementById('tplText').value=t.defaultText; }
+  document.getElementById('tplModalOverlay').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('tplName').focus(),50);
+}
+function closeTplModal() { document.getElementById('tplModalOverlay').classList.add('hidden'); editingTemplateId=null; }
+async function confirmSaveTemplate() {
+  const name = document.getElementById('tplName').value.trim();
+  const text = document.getElementById('tplText').value.trim();
+  if (!name) { alert('Ponle un nombre a la plantilla.'); return; }
+  if (editingTemplateId) {
+    const t = getTemplate(editingTemplateId); t.name=name; t.defaultText=text;
+    await sb.from('templates').update({ name, default_text: text }).eq('id', editingTemplateId);
+  } else {
+    const id = 'tpl_' + Date.now().toString(36);
+    state.templates.push({ id, name, defaultText: text, builtin:false });
+    await sb.from('templates').insert({ id, name, default_text: text, builtin:false });
+  }
+  closeTplModal(); render();
+}
+async function deleteTemplate(id) {
+  if (!confirm('¿Eliminar esta plantilla? Los días que ya la usaron conservan su texto, solo se pierde la etiqueta.')) return;
+  state.templates = state.templates.filter(t => t.id !== id);
+  render();
+  await sb.from('templates').delete().eq('id', id);
+}
+
+// ============ NUEVO PACIENTE ============
+
+let npMonths = 6;
+function setNpMonths(m) { npMonths=m; document.querySelectorAll('#npMonthsToggle button').forEach(b => b.classList.toggle('active', Number(b.dataset.months)===m)); }
+function openModal() {
+  document.getElementById('npName').value='';
+  document.getElementById('npEmail').value='';
+  document.getElementById('npPhone').value='';
+  document.getElementById('npDate').value = todayISO();
+  setNpMonths(6);
+  document.getElementById('modalOverlay').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('npName').focus(),50);
+}
+function closeModal() { document.getElementById('modalOverlay').classList.add('hidden'); }
+async function confirmCreatePatient() {
+  const name = document.getElementById('npName').value.trim();
+  if (!name) { alert('Ingresa un nombre.'); return; }
+  const email = document.getElementById('npEmail').value.trim();
+  if (!email) { alert('Ingresa el email del paciente — lo necesita para entrar a su Rueda.'); return; }
+  const phone = document.getElementById('npPhone').value.trim();
+  const startDate = document.getElementById('npDate').value || todayISO();
+  const { data, error } = await sb.from('patients').insert({ name, email, phone, start_date: startDate, program_months: npMonths }).select().single();
+  if (error) { alert('No se pudo crear: ' + error.message); return; }
+  state.clients.unshift({ id: data.id, name, phone, email, linked:false, startDate, programMonths: npMonths, days: emptyDaysRange(npMonths*DAYS_PER_MONTH), archived:false });
+  closeModal();
+  openDetail(data.id);
+}
+
+initAuth();
+</script>
+</body>
+</html>
