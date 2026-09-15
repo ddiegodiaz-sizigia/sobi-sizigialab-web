@@ -73,6 +73,9 @@
 
   .detail-back { font-size:12.5px; color:var(--accent-dark); cursor:pointer; background:none; border:none; padding:0; margin-bottom:12px; font-family:inherit; font-weight:600; }
   .detail-back:hover { text-decoration:underline; }
+  .patient-link { background:none; border:none; padding:0; font:inherit; font-weight:700; color:var(--accent-dark); cursor:pointer; text-align:left; }
+  .patient-link:hover { text-decoration:underline; }
+  .note-flag { font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; background:var(--amber-bg); color:var(--amber); padding:1px 7px; border-radius:999px; margin-right:6px; display:inline-block; }
   .detail-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
   .detail-head h2 { font-size:19px; margin:0 0 3px 0; letter-spacing:-0.01em; }
   .detail-head .sub { font-size:12px; color:var(--muted); }
@@ -223,7 +226,7 @@ const DAYS_PER_MONTH = 30;
 let session = null;
 let isAdmin = false;
 let state = { clients: [], templates: [] };
-let view = { mode: 'dashboard', clientId: null, month: 1, selectedDay: null, showArchived: false, detailTab: 'rueda', checkins: [], transcripts: [] };
+let view = { mode: 'dashboard', clientId: null, month: 1, selectedDay: null, showArchived: false, detailTab: 'rueda', checkins: [], transcripts: [], patientFileId: null };
 
 function todayISO() { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function escapeHtml(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -317,6 +320,7 @@ function render() {
   else if (view.mode === 'bitacora') app.innerHTML = renderBitacoraHTML();
   else if (view.mode === 'templates') app.innerHTML = renderTemplatesHTML();
   else if (view.mode === 'status') app.innerHTML = renderStatusHTML();
+  else if (view.mode === 'patientfile') app.innerHTML = renderPatientFileHTML();
   else app.innerHTML = renderDashboardHTML();
 }
 
@@ -578,19 +582,34 @@ function renderCheckinsTab(c) {
     html += `<div class="empty-state"><span class="empty-icon">○</span>${c.linked ? 'Todavía no ha registrado ningún check-in.' : 'El paciente aún no ha entrado a su Rueda, así que no hay check-ins.'}</div>`;
     return html;
   }
-  items.forEach(ci => {
-    html += `<div class="checkin-row">
-      <div class="cdate">${ci.entry_date}</div>
-      <div class="checkin-tags">
-        <span class="tag">Ánimo ${ci.mood ?? '—'}</span>
-        <span class="tag">Energía ${ci.energy ?? '—'}</span>
-        <span class="tag">Sueño ${ci.sleep_hours ?? '—'}h</span>
-      </div>
-      ${ci.adherence ? `<div style="font-size:13px;margin-bottom:4px;"><b>Adherencia:</b> ${escapeHtml(ci.adherence)}</div>` : ''}
-      ${ci.notes ? `<div style="font-size:13px;white-space:pre-wrap;">${escapeHtml(ci.notes)}</div>` : ''}
-    </div>`;
-  });
+  items.forEach(ci => html += renderCheckinRowHTML(ci, false));
   return html;
+}
+
+// Nota 15-09-2026: este render antes leía columnas (mood/energy/sleep_hours/adherence) que no
+// existen en la tabla checkins — el schema real es ratings (jsonb por pilar), notes, entry_type,
+// ack (confirmado en rueda_final.html, syncCheckinUpsert). Se corrigió acá y se reusa en la
+// Ficha del paciente (ver más abajo) para no repetir el mismo mapeo dos veces.
+const PILLAR_LABELS = { movimiento:'Movimiento', nutricion:'Nutrición Humana', sueno:'Descanso y Sueño', estres:'Estrés y Recuperación', relaciones:'Relaciones Sociales', sustancias:'Control de Sustancias' };
+const DAY_TYPE_LABELS = { bienvenida:'Bienvenida', vitalidad:'Vitalidad y Claridad Mental', habito_ancla:'Hábito Ancla y Movimiento', psicoed_zb:'Psicoeducación Zona Azul', ikigai:'Mente, Stoicismo & Ikigai', cierre_semana:'Cierre de Semana', zona_sagrada:'Espacio Sagrado Zona Azul', encuesta:'Check-in' };
+
+function renderCheckinRowHTML(ci, flagIfRecent) {
+  const typeLabel = DAY_TYPE_LABELS[ci.entry_type] || ci.entry_type || 'Check-in';
+  const ratings = ci.ratings || {};
+  let chips = '';
+  Object.keys(ratings).forEach(k => {
+    if (k === '_semanal') chips += `<span class="tag">Semana: ${ratings[k]}/10</span>`;
+    else if (PILLAR_LABELS[k]) chips += `<span class="tag">${escapeHtml(PILLAR_LABELS[k])}: ${ratings[k]}/10</span>`;
+  });
+  const note = (ci.notes || '').trim();
+  const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 6);
+  const sevenAgoISO = sevenAgo.getFullYear()+'-'+String(sevenAgo.getMonth()+1).padStart(2,'0')+'-'+String(sevenAgo.getDate()).padStart(2,'0');
+  const isRecent = flagIfRecent && note && ci.entry_date >= sevenAgoISO;
+  return `<div class="checkin-row"${isRecent ? ' style="border-left:3px solid var(--amber);"' : ''}>
+    <div class="cdate">${ci.entry_date} · ${escapeHtml(typeLabel)}</div>
+    ${chips ? `<div class="checkin-tags">${chips}</div>` : ''}
+    ${note ? `<div style="font-size:13px;white-space:pre-wrap;margin-top:4px;">${isRecent ? '<span class="note-flag">Para revisar</span>' : ''}${escapeHtml(note)}</div>` : ''}
+  </div>`;
 }
 
 function renderTranscriptsTab(c) {
@@ -955,7 +974,7 @@ function renderStatusHTML() {
     const control = nextControlLabel(c);
     const lastAccess = formatLastAccess(statusData.lastLoginByPatient[c.id]);
     html += `<tr>
-      <td>${escapeHtml(c.name)}</td>
+      <td><button class="patient-link" onclick="openPatientFile('${c.id}')" title="Ver ficha completa">${escapeHtml(c.name)}</button></td>
       <td><span class="status-pill ${adhClass}">${days}/7 días con check-in</span></td>
       <td>${lastExam ? `<span class="status-pill ok">Sí · ${escapeHtml(lastExam)}</span>` : `<span class="status-pill no">Sin exámenes</span>`}</td>
       <td>${escapeHtml(control.label)}${control.date ? ' · ' + escapeHtml(control.date) : ''}</td>
@@ -963,6 +982,83 @@ function renderStatusHTML() {
     </tr>`;
   });
   html += `</tbody></table>`;
+  return html;
+}
+
+// ============ FICHA DEL PACIENTE (solo lectura, se abre desde el nombre en Estado) ============
+// Consolida lo que hoy está repartido: check-ins con nota destacada si es de los últimos 7 días
+// (mismo criterio de "para revisar antes del próximo control" que se dejó pendiente en
+// ritmo_semanal_rediseno_15-09.md §4), historial COMPLETO de accesos (no solo el último, a
+// diferencia de la columna de Estado — sirve para ver patrones de abandono), consultas
+// (transcripts) y exámenes (patient_exams). Mismo patrón de queries (Promise.all, RLS admin)
+// que ya usa Estado/Último acceso — no se inventó infraestructura nueva.
+let patientFile = { patientId: null, checkins: [], logins: [], transcripts: [], exams: [], loaded: false, error: null };
+
+function openPatientFile(id) {
+  view.mode = 'patientfile'; view.patientFileId = id;
+  patientFile = { patientId: id, checkins: [], logins: [], transcripts: [], exams: [], loaded: false, error: null };
+  render();
+  loadPatientFile(id).then(render);
+}
+
+async function loadPatientFile(id) {
+  try {
+    const [{ data: checkins, error: e1 }, { data: logins, error: e2 }, { data: transcripts, error: e3 }, { data: exams, error: e4 }] = await Promise.all([
+      sb.from('checkins').select('*').eq('patient_id', id).order('entry_date', { ascending: false }).limit(14),
+      sb.from('patient_logins').select('logged_in_at').eq('patient_id', id).order('logged_in_at', { ascending: false }),
+      sb.from('transcripts').select('*').eq('patient_id', id).order('session_date', { ascending: false }),
+      sb.from('patient_exams').select('patient_id, exam_date').eq('patient_id', id).order('exam_date', { ascending: false })
+    ]);
+    if (e1 || e2 || e3 || e4) throw (e1 || e2 || e3 || e4);
+    patientFile = { patientId: id, checkins: checkins || [], logins: logins || [], transcripts: transcripts || [], exams: exams || [], loaded: true, error: null };
+  } catch (e) {
+    patientFile = { patientId: id, checkins: [], logins: [], transcripts: [], exams: [], loaded: true, error: e.message || 'Error cargando la ficha' };
+  }
+}
+
+function renderPatientFileHTML() {
+  const c = getClient(view.patientFileId);
+  let html = `<button class="detail-back" onclick="openStatusView()">&larr; Volver a Estado</button>`;
+  html += `<div class="detail-head"><div><h2>Ficha — ${escapeHtml(c ? c.name : '')}</h2><div class="sub">Solo lectura — check-ins, accesos, consultas y exámenes. No reemplaza la Rueda de mensajes.</div></div></div>`;
+  if (!patientFile.loaded) { html += `<div class="empty-state">Cargando ficha…</div>`; return html; }
+  if (patientFile.error) { html += `<div class="msg-inline err">No se pudo cargar la ficha: ${escapeHtml(patientFile.error)}</div>`; return html; }
+
+  html += `<div class="section-title">Check-ins (últimos ${patientFile.checkins.length})</div>`;
+  if (patientFile.checkins.length === 0) {
+    html += `<div class="empty-state"><span class="empty-icon">○</span>Todavía no hay check-ins registrados.</div>`;
+  } else {
+    patientFile.checkins.forEach(ci => html += renderCheckinRowHTML(ci, true));
+  }
+
+  html += `<div class="section-title">Historial de accesos (${patientFile.logins.length})</div>`;
+  if (patientFile.logins.length === 0) {
+    html += `<div class="empty-state" style="margin-bottom:20px;"><span class="empty-icon">○</span>Sin accesos registrados.</div>`;
+  } else {
+    html += `<div class="checkin-tags" style="margin-bottom:20px;">`;
+    patientFile.logins.forEach(l => { html += `<span class="tag">${escapeHtml(formatLastAccess(l.logged_in_at) || l.logged_in_at)}</span>`; });
+    html += `</div>`;
+  }
+
+  html += `<div class="section-title">Consultas registradas (${patientFile.transcripts.length})</div>`;
+  if (patientFile.transcripts.length === 0) {
+    html += `<div class="empty-state"><span class="empty-icon">○</span>Todavía no hay consultas registradas.</div>`;
+  } else {
+    patientFile.transcripts.forEach(t => {
+      html += `<div class="transcript-item">
+        <div class="tdate">${t.session_date}</div>
+        ${t.summary ? `<div style="font-size:13px;white-space:pre-wrap;"><b>Resumen:</b> ${escapeHtml(t.summary)}</div>` : '<div style="font-size:12.5px;color:var(--muted);font-style:italic;">Sin resumen cargado.</div>'}
+      </div>`;
+    });
+  }
+
+  html += `<div class="section-title">Exámenes (${patientFile.exams.length})</div>`;
+  if (patientFile.exams.length === 0) {
+    html += `<div class="empty-state"><span class="empty-icon">○</span>Sin exámenes subidos.</div>`;
+  } else {
+    html += `<div class="checkin-tags">`;
+    patientFile.exams.forEach(e => { html += `<span class="tag">${escapeHtml(e.exam_date)}</span>`; });
+    html += `</div>`;
+  }
   return html;
 }
 
