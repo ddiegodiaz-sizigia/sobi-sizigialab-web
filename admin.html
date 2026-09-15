@@ -173,6 +173,11 @@
   .status-pill.ok { background:var(--green-bg); color:var(--green); }
   .status-pill.warn { background:var(--amber-bg); color:var(--amber); }
   .status-pill.no { background:#f3f4f6; color:var(--muted); }
+  .resumen-box { border:1.5px solid var(--accent); background:var(--accent-bg); border-radius:14px; padding:14px 16px; margin-bottom:20px; }
+  .resumen-list { display:flex; flex-direction:column; gap:8px; }
+  .resumen-item { font-size:13px; line-height:1.5; color:var(--ink); }
+  .resumen-open { margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); font-size:12.5px; color:var(--muted); }
+  .resumen-open b { color:var(--ink); }
 </style>
 </head>
 <body>
@@ -1016,12 +1021,140 @@ async function loadPatientFile(id) {
   }
 }
 
+// ============ ULTRA RESUMEN (pre-consulta) ============
+// Mismos datos que ya carga la Ficha (checkins/logins/transcripts/exams) — nada nuevo del
+// lado de Supabase. Reglas simples (umbral de caída, nota reciente, cambio de horario de
+// acceso), no hay síntesis de lenguaje. Pensado para cuando Manuel tiene 1-2 minutos antes
+// de un control. Con pacientes recién dados de alta (sin check-ins/accesos todavía) muestra
+// un estado vacío honesto en vez de inventar una lectura — se va completando solo.
+function sevenDaysAgoISO() {
+  const d = new Date(); d.setDate(d.getDate() - 6);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function buildResumenSignals(pf, client) {
+  const checkins = pf.checkins || [], logins = pf.logins || [], transcripts = pf.transcripts || [], exams = pf.exams || [];
+  const sevenAgoISO = sevenDaysAgoISO();
+  const s = { adherence: null, flaggedNotes: [], pillars: [], access: null, exam: null, control: null,
+    hasAnyData: checkins.length > 0 || logins.length > 0 || transcripts.length > 0 || exams.length > 0 };
+
+  const recentDays = new Set(checkins.filter(ci => ci.entry_date >= sevenAgoISO).map(ci => ci.entry_date));
+  if (checkins.length > 0) s.adherence = { days: recentDays.size };
+
+  s.flaggedNotes = checkins
+    .filter(ci => ci.entry_date >= sevenAgoISO && (ci.notes || '').trim())
+    .map(ci => ({ date: ci.entry_date, type: DAY_TYPE_LABELS[ci.entry_type] || ci.entry_type || 'Check-in', note: ci.notes.trim() }));
+
+  const byPillar = {};
+  checkins.slice().sort((a, b) => a.entry_date < b.entry_date ? -1 : 1).forEach(ci => {
+    const r = ci.ratings || {};
+    Object.keys(r).forEach(k => { if (PILLAR_LABELS[k]) (byPillar[k] = byPillar[k] || []).push({ date: ci.entry_date, value: r[k] }); });
+  });
+  s.pillars = Object.keys(byPillar).map(k => {
+    const series = byPillar[k];
+    return { key: k, label: PILLAR_LABELS[k], last: series[series.length - 1].value, delta: series.length > 1 ? series[series.length - 1].value - series[0].value : 0 };
+  }).sort((a, b) => a.last - b.last || a.delta - b.delta);
+
+  if (logins.length >= 3) {
+    const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
+    const fourteenAgo = new Date(); fourteenAgo.setDate(fourteenAgo.getDate() - 14);
+    const recent = logins.filter(l => new Date(l.logged_in_at) >= sevenAgo);
+    const prior = logins.filter(l => { const t = new Date(l.logged_in_at); return t < sevenAgo && t >= fourteenAgo; });
+    const avgHour = arr => arr.length ? arr.reduce((sum, l) => sum + new Date(l.logged_in_at).getHours(), 0) / arr.length : null;
+    s.access = { recentCount: recent.length, priorCount: prior.length, recentHour: avgHour(recent), priorHour: avgHour(prior) };
+  }
+
+  if (exams.length > 0) s.exam = { lastDate: exams[0].exam_date };
+  if (client) s.control = nextControlLabel(client);
+  return s;
+}
+
+function resumenNarrative(s) {
+  const items = [];
+  if (s.adherence) items.push(`Adherencia: <b>${s.adherence.days}/7</b> días con check-in en la última semana.`);
+  if (s.flaggedNotes.length > 0) {
+    const latest = s.flaggedNotes[0];
+    const clipped = latest.note.length > 160 ? latest.note.slice(0, 160) + '…' : latest.note;
+    items.push(`<span class="note-flag" style="margin-right:0;">Para revisar</span> nota del ${latest.date} (${escapeHtml(latest.type)}): &ldquo;${escapeHtml(clipped)}&rdquo;${s.flaggedNotes.length > 1 ? ` — y ${s.flaggedNotes.length - 1} nota(s) más esta semana.` : ''}`);
+  }
+  const weak = s.pillars.filter(p => p.last <= 4);
+  const declining = s.pillars.filter(p => p.delta <= -2);
+  if (weak.length > 0) items.push(`Pilar(es) más débil(es) hoy: ${weak.slice(0, 2).map(p => `${escapeHtml(p.label)} (${p.last}/10)`).join(', ')}.`);
+  if (declining.length > 0) items.push(`Bajando en el período cargado: ${declining.slice(0, 2).map(p => `${escapeHtml(p.label)} (${p.delta}pt)`).join(', ')}.`);
+  if (s.access) {
+    if (s.access.recentCount === 0 && s.access.priorCount > 0) items.push(`Sin accesos registrados en los últimos 7 días (sí había entrado la semana anterior).`);
+    else if (s.access.recentHour != null && s.access.priorHour != null && Math.abs(s.access.recentHour - s.access.priorHour) >= 3 && s.access.recentCount >= 2 && s.access.priorCount >= 2) {
+      items.push(`El horario de acceso cambió: promedio ~${Math.round(s.access.priorHour)}h &rarr; ~${Math.round(s.access.recentHour)}h.`);
+    }
+  }
+  items.push(s.exam ? `Último examen cargado: ${s.exam.lastDate}.` : `Sin exámenes cargados todavía.`);
+  if (s.control) items.push(`Próximo control: ${escapeHtml(s.control.label)}${s.control.date ? ' · ' + escapeHtml(s.control.date) : ''}.`);
+  let opener = null;
+  if (s.flaggedNotes.length > 0) opener = `Antes de repasar lo demás, preguntarle directo por lo que escribió el ${s.flaggedNotes[0].date}.`;
+  else if (weak.length > 0) opener = `Preguntar por ${weak[0].label.toLowerCase()} — es el pilar más bajo en este momento.`;
+  else if (declining.length > 0) opener = `Preguntar por ${declining[0].label.toLowerCase()} — es lo que más cayó en el período cargado.`;
+  return { items, opener };
+}
+
+function renderUltraResumenHTML(pf, client) {
+  const s = buildResumenSignals(pf, client);
+  let html = `<div class="section-title">Ultra resumen <span style="font-weight:500;text-transform:none;letter-spacing:0;">· para antes de la consulta</span></div>`;
+  if (!s.hasAnyData) {
+    html += `<div class="empty-state" style="margin-bottom:20px;"><span class="empty-icon">○</span>Todavía no hay datos de ${escapeHtml(client ? client.name : 'este paciente')} en la plataforma — ni check-ins, ni accesos, ni consultas o exámenes cargados. Este resumen se va a empezar a completar solo con el primer check-in o el primer login.</div>`;
+    return html;
+  }
+  const { items, opener } = resumenNarrative(s);
+  html += `<div class="resumen-box">`;
+  html += `<div class="resumen-list">` + items.map(i => `<div class="resumen-item">${i}</div>`).join('') + `</div>`;
+  if (opener) html += `<div class="resumen-open"><b>Apertura sugerida:</b> ${escapeHtml(opener)}</div>`;
+  html += `<div style="margin-top:10px;"><button class="btn small primary" id="copyResumenBtn" onclick="copyUltraResumen('${client ? client.id : ''}')">Copiar resumen</button></div>`;
+  html += `</div>`;
+  return html;
+}
+
+function buildResumenText(pf, client) {
+  const s = buildResumenSignals(pf, client);
+  const lines = [`FICHA — ${client ? client.name : ''}${client && client.phone ? ' (' + client.phone + ')' : ''} — resumen pre-consulta`];
+  if (!s.hasAnyData) { lines.push('', 'Todavía no hay datos en la plataforma.'); return lines.join('\n'); }
+  lines.push('');
+  if (s.adherence) lines.push(`- Adherencia: ${s.adherence.days}/7 días con check-in en la última semana.`);
+  if (s.flaggedNotes.length > 0) {
+    const latest = s.flaggedNotes[0];
+    lines.push(`- Nota para revisar (${latest.date}, ${latest.type}): "${latest.note}"${s.flaggedNotes.length > 1 ? ` (+${s.flaggedNotes.length - 1} más)` : ''}`);
+  }
+  const weak = s.pillars.filter(p => p.last <= 4);
+  const declining = s.pillars.filter(p => p.delta <= -2);
+  if (weak.length > 0) lines.push(`- Pilar(es) más débil(es): ${weak.slice(0, 2).map(p => `${p.label} (${p.last}/10)`).join(', ')}.`);
+  if (declining.length > 0) lines.push(`- Bajando: ${declining.slice(0, 2).map(p => `${p.label} (${p.delta}pt)`).join(', ')}.`);
+  if (s.access) {
+    if (s.access.recentCount === 0 && s.access.priorCount > 0) lines.push('- Sin accesos en los últimos 7 días (sí la semana anterior).');
+    else if (s.access.recentHour != null && s.access.priorHour != null && Math.abs(s.access.recentHour - s.access.priorHour) >= 3 && s.access.recentCount >= 2 && s.access.priorCount >= 2) {
+      lines.push(`- Cambió el horario de acceso: ~${Math.round(s.access.priorHour)}h -> ~${Math.round(s.access.recentHour)}h.`);
+    }
+  }
+  lines.push(s.exam ? `- Último examen: ${s.exam.lastDate}.` : '- Sin exámenes cargados.');
+  if (s.control) lines.push(`- Próximo control: ${s.control.label}${s.control.date ? ' · ' + s.control.date : ''}.`);
+  let opener = null;
+  if (s.flaggedNotes.length > 0) opener = `Preguntar directo por lo que escribió el ${s.flaggedNotes[0].date}.`;
+  else if (weak.length > 0) opener = `Preguntar por ${weak[0].label.toLowerCase()}.`;
+  else if (declining.length > 0) opener = `Preguntar por ${declining[0].label.toLowerCase()}.`;
+  if (opener) lines.push('', `Apertura sugerida: ${opener}`);
+  return lines.join('\n');
+}
+
+function copyUltraResumen(clientId) {
+  const c = getClient(clientId);
+  copyText(buildResumenText(patientFile, c), document.getElementById('copyResumenBtn'));
+}
+
 function renderPatientFileHTML() {
   const c = getClient(view.patientFileId);
   let html = `<button class="detail-back" onclick="openStatusView()">&larr; Volver a Estado</button>`;
   html += `<div class="detail-head"><div><h2>Ficha — ${escapeHtml(c ? c.name : '')}</h2><div class="sub">Solo lectura — check-ins, accesos, consultas y exámenes. No reemplaza la Rueda de mensajes.</div></div></div>`;
   if (!patientFile.loaded) { html += `<div class="empty-state">Cargando ficha…</div>`; return html; }
   if (patientFile.error) { html += `<div class="msg-inline err">No se pudo cargar la ficha: ${escapeHtml(patientFile.error)}</div>`; return html; }
+
+  html += renderUltraResumenHTML(patientFile, c);
 
   html += `<div class="section-title">Check-ins (últimos ${patientFile.checkins.length})</div>`;
   if (patientFile.checkins.length === 0) {
