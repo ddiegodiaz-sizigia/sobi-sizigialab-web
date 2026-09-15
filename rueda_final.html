@@ -1048,6 +1048,101 @@ function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+/* ============================= TAB: RESUMEN =============================
+   Foto general del estado del paciente — pestaña por defecto al entrar.
+   Todo lo que muestra reusa cálculos que ya existen en otras pestañas
+   (Mi Data, Sesiones, Mi Bitácora), para no duplicar lógica ni introducir
+   una segunda fuente de verdad. "Próximo control" usa el mismo ROADMAP
+   clínico que ya usa Sesiones, con la misma etiqueta honesta ("Estimada")
+   hasta que exista la integración real de Calendar. */
+function renderResumen() {
+  const todayIso = todayISO();
+  const startIso = state.patient.startDate;
+  const daysIn = daysBetween(startIso, todayIso);
+  const totalProgramDays = state.patient.programMonths * 30;
+  const tier = currentTier();
+  const firstName = (state.patient.name || '').trim().split(' ')[0] || '';
+
+  const dayLabel = daysIn >= 0
+    ? ('Día ' + (daysIn + 1) + ' de ' + totalProgramDays + ' del programa')
+    : 'Tu programa aún no inicia';
+
+  /* Adherencia global — mismo cálculo que la pestaña Mi Data */
+  const allIsos = Object.keys(state.checkins).sort();
+  const daysSinceStart = Math.max(1, daysIn + 1);
+  const adherence = daysIn >= 0 ? Math.round(allIsos.length / daysSinceStart * 100) : null;
+
+  /* Check-ins de los últimos 7 días */
+  let last7Count = 0;
+  for (let i = 0; i < 7; i++) { if (state.checkins[addDaysISO(todayIso, -i)]) last7Count++; }
+
+  /* Próximo hito del cronograma clínico — mismo cálculo que "Próximas Sesiones" */
+  const nextItem = ROADMAP
+    .map(m => ({ m: m, dueDate: addDaysISO(startIso, m.offsetDays) }))
+    .find(x => x.dueDate > todayIso);
+
+  let html = '';
+
+  html += '<div class="card" style="margin-bottom:16px;">';
+  html += '  <h3 style="margin:0 0 2px 0;">Hola' + (firstName ? ', ' + escapeHtml(firstName) : '') + '</h3>';
+  html += '  <div class="card-sub" style="margin:0;">' + dayLabel + ' · Plan ' + state.patient.programMonths + ' meses · ' + escapeHtml(tier.label) + ' · inicio ' + fmtDate(startIso) + '</div>';
+  html += '</div>';
+
+  html += '<div class="grid-2">';
+
+  /* --- Left: stats + próximo control + accesos rápidos --- */
+  html += '<div>';
+
+  html += '<div class="stat-chips" style="margin-bottom:16px;">';
+  html += statChip(adherence !== null ? adherence + '%' : '—', 'Adherencia del programa');
+  html += statChip(last7Count + '/7', 'Check-ins últimos 7 días');
+  html += statChip(state.sessions.length, 'Sesiones registradas');
+  html += '</div>';
+
+  html += '<div class="card" style="margin-bottom:16px;">';
+  html += '<h3>Próximo control</h3>';
+  if (nextItem) {
+    html += '<div class="roadmap-mini" style="margin:0;">';
+    html += '  <div class="rm-tag">' + nextItem.m.tag + '</div>';
+    html += '  <h4>' + nextItem.m.title + '</h4>';
+    html += '  <p>' + nextItem.m.desc + '</p>';
+    html += '  <div class="rm-date">Estimada: ' + fmtDate(nextItem.dueDate) + '</div>';
+    html += '</div>';
+    html += '<div style="font-size:11px;color:var(--muted);margin-top:8px;">Fecha estimada según el cronograma del programa. Se actualizará automáticamente con la fecha real de Google Calendar apenas esa integración esté conectada.</div>';
+  } else {
+    html += '<div class="empty-state">No hay controles por delante — programa cerrado o completo.</div>';
+  }
+  html += '</div>';
+
+  html += '<div class="card">';
+  html += '<h3>Navega tu programa</h3>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+  TABS.filter(function(t) { return t.id !== 'resumen'; }).forEach(function(t) {
+    html += '<button class="btn small" onclick="setTab(\'' + t.id + '\')">' + t.label + '</button>';
+  });
+  html += '</div>';
+  html += '</div>';
+
+  html += '</div>'; // left col
+
+  /* --- Right: mini ritmo del mes (reusa buildRadarSVG de Mi Bitácora) --- */
+  html += '<div class="card">';
+  html += '<h3>Ritmo de este mes</h3>';
+  html += '<div class="card-sub">Promedio de cada pilar en ' + monthLabel(monthKey(todayIso)) + '.</div>';
+  const mstats = monthAverages(monthKey(todayIso));
+  if (mstats.daysWithData === 0) {
+    html += '<div class="no-data-msg">Sin check-ins registrados este mes todavía.</div>';
+  } else {
+    html += '<div class="rueda-svg-wrap">' + buildRadarSVG(mstats) + '</div>';
+  }
+  html += '<div style="margin-top:10px;"><button class="btn small" onclick="setTab(\'rueda\')">Ver Mi Bitácora completa →</button></div>';
+  html += '</div>';
+
+  html += '</div>'; // grid-2
+
+  return html;
+}
+
 /* ============================= TAB: MI RITMO ============================= */
 function renderRueda() {
   const todayIso = todayISO();
