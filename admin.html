@@ -500,8 +500,10 @@ function renderPatientCard(client) {
 // ============ DETAIL / WHEEL ============
 
 async function openDetail(id) {
-  view.mode = 'detail'; view.clientId = id; view.selectedDay = null; view.detailTab = 'rueda';
+  view.mode = 'detail'; view.clientId = id; view.selectedDay = null; view.detailTab = 'resumen';
+  patientFile = { patientId: id, checkins: [], logins: [], transcripts: [], exams: [], loaded: false, error: null };
   render();
+  loadPatientFile(id).then(render);
 }
 
 function backToDashboard() { view.mode='dashboard'; view.clientId=null; render(); }
@@ -510,6 +512,7 @@ function setDetailTab(tab) {
   view.detailTab = tab;
   if (tab === 'checkins') loadCheckinsForClient(view.clientId).then(render);
   else if (tab === 'transcripts') loadTranscriptsForClient(view.clientId).then(render);
+  else if (tab === 'resumen') loadPatientFile(view.clientId).then(render);
   else render();
 }
 
@@ -546,12 +549,14 @@ function renderDetailHTML() {
   </div>`;
 
   html += `<div class="tabbar">
+    <button class="${view.detailTab==='resumen'?'active':''}" onclick="setDetailTab('resumen')">Resumen</button>
     <button class="${view.detailTab==='rueda'?'active':''}" onclick="setDetailTab('rueda')">Rueda de mensajes</button>
     <button class="${view.detailTab==='checkins'?'active':''}" onclick="setDetailTab('checkins')">Check-ins del paciente</button>
     <button class="${view.detailTab==='transcripts'?'active':''}" onclick="setDetailTab('transcripts')">Transcripciones</button>
     <button class="${view.detailTab==='bitacora'?'active':''}" onclick="openBitacora('${c.id}')">Bitácora de mensajes</button>
   </div>`;
 
+  if (view.detailTab === 'resumen') { html += renderResumenTab(c); return html; }
   if (view.detailTab === 'checkins') { html += renderCheckinsTab(c); return html; }
   if (view.detailTab === 'transcripts') { html += renderTranscriptsTab(c); return html; }
 
@@ -577,6 +582,17 @@ function renderDetailHTML() {
     html += `<div class="month-cell"><div class="month-cell-title"><span class="dot" style="background:${col};"></span>Mes ${m}</div>${renderWheelSVG(c,m,{size:300,showNotes:false})}<div class="month-cell-caption">${caption}</div></div>`;
   }
   html += `</div><div class="editor-wrap">${renderEditorHTML(c)}</div></div>`;
+  return html;
+}
+
+// Nota 15-09-2026: reusa el mismo Ultra Resumen que ya existe en la Ficha (Estado -> nombre
+// del paciente) — ver buildResumenSignals/renderUltraResumenHTML más abajo. Ahora también se
+// muestra acá como tab por defecto al abrir un paciente desde el dashboard, que es donde
+// Manuel/Diego realmente entran, para tener una primera foto antes de repasar la Rueda.
+function renderResumenTab(c) {
+  if (!patientFile.loaded || patientFile.patientId !== c.id) return `<div class="empty-state">Cargando resumen…</div>`;
+  let html = renderUltraResumenHTML(patientFile, c);
+  html += `<div style="margin-top:4px;"><button class="btn small" onclick="setDetailTab('rueda')">Ir a la Rueda de mensajes &rarr;</button></div>`;
   return html;
 }
 
