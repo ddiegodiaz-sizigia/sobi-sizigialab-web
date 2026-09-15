@@ -753,7 +753,7 @@ function generateSeedState() {
     checkins: checkins,
     measurements: measurements,
     sessions: sessions,
-    ui: { tab: 'rueda', selectedMonth: monthKey(todayISO()), historialRange: 'all', highlightPillar: null, checkinsExpanded: false, selectedRingDay: null, selectedMeasureDate: todayISO() }
+    ui: { tab: 'resumen', selectedMonth: monthKey(todayISO()), historialRange: 'all', highlightPillar: null, checkinsExpanded: false, selectedRingDay: null, selectedMeasureDate: todayISO() }
   };
 }
 
@@ -861,7 +861,7 @@ async function loadStateForUser(user) {
     checkins: checkins,
     measurements: measurements,
     sessions: sessions,
-    ui: { tab: 'rueda', selectedMonth: monthKey(todayISO()), historialRange: 'all', highlightPillar: null, checkinsExpanded: false, selectedRingDay: null, selectedMeasureDate: todayISO() }
+    ui: { tab: 'resumen', selectedMonth: monthKey(todayISO()), historialRange: 'all', highlightPillar: null, checkinsExpanded: false, selectedRingDay: null, selectedMeasureDate: todayISO() }
   };
   try { localStorage.setItem(cacheKey, JSON.stringify(state)); } catch(e) {}
   return true;
@@ -980,6 +980,7 @@ function getMonthList() {
 
 /* ============================= RENDER: SHELL ============================= */
 const TABS = [
+  { id: 'resumen', label: 'Resumen' },
   { id: 'rueda', label: 'Mi Bitácora' },
   { id: 'progreso', label: 'Progreso' },
   { id: 'medidas', label: 'Medidas' },
@@ -1033,7 +1034,8 @@ function render() {
   app.innerHTML = html;
 
   const content = document.getElementById('tabContent');
-  if (state.ui.tab === 'rueda') content.innerHTML = renderRueda();
+  if (state.ui.tab === 'resumen') content.innerHTML = renderResumen();
+  else if (state.ui.tab === 'rueda') content.innerHTML = renderRueda();
   else if (state.ui.tab === 'progreso') content.innerHTML = renderProgreso();
   else if (state.ui.tab === 'medidas') content.innerHTML = renderMedidas();
   else if (state.ui.tab === 'historial') content.innerHTML = renderHistorial();
