@@ -883,12 +883,14 @@ function copyBitacora(clientId) { const c = getClient(clientId); copyText(buildB
 // Adherencia = check-ins con fecha en los últimos 7 días (no distingue tipo de día).
 // Próximo control = próximo hito del ROADMAP clínico (mismo criterio que rueda_final.html:
 // día 30 control quincenal, día 90 reporte de avance, día 180 cierre de ciclo).
+// Último acceso = login más reciente a la plataforma, desde patient_logins (tabla admin-only,
+// se llena sola vía trigger de Postgres en cada login real — no depende del JS del cliente).
 const STATUS_MILESTONES = [
   { offsetDays: 30, label: 'Control quincenal (mes 1)' },
   { offsetDays: 90, label: 'Reporte de avance (mes 3)' },
   { offsetDays: 180, label: 'Cierre de ciclo (mes 6)' }
 ];
-let statusData = { checkinsByPatient: {}, lastExamByPatient: {}, loaded: false, error: null };
+let statusData = { checkinsByPatient: {}, lastExamByPatient: {}, lastLoginByPatient: {}, loaded: false, error: null };
 
 function openStatusView() { view.mode = 'status'; render(); loadStatusData().then(render); }
 
@@ -896,19 +898,31 @@ async function loadStatusData() {
   const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 6);
   const sevenAgoISO = sevenAgo.getFullYear()+'-'+String(sevenAgo.getMonth()+1).padStart(2,'0')+'-'+String(sevenAgo.getDate()).padStart(2,'0');
   try {
-    const [{ data: checkins, error: e1 }, { data: exams, error: e2 }] = await Promise.all([
+    const [{ data: checkins, error: e1 }, { data: exams, error: e2 }, { data: logins, error: e3 }] = await Promise.all([
       sb.from('checkins').select('patient_id, entry_date').gte('entry_date', sevenAgoISO),
-      sb.from('patient_exams').select('patient_id, exam_date').order('exam_date', { ascending: false })
+      sb.from('patient_exams').select('patient_id, exam_date').order('exam_date', { ascending: false }),
+      sb.from('patient_logins').select('patient_id, logged_in_at').order('logged_in_at', { ascending: false })
     ]);
-    if (e1 || e2) throw (e1 || e2);
+    if (e1 || e2 || e3) throw (e1 || e2 || e3);
     const byPatient = {};
     (checkins || []).forEach(r => { (byPatient[r.patient_id] = byPatient[r.patient_id] || new Set()).add(r.entry_date); });
     const lastExam = {};
     (exams || []).forEach(r => { if (!lastExam[r.patient_id]) lastExam[r.patient_id] = r.exam_date; });
-    statusData = { checkinsByPatient: byPatient, lastExamByPatient: lastExam, loaded: true, error: null };
+    const lastLogin = {};
+    (logins || []).forEach(r => { if (!lastLogin[r.patient_id]) lastLogin[r.patient_id] = r.logged_in_at; });
+    statusData = { checkinsByPatient: byPatient, lastExamByPatient: lastExam, lastLoginByPatient: lastLogin, loaded: true, error: null };
   } catch (e) {
-    statusData = { checkinsByPatient: {}, lastExamByPatient: {}, loaded: true, error: e.message || 'Error cargando estado' };
+    statusData = { checkinsByPatient: {}, lastExamByPatient: {}, lastLoginByPatient: {}, loaded: true, error: e.message || 'Error cargando estado' };
   }
+}
+
+function formatLastAccess(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  const datePart = d.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Santiago' });
+  const timePart = d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Santiago' });
+  return `${datePart} · ${timePart}`;
 }
 
 function nextControlLabel(client) {
@@ -932,18 +946,20 @@ function renderStatusHTML() {
   const active = activeClients();
   if (active.length === 0) { html += `<div class="empty-state"><span class="empty-icon">○</span>No hay pacientes activos.</div>`; return html; }
   html += `<table class="status-table"><thead><tr>
-    <th>Paciente</th><th>Adherencia (7 días)</th><th>Examen</th><th>Próximo control</th>
+    <th>Paciente</th><th>Adherencia (7 días)</th><th>Examen</th><th>Próximo control</th><th>Último acceso</th>
   </tr></thead><tbody>`;
   active.forEach(c => {
     const days = statusData.checkinsByPatient[c.id] ? statusData.checkinsByPatient[c.id].size : 0;
     const adhClass = days >= 5 ? 'ok' : (days >= 2 ? 'warn' : 'no');
     const lastExam = statusData.lastExamByPatient[c.id];
     const control = nextControlLabel(c);
+    const lastAccess = formatLastAccess(statusData.lastLoginByPatient[c.id]);
     html += `<tr>
       <td>${escapeHtml(c.name)}</td>
       <td><span class="status-pill ${adhClass}">${days}/7 días con check-in</span></td>
       <td>${lastExam ? `<span class="status-pill ok">Sí · ${escapeHtml(lastExam)}</span>` : `<span class="status-pill no">Sin exámenes</span>`}</td>
       <td>${escapeHtml(control.label)}${control.date ? ' · ' + escapeHtml(control.date) : ''}</td>
+      <td>${lastAccess ? `<span class="status-pill ok">${escapeHtml(lastAccess)}</span>` : `<span class="status-pill no">Sin accesos registrados</span>`}</td>
     </tr>`;
   });
   html += `</tbody></table>`;
