@@ -165,9 +165,12 @@
 
   /* ---- Historial ---- */
   .stat-chips { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
-  .stat-chip { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px; text-align: left; min-width: 120px; box-shadow: var(--shadow-sm); flex: 1; }
+  .stat-chip { position: relative; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px; text-align: left; min-width: 120px; box-shadow: var(--shadow-sm); flex: 1; }
   .stat-chip .num { font-size: 21px; font-weight: 700; line-height: 1.1; color: var(--accent-dark); }
   .stat-chip .lbl { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+  .stat-info-btn { position: absolute; top: 7px; right: 7px; width: 16px; height: 16px; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: #fff; color: var(--muted); font-size: 10px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; line-height: 14px; text-align: center; cursor: pointer; }
+  .stat-info-btn:hover { background: var(--line); color: var(--ink); }
+  .stat-info-pop { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 30; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 11.5px; line-height: 1.5; color: var(--ink); box-shadow: 0 4px 14px rgba(29,29,26,0.12); text-transform: none; letter-spacing: normal; }
   .range-toggle { display: inline-flex; gap: 4px; border: 1px solid var(--line); border-radius: 9px; padding: 2px; background: #fff; }
   .range-toggle button { border: none; background: none; border-radius: 7px; padding: 5px 11px; font-size: 11.5px; cursor: pointer; font-family: inherit; color: var(--muted); font-weight: 600; }
   .range-toggle button.active { background: var(--ink); color: #fff; }
@@ -652,6 +655,45 @@ function getMilestoneReminder(iso) {
   return hit;
 }
 
+/* ============================= ADHERENCIA — cálculo único, compartido ============================
+   Corregido 15-09-2026 (ver claude/pestana_resumen_ajustes_15-09.md en el proyecto). Antes, cada
+   pestaña (Resumen, Progreso/Sprint Semanal, Historial, Mi Data) calculaba esto por su cuenta
+   dividiendo el total de check-ins por TODOS los días calendario desde el inicio — sábado y
+   domingo incluidos, aunque son "Zona Sagrada" y por diseño nunca piden check-in. Resultado: un
+   paciente con cumplimiento perfecto de lo que se le pide (lunes a viernes) topeaba en ~71%, nunca
+   en 100% — un número que se leía como mediocre estando perfecto. Ahora el denominador es
+   "días que efectivamente pedían un check-in", usando el mismo WEEKDAY_TYPES que ya define el
+   ritmo semanal — una sola fuente de verdad, no una regla nueva. */
+function isCheckinEligibleDay(startIso, iso) {
+  return dayTypeForDate(startIso, iso) !== 'zona_sagrada';
+}
+function computeAdherence(startIso, todayIso, checkins) {
+  const daysIn = daysBetween(startIso, todayIso);
+  if (daysIn < 0) return null;
+  let eligible = 0, done = 0;
+  for (let i = 0; i <= daysIn; i++) {
+    const iso = addDaysISO(startIso, i);
+    if (isCheckinEligibleDay(startIso, iso)) {
+      eligible++;
+      if (checkins[iso]) done++;
+    }
+  }
+  return eligible > 0 ? Math.round(done / eligible * 100) : null;
+}
+/* Adherencia acotada a un rango de fechas [fromIso, toIso] — para "últimos 7 días" o
+   "esta semana vs. semana anterior" sin repetir el barrido completo desde el inicio. */
+function computeAdherenceInRange(startIso, checkins, fromIso, toIso) {
+  let eligible = 0, done = 0, iso = fromIso < startIso ? startIso : fromIso;
+  while (iso <= toIso) {
+    if (isCheckinEligibleDay(startIso, iso)) {
+      eligible++;
+      if (checkins[iso]) done++;
+    }
+    iso = addDaysISO(iso, 1);
+  }
+  return { done: done, eligible: eligible, pct: eligible > 0 ? Math.round(done / eligible * 100) : 0 };
+}
+
 const KEYWORD_MAP = {
   movimiento: ['entren', 'caminata', 'ejercicio', 'fuerza', 'movimiento', 'kines'],
   nutricion: ['comida', 'nutric', 'alimenta', 'proteína', 'proteina', 'dieta', 'desayuno'],
@@ -965,6 +1007,18 @@ function monthAverages(mk) {
   return { avgs: avgs, counts: counts2, daysWithData: isos.length };
 }
 
+/* Pilar con nota más baja a partir de un objeto de promedios (monthAverages(mk).avgs, por ej.) —
+   misma lógica que ya usa el Sprint Semanal (renderWeeklySummaryCard), factorizada acá para
+   reusarla también desde Resumen sin duplicar el barrido. */
+function weakestPillarFromAvgs(avgs) {
+  let minAvg = Infinity, minId = null;
+  state.pillars.forEach(p => {
+    const a = avgs[p.id];
+    if (a !== null && a !== undefined && a < minAvg) { minAvg = a; minId = p.id; }
+  });
+  return minId ? { name: pillarById(minId).name, avg: minAvg } : null;
+}
+
 function getMonthList() {
   const months = [];
   let mk = monthKey(state.patient.startDate);
@@ -1067,14 +1121,11 @@ function renderResumen() {
     ? ('Día ' + (daysIn + 1) + ' de ' + totalProgramDays + ' del programa')
     : 'Tu programa aún no inicia';
 
-  /* Adherencia global — mismo cálculo que la pestaña Mi Data */
-  const allIsos = Object.keys(state.checkins).sort();
-  const daysSinceStart = Math.max(1, daysIn + 1);
-  const adherence = daysIn >= 0 ? Math.round(allIsos.length / daysSinceStart * 100) : null;
+  /* Adherencia global — mismo cálculo que la pestaña Mi Data (computeAdherence, único en todo el archivo) */
+  const adherence = computeAdherence(startIso, todayIso, state.checkins);
 
-  /* Check-ins de los últimos 7 días */
-  let last7Count = 0;
-  for (let i = 0; i < 7; i++) { if (state.checkins[addDaysISO(todayIso, -i)]) last7Count++; }
+  /* Check-ins de los últimos 7 días — sobre los días que realmente pedían uno (lunes a viernes) */
+  const last7 = computeAdherenceInRange(startIso, state.checkins, addDaysISO(todayIso, -6), todayIso);
 
   /* Próximo hito del cronograma clínico — mismo cálculo que "Próximas Sesiones" */
   const nextItem = ROADMAP
@@ -1090,16 +1141,28 @@ function renderResumen() {
 
   html += '<div class="grid-2">';
 
-  /* --- Left: stats + próximo control + accesos rápidos --- */
+  /* --- Left: hoy te toca + stats + próximo control --- */
   html += '<div>';
 
-  html += '<div class="stat-chips" style="margin-bottom:16px;">';
-  html += statChip(adherence !== null ? adherence + '%' : '—', 'Adherencia del programa');
-  html += statChip(last7Count + '/7', 'Check-ins últimos 7 días');
-  html += statChip(state.sessions.length, 'Sesiones registradas');
+  /* "Hoy te toca" — reusa buildDayCard tal cual (misma tarjeta de Mi Bitácora), para que Resumen
+     no sea solo foto del pasado sino también la próxima acción concreta. Maneja fin de semana
+     (Zona Sagrada), días futuros/anteriores al inicio y "ya completado" sin lógica nueva. */
+  html += '<div class="card" style="margin-bottom:16px;">';
+  html += '<h3>Hoy te toca</h3>';
+  html += buildDayCard(todayIso, 'summary');
   html += '</div>';
 
-  html += '<div class="card" style="margin-bottom:16px;">';
+  const adherenceInfo = 'Mide qué % de los días que pedían un check-in (lunes a viernes; el fin de semana es tu Zona Sagrada, sin tareas por diseño) sí lo hiciste, desde el día 1 del programa. <strong>100% es cumplimiento total de lo pedido</strong> — no hace falta estar siempre en el máximo para que el proceso funcione, pero es el número que Manuel revisa antes de cada control.';
+  const last7Info = 'De los 5 días que piden algo esta semana (lunes a viernes), cuántos ya registraste. Sábado y domingo no cuentan ni suman ni restan: son tu Zona Sagrada.';
+  const sesionesInfo = 'Consultas clínicas con Manuel ya registradas en tu ficha — no tus ingresos a esta plataforma. Entrar a Mi Bitácora no suma acá.';
+
+  html += '<div class="stat-chips" style="margin-bottom:16px;">';
+  html += statChip(adherence !== null ? adherence + '%' : '—', 'Adherencia del programa', adherenceInfo);
+  html += statChip(last7.done + '/' + last7.eligible, 'Check-ins esta semana', last7Info);
+  html += statChip(state.sessions.length, 'Consultas registradas', sesionesInfo);
+  html += '</div>';
+
+  html += '<div class="card">';
   html += '<h3>Próximo control</h3>';
   if (nextItem) {
     html += '<div class="roadmap-mini" style="margin:0;">';
@@ -1114,18 +1177,9 @@ function renderResumen() {
   }
   html += '</div>';
 
-  html += '<div class="card">';
-  html += '<h3>Navega tu programa</h3>';
-  html += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
-  TABS.filter(function(t) { return t.id !== 'resumen'; }).forEach(function(t) {
-    html += '<button class="btn small" onclick="setTab(\'' + t.id + '\')">' + t.label + '</button>';
-  });
-  html += '</div>';
-  html += '</div>';
-
   html += '</div>'; // left col
 
-  /* --- Right: mini ritmo del mes (reusa buildRadarSVG de Mi Bitácora) --- */
+  /* --- Right: mini ritmo del mes (reusa buildRadarSVG de Mi Bitácora) + pilar más débil --- */
   html += '<div class="card">';
   html += '<h3>Ritmo de este mes</h3>';
   html += '<div class="card-sub">Promedio de cada pilar en ' + monthLabel(monthKey(todayIso)) + '.</div>';
@@ -1134,6 +1188,10 @@ function renderResumen() {
     html += '<div class="no-data-msg">Sin check-ins registrados este mes todavía.</div>';
   } else {
     html += '<div class="rueda-svg-wrap">' + buildRadarSVG(mstats) + '</div>';
+    const weakestMonth = weakestPillarFromAvgs(mstats.avgs);
+    if (weakestMonth) {
+      html += '<div style="margin-top:8px;padding:8px 10px;background:var(--gray-bg);border-radius:8px;font-size:12px;color:var(--ink);">Pilar con nota más baja este mes: <strong>' + escapeHtml(weakestMonth.name) + '</strong> (' + weakestMonth.avg.toFixed(1) + '/10)</div>';
+    }
   }
   html += '<div style="margin-top:10px;"><button class="btn small" onclick="setTab(\'rueda\')">Ver Mi Bitácora completa →</button></div>';
   html += '</div>';
@@ -1685,7 +1743,7 @@ function renderProgreso() {
   const months = getMonthList();
   const allIsos = Object.keys(state.checkins).sort();
   const daysSinceStart = Math.max(1, daysBetween(state.patient.startDate, todayISO()) + 1);
-  const adherence = Math.round(allIsos.length / daysSinceStart * 100);
+  const adherence = computeAdherence(state.patient.startDate, todayISO(), state.checkins);
   const streak = computeCurrentStreak();
   const totalProgramDays = state.patient.programMonths * 30;
   const progPct = Math.max(0, Math.min(100, Math.round(daysSinceStart / totalProgramDays * 100)));
@@ -1705,7 +1763,7 @@ function renderProgreso() {
 
   let html = '';
   html += '<div class="stat-chips">';
-  html += statChip(adherence + '%', 'Adherencia global');
+  html += statChip((adherence !== null ? adherence : 0) + '%', 'Adherencia global');
   html += statChip(streak + (streak === 1 ? ' día' : ' días'), 'Racha actual');
   html += '<div class="stat-chip"><div class="num">' + (currentAvg !== null ? currentAvg.toFixed(1) : '—') + '</div><div class="lbl">Bienestar (últ. 30d)</div>' + deltaHtml + '</div>';
   html += statChip(progPct + '%', 'Avance del programa');
@@ -1755,8 +1813,8 @@ function renderWeeklySummaryCard() {
   const thisWeekIsos = Object.keys(state.checkins).filter(iso => iso >= weekStart && iso <= todayIso);
   const prevWeekIsos = Object.keys(state.checkins).filter(iso => iso >= prevWeekStart && iso <= prevWeekEnd);
 
-  const thisWeekAdherence = Math.round(thisWeekIsos.length / 7 * 100);
-  const prevWeekAdherence = Math.round(prevWeekIsos.length / 7 * 100);
+  const thisWeekAdherence = computeAdherenceInRange(state.patient.startDate, state.checkins, weekStart, todayIso).pct;
+  const prevWeekAdherence = computeAdherenceInRange(state.patient.startDate, state.checkins, prevWeekStart, prevWeekEnd).pct;
   const adherenceDelta = thisWeekAdherence - prevWeekAdherence;
 
   const thisScores = thisWeekIsos.map(iso => weightedDailyScore(state.checkins[iso].ratings)).filter(s => s !== null);
@@ -2152,14 +2210,13 @@ function renderHistorial() {
   }
   const scores = filtered.map(iso => weightedDailyScore(state.checkins[iso].ratings)).filter(s => s !== null);
   const avg = scores.length ? (scores.reduce((a,b) => a+b, 0) / scores.length) : null;
-  const daysSinceStart = Math.max(1, daysBetween(state.patient.startDate, todayISO()) + 1);
-  const adherence = Math.round(allIsos.length / daysSinceStart * 100);
+  const adherence = computeAdherence(state.patient.startDate, todayISO(), state.checkins);
 
   let html = '<div class="stat-chips">';
   html += statChip(avg !== null ? avg.toFixed(1) : '—', 'Bienestar general prom.');
   html += statChip(allIsos.length, 'Check-ins totales');
-  html += statChip(adherence + '%', 'Adherencia al programa');
-  html += statChip(state.sessions.length, 'Sesiones registradas');
+  html += statChip((adherence !== null ? adherence : 0) + '%', 'Adherencia al programa');
+  html += statChip(state.sessions.length, 'Consultas registradas');
   html += '</div>';
 
   html += '<div class="card" style="margin-bottom:18px;">';
@@ -2218,9 +2275,28 @@ function renderHistorial() {
 
   return html;
 }
-function statChip(num, lbl) {
-  return '<div class="stat-chip"><div class="num">' + num + '</div><div class="lbl">' + lbl + '</div></div>';
+let statInfoSeq = 0;
+/* info (opcional): HTML corto que explica qué mide el número, si es bueno/malo y qué se espera —
+   aparece detrás de un botón "i" para no ensuciar el chip cuando no hace falta. */
+function statChip(num, lbl, info) {
+  let infoHtml = '';
+  if (info) {
+    const infoId = 'statinfo_' + (statInfoSeq++);
+    infoHtml = '<button type="button" class="stat-info-btn" onclick="event.stopPropagation();toggleStatInfo(\'' + infoId + '\')" aria-label="Qué significa este número">i</button>' +
+      '<div class="stat-info-pop" id="' + infoId + '" hidden>' + info + '</div>';
+  }
+  return '<div class="stat-chip">' + infoHtml + '<div class="num">' + num + '</div><div class="lbl">' + lbl + '</div></div>';
 }
+function toggleStatInfo(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const wasHidden = el.hidden;
+  document.querySelectorAll('.stat-info-pop').forEach(p => { p.hidden = true; });
+  el.hidden = !wasHidden;
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.stat-chip')) document.querySelectorAll('.stat-info-pop').forEach(p => { p.hidden = true; });
+});
 function setHistorialRange(r) { state.ui.historialRange = r; saveState(); render(); }
 function toggleCheckinsExpanded() { state.ui.checkinsExpanded = !state.ui.checkinsExpanded; saveState(); render(); }
 
@@ -2439,14 +2515,13 @@ function renderData() {
   const allIsos = Object.keys(state.checkins).sort();
   const scores = allIsos.map(iso => weightedDailyScore(state.checkins[iso].ratings)).filter(s => s !== null);
   const avg = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length) : null;
-  const daysSinceStart = Math.max(1, daysBetween(state.patient.startDate, todayISO()) + 1);
-  const adherence = Math.round(allIsos.length / daysSinceStart * 100);
+  const adherence = computeAdherence(state.patient.startDate, todayISO(), state.checkins);
 
   let html = '<div class="stat-chips">';
   html += statChip(allIsos.length, 'Check-ins registrados');
   html += statChip(avg !== null ? avg.toFixed(1) : '—', 'Bienestar general prom.');
-  html += statChip(adherence + '%', 'Adherencia');
-  html += statChip(state.sessions.length, 'Sesiones');
+  html += statChip((adherence !== null ? adherence : 0) + '%', 'Adherencia');
+  html += statChip(state.sessions.length, 'Consultas');
   html += '</div>';
 
   html += '<div class="card">';
