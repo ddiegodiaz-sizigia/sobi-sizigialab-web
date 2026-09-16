@@ -838,13 +838,15 @@ async function loadStateForUser(user) {
 
     if (!patient) {
       // Intenta reclamar un registro pre-creado por Manuel/Diego que coincida con el email
-      await supabaseClient
+      const claim = await supabaseClient
         .from('patients')
         .update({ auth_user_id: user.id })
         .is('auth_user_id', null)
         .ilike('email', user.email);
+      if (claim.error) console.error('Self-claim UPDATE error', claim.error);
       const retry = await supabaseClient
         .from('patients').select('*').eq('auth_user_id', user.id).maybeSingle();
+      if (retry.error) console.error('Self-claim retry SELECT error', retry.error);
       patient = retry.data || null;
     }
   } catch (e) {
@@ -1035,7 +1037,7 @@ function getMonthList() {
 /* ============================= RENDER: SHELL ============================= */
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
-  { id: 'rueda', label: 'Mi Bitácora' },
+  { id: 'rueda', label: 'Mi Rueda' },
   { id: 'progreso', label: 'Progreso' },
   { id: 'medidas', label: 'Medidas' },
   { id: 'historial', label: 'Historial' },
@@ -1193,7 +1195,7 @@ function renderResumen() {
       html += '<div style="margin-top:8px;padding:8px 10px;background:var(--gray-bg);border-radius:8px;font-size:12px;color:var(--ink);">Pilar con nota más baja este mes: <strong>' + escapeHtml(weakestMonth.name) + '</strong> (' + weakestMonth.avg.toFixed(1) + '/10)</div>';
     }
   }
-  html += '<div style="margin-top:10px;"><button class="btn small" onclick="setTab(\'rueda\')">Ver Mi Bitácora completa →</button></div>';
+  html += '<div style="margin-top:10px;"><button class="btn small" onclick="setTab(\'rueda\')">Ver Mi Rueda completa →</button></div>';
   html += '</div>';
 
   html += '</div>'; // grid-2
