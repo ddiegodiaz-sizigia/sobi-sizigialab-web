@@ -17,15 +17,16 @@ var SIZIGIA_LEADS = {
   form.addEventListener('submit', function (ev) {
     ev.preventDefault();
     var d = new FormData(form), bad = '';
-    ['nombre', 'apellido', 'celular', 'ubicacion'].forEach(function (k) { if (!String(d.get(k) || '').trim()) bad = 'Completa todos los campos.'; });
+    ['nombre', 'apellido', 'correo', 'celular', 'ubicacion'].forEach(function (k) { if (!String(d.get(k) || '').trim()) bad = 'Completa todos los campos.'; });
     var cel = String(d.get('celular') || '').replace(/\D/g, '');
+    if (!bad && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(d.get('correo')).trim())) bad = 'Revisa tu correo.';
     if (!bad && (cel.length < 8 || cel.length > 13)) bad = 'Revisa tu número de celular.';
     if (!bad && !form.elements.acepto.checked) bad = 'Debes aceptar el uso de tus datos para continuar.';
     if (bad) { err.textContent = bad; err.hidden = false; return; }
     err.hidden = true;
     var payload = {
       fecha: new Date().toISOString(),
-      nombre: d.get('nombre').trim(), apellido: d.get('apellido').trim(),
+      nombre: d.get('nombre').trim(), apellido: d.get('apellido').trim(), correo: d.get('correo').trim(),
       celular: d.get('celular').trim(), ubicacion: d.get('ubicacion').trim(),
       origen: 'guia-sueno', pagina: location.pathname
     };
