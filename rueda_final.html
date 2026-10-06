@@ -206,6 +206,31 @@
   .resource-blur { filter: blur(3px); opacity: 0.5; user-select: none; pointer-events: none; }
   .resource-unlock-note { font-size: 11.5px; color: var(--muted); }
 
+  /* --- Biblioteca Zona Azul: tarjetas con portada + enlaces --- */
+  .lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 18px; }
+  .lib-card { display: flex; gap: 16px; border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: var(--paper); box-shadow: var(--shadow-sm); transition: transform .15s, box-shadow .15s; }
+  .lib-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .lib-cover { flex: 0 0 104px; width: 104px; height: 156px; border-radius: 6px 10px 10px 6px; overflow: hidden; position: relative; box-shadow: 0 10px 20px -8px rgba(29,29,26,.45), 0 2px 4px rgba(29,29,26,.15); display: block; text-decoration: none; background: var(--gray-bg); }
+  .lib-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .lib-cover.book::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: linear-gradient(90deg, rgba(0,0,0,.25), rgba(255,255,255,.12) 60%, transparent); pointer-events: none; }
+  .lib-gen { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 12px 10px; color: #fff; box-sizing: border-box; }
+  .lib-gen .gi { font-size: 22px; line-height: 1; opacity: .9; }
+  .lib-gen .gt { font-size: 12.5px; font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; }
+  .lib-gen .ga { font-size: 9.5px; opacity: .8; letter-spacing: .04em; text-transform: uppercase; margin-top: 4px; }
+  .lib-gen.t-libro { background: linear-gradient(155deg, #B86B4B, #5a2f1f); }
+  .lib-gen.t-documental { background: linear-gradient(155deg, #3f5a6b, #17252e); }
+  .lib-gen.t-podcast { background: linear-gradient(155deg, #7b836b, #353b2c); }
+  .lib-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+  .lib-body h4 { font-size: 15px; margin: 0 0 3px 0; line-height: 1.3; }
+  .lib-body .card-sub { margin-bottom: 8px; }
+  .lib-body p { font-size: 12.5px; color: var(--muted); line-height: 1.55; margin: 0 0 12px 0; }
+  .lib-actions { margin-top: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .lib-btn { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 999px; text-decoration: none; border: 1px solid var(--accent); background: var(--accent); color: #fff; transition: background .12s; }
+  .lib-btn:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+  .lib-btn.ghost { background: transparent; color: var(--accent-dark); }
+  .lib-btn.ghost:hover { background: var(--accent-bg); }
+  @media (max-width: 440px) { .lib-grid { grid-template-columns: 1fr; } .lib-cover { flex-basis: 88px; width: 88px; height: 132px; } }
+
   /* ---- Sesiones ---- */
   .sessions-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
   @media (max-width: 880px) { .sessions-columns { grid-template-columns: 1fr; } }
@@ -594,27 +619,27 @@ function getZoneBlueTipForDay(iso) {
 
 /* --- Biblioteca curada Zona Azul (libros, documentales, podcasts) — acceso por plan, ver TIERS --- */
 const ZONE_BLUE_LIBRARY = [
-  { type: 'Libro', title: 'Outlive: The Science and Art of Longevity', author: 'Dr. Peter Attia', tag: 'Medicina 3.0',
+  { type: 'Libro', title: 'Outlive: The Science and Art of Longevity', isbn: '9780593236598', url: 'https://www.amazon.com/dp/0593236599', urlLabel: 'Comprar en Amazon', url2: 'https://www.buscalibre.cl/libros/search?q=Outlive+Peter+Attia', url2Label: 'Buscalibre Chile', author: 'Dr. Peter Attia', tag: 'Medicina 3.0',
     blurb: 'Medicina 3.0, prevención proactiva, zona 2 de entrenamiento, estabilidad física y masa muscular como seguro de vida.' },
-  { type: 'Libro', title: 'Why We Sleep', author: 'Matthew Walker', tag: 'Sueño',
+  { type: 'Libro', title: 'Why We Sleep', isbn: '9781501144318', url: 'https://www.amazon.com/dp/1501144316', urlLabel: 'Comprar en Amazon', url2: 'https://www.buscalibre.cl/libros/search?q=Why+We+Sleep+Matthew+Walker', url2Label: 'Buscalibre Chile', author: 'Matthew Walker', tag: 'Sueño',
     blurb: 'Higiene del sueño, fases REM y NREM, impacto en el sistema inmune, aprendizaje y regulación metabólica.' },
-  { type: 'Libro', title: 'The Blue Zones', author: 'Dan Buettner', tag: 'Longevidad',
+  { type: 'Libro', title: 'The Blue Zones', isbn: '9781426209482', url: 'https://www.amazon.com/dp/1426209487', urlLabel: 'Comprar en Amazon', url2: 'https://www.buscalibre.cl/libros/search?q=The+Blue+Zones+Dan+Buettner', url2Label: 'Buscalibre Chile', author: 'Dan Buettner', tag: 'Longevidad',
     blurb: 'Mover de forma natural, tener propósito (Ikigai), comer hasta el 80% de saciedad (Hara Hachi Bu) y priorizar la tribu.' },
-  { type: 'Libro', title: 'Atomic Habits', author: 'James Clear', tag: 'Hábitos',
+  { type: 'Libro', title: 'Atomic Habits', isbn: '9780735211292', url: 'https://www.amazon.com/dp/0735211299', urlLabel: 'Comprar en Amazon', url2: 'https://www.buscalibre.cl/libros/search?q=Atomic+Habits+James+Clear', url2Label: 'Buscalibre Chile', author: 'James Clear', tag: 'Hábitos',
     blurb: 'Diseño de ambientes, hábitos de 2 minutos, apilamiento de hábitos y enfoque en la identidad más que en las metas.' },
-  { type: 'Libro', title: 'Breath', author: 'James Nestor', tag: 'Respiración',
+  { type: 'Libro', title: 'Breath', isbn: '9780735213616', url: 'https://www.amazon.com/dp/0735213615', urlLabel: 'Comprar en Amazon', url2: 'https://www.buscalibre.cl/libros/search?q=Breath+James+Nestor', url2Label: 'Buscalibre Chile', author: 'James Nestor', tag: 'Respiración',
     blurb: 'Respiración nasal vs. bucal, reducción de volumen respiratorio y control de la variabilidad del ritmo cardíaco (HRV).' },
-  { type: 'Documental', title: 'Vivir 100 años: El secreto de las zonas azules', author: 'Netflix', tag: 'Zonas Azules',
+  { type: 'Documental', title: 'Vivir 100 años: El secreto de las zonas azules', platform: 'Netflix', url: 'https://www.netflix.com/title/81214929', urlLabel: 'Ver en Netflix', author: 'Netflix', tag: 'Zonas Azules',
     blurb: 'Dieta, relaciones sociales y hábitos diarios en Nicoya, Okinawa, Cerdeña, Icaria y Loma Linda.' },
-  { type: 'Documental', title: 'Limitless con Chris Hemsworth', author: 'National Geographic / Disney+', tag: 'Estrés hormético',
+  { type: 'Documental', title: 'Limitless con Chris Hemsworth', platform: 'Disney+', url: 'https://www.disneyplus.com/search?q=Limitless%20Chris%20Hemsworth', urlLabel: 'Ver en Disney+', author: 'National Geographic / Disney+', tag: 'Estrés hormético',
     blurb: 'Ayuno, resistencia mental, saunas y exposición al frío para prolongar la vitalidad.' },
-  { type: 'Documental', title: 'Heal', author: 'Documental', tag: 'Estrés crónico',
+  { type: 'Documental', title: 'Heal', platform: 'Apple TV', url: 'https://tv.apple.com/movie/heal/umc.cmc.43kbyptvtq16zxfa0z4q3og3u', urlLabel: 'Ver en Apple TV', author: 'Documental', tag: 'Estrés crónico',
     blurb: 'El impacto del cortisol y estrés crónico en la expresión genética y procesos inflamatorios.' },
-  { type: 'Podcast', title: 'Huberman Lab Podcast', author: 'Dr. Andrew Huberman', tag: 'Neurobiología',
+  { type: 'Podcast', title: 'Huberman Lab Podcast', platform: 'Podcast', url: 'https://www.hubermanlab.com/', urlLabel: 'Sitio oficial', url2: 'https://open.spotify.com/search/Huberman%20Lab', url2Label: 'Spotify', author: 'Dr. Andrew Huberman', tag: 'Neurobiología',
     blurb: 'Protocolos de neurobiología, luz circadiana, fijación de dopamina y descansos profundos sin sueño (NSDR).' },
-  { type: 'Podcast', title: 'The Peter Attia Drive', author: 'Peter Attia', tag: 'Biomarcadores',
+  { type: 'Podcast', title: 'The Peter Attia Drive', platform: 'Podcast', url: 'https://peterattiamd.com/podcast/', urlLabel: 'Sitio oficial', url2: 'https://open.spotify.com/search/The%20Peter%20Attia%20Drive', url2Label: 'Spotify', author: 'Peter Attia', tag: 'Biomarcadores',
     blurb: 'Biomarcadores, resistencia a la insulina, perfil lipídico y entrenamiento metabólico.' },
-  { type: 'Podcast', title: 'The Rich Roll Podcast', author: 'Rich Roll', tag: 'Nutrición',
+  { type: 'Podcast', title: 'The Rich Roll Podcast', platform: 'Podcast', url: 'https://www.richroll.com/podcast/', urlLabel: 'Sitio oficial', url2: 'https://open.spotify.com/search/The%20Rich%20Roll%20Podcast', url2Label: 'Spotify', author: 'Rich Roll', tag: 'Nutrición',
     blurb: 'Longevidad, nutrición basada en alimentos integrales y transformación personal.' }
 ];
 
@@ -2401,21 +2426,47 @@ function renderRecursos() {
     html += '</div>';
   } else {
     const items = tier.library === 'unlimited' ? ZONE_BLUE_LIBRARY : ZONE_BLUE_LIBRARY.slice(0, 8);
-    html += '<div class="resource-grid">';
-    items.forEach(item => {
-      html += '<div class="resource-card">';
-      html += '<div class="rnum">' + escapeHtml(item.type.toUpperCase()) + ' · ' + escapeHtml(item.tag.toUpperCase()) + '</div>';
-      html += '<h4>' + escapeHtml(item.title) + '</h4>';
-      html += '<div class="card-sub" style="margin-bottom:8px;">' + escapeHtml(item.author) + '</div>';
-      html += '<p>' + escapeHtml(item.blurb) + '</p>';
-      html += '</div>';
-    });
+    html += '<div class="lib-grid">';
+    items.forEach(item => { html += renderLibraryCard(item); });
     html += '</div>';
     if (tier.library !== 'unlimited' && ZONE_BLUE_LIBRARY.length > items.length) {
       html += '<div class="resource-unlock-note" style="margin-top:10px;">+' + (ZONE_BLUE_LIBRARY.length - items.length) + ' títulos más con Biblioteca Zona Azul ilimitada (planes 6M).</div>';
     }
   }
   return html;
+}
+/* Portada generada (fallback y para documentales/podcasts) */
+function libGenCover(item) {
+  const icon = item.type === 'Libro' ? '📖' : item.type === 'Documental' ? '🎬' : '🎧';
+  return '<div class="lib-gen t-' + item.type.toLowerCase() + '"><div class="gi">' + icon + '</div>' +
+    '<div><div class="gt">' + escapeHtml(item.title) + '</div><div class="ga">' + escapeHtml(item.author) + '</div></div></div>';
+}
+function libCoverError(img) {
+  const holder = img.parentNode;
+  const idx = parseInt(holder.getAttribute('data-idx'), 10);
+  holder.innerHTML = libGenCover(ZONE_BLUE_LIBRARY[idx]);
+}
+function renderLibraryCard(item) {
+  const idx = ZONE_BLUE_LIBRARY.indexOf(item);
+  const isBook = item.type === 'Libro';
+  let cover;
+  if (isBook && item.isbn) {
+    cover = '<img src="https://covers.openlibrary.org/b/isbn/' + item.isbn + '-L.jpg?default=false" alt="Portada de ' + escapeHtml(item.title) + '" loading="lazy" referrerpolicy="no-referrer" onerror="libCoverError(this)">';
+  } else {
+    cover = libGenCover(item);
+  }
+  let h = '<div class="lib-card">';
+  h += '<a class="lib-cover ' + (isBook ? 'book' : '') + '" data-idx="' + idx + '" href="' + item.url + '" target="_blank" rel="noopener noreferrer" aria-label="' + escapeHtml(item.urlLabel + ': ' + item.title) + '">' + cover + '</a>';
+  h += '<div class="lib-body">';
+  h += '<div class="rnum" style="font-size:10.5px;color:var(--accent-dark);font-weight:700;letter-spacing:.06em;margin-bottom:6px;">' + escapeHtml(item.type.toUpperCase()) + ' · ' + escapeHtml(item.tag.toUpperCase()) + '</div>';
+  h += '<h4>' + escapeHtml(item.title) + '</h4>';
+  h += '<div class="card-sub">' + escapeHtml(item.author) + '</div>';
+  h += '<p>' + escapeHtml(item.blurb) + '</p>';
+  h += '<div class="lib-actions">';
+  h += '<a class="lib-btn" href="' + item.url + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(item.urlLabel) + ' ↗</a>';
+  if (item.url2) h += '<a class="lib-btn ghost" href="' + item.url2 + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(item.url2Label) + ' ↗</a>';
+  h += '</div></div></div>';
+  return h;
 }
 function downloadResourceStub(pillarId) {
   alert('La descarga de esta guía en PDF estará disponible próximamente. Por ahora puedes revisar el contenido acá mismo.');
