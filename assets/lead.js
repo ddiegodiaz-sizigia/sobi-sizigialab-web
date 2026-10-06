@@ -1,7 +1,7 @@
 /* SIZIGIA LAB — captura de datos para la guía gratuita */
 var SIZIGIA_LEADS = {
   // Pega aquí la URL de tu Google Apps Script (ver instrucciones). Mientras esté vacía, la guía se descarga pero los datos NO se guardan.
-  endpoint: '',
+  endpoint: 'https://script.google.com/macros/s/AKfycbxHj4hzVbWFIGA6bNhS3jWDlN75zkK_OUiGlN2gcANmmoJfzNVPXYZs8jLPwJu4QyHH7Q/exec',
   pdf: 'assets/guia-sueno-sizigia.pdf'
 };
 (function () {
