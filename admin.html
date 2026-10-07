@@ -178,6 +178,11 @@
   .resumen-item { font-size:13px; line-height:1.5; color:var(--ink); }
   .resumen-open { margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); font-size:12.5px; color:var(--muted); }
   .resumen-open b { color:var(--ink); }
+  .sem-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:7px; vertical-align:middle; background:#9ca3af; }
+  .sem-dot.big { width:22px; height:22px; margin:0; }
+  .sem-dot.verde { background:#16a34a; } .sem-dot.amarillo { background:#f59e0b; } .sem-dot.rojo { background:#dc2626; } .sem-dot.gris { background:#9ca3af; }
+  .sem-reason { font-size:13px; margin:2px 0; } .sem-reason.muted { color:var(--muted); }
+  .sem-label { font-size:11.5px; color:var(--muted); margin-top:2px; } .sem-src { font-size:11px; color:var(--muted); margin-top:5px; }
 </style>
 </head>
 <body>
@@ -950,7 +955,13 @@ async function loadStatusData() {
     (exams || []).forEach(r => { if (!lastExam[r.patient_id]) lastExam[r.patient_id] = r.exam_date; });
     const lastLogin = {};
     (logins || []).forEach(r => { if (!lastLogin[r.patient_id]) lastLogin[r.patient_id] = r.logged_in_at; });
-    statusData = { checkinsByPatient: byPatient, lastExamByPatient: lastExam, lastLoginByPatient: lastLogin, loaded: true, error: null };
+    // Registro deportivo: consulta aparte para que Estado siga funcionando si la migración aún no se aplicó.
+    let logsByPatient = {}, logsError = null;
+    const from60 = new Date(); from60.setDate(from60.getDate() - 60);
+    const from60ISO = from60.getFullYear()+'-'+String(from60.getMonth()+1).padStart(2,'0')+'-'+String(from60.getDate()).padStart(2,'0');
+    const { data: logs, error: e4 } = await sb.from('athlete_logs').select('patient_id, log_date, sleep_hours, sleep_quality, fatigue, mood, pain_level, pain_zone, trained, session_rpe, session_minutes').gte('log_date', from60ISO);
+    if (e4) logsError = e4.message || 'error'; else (logs || []).forEach(r => { (logsByPatient[r.patient_id] = logsByPatient[r.patient_id] || []).push(r); });
+    statusData = { checkinsByPatient: byPatient, lastExamByPatient: lastExam, lastLoginByPatient: lastLogin, logsByPatient: logsByPatient, logsError: logsError, loaded: true, error: null };
   } catch (e) {
     statusData = { checkinsByPatient: {}, lastExamByPatient: {}, lastLoginByPatient: {}, loaded: true, error: e.message || 'Error cargando estado' };
   }
@@ -978,6 +989,109 @@ function nextControlLabel(client) {
   return { label: 'Ciclo de 6 meses cumplido', date: '', overdue: false };
 }
 
+// ============ SEMÁFORO DE DISPONIBILIDAD v1 (reglas simples y explicables, sin ML) ============
+// PROPUESTA pendiente de validación por el Dr. Acuña: los umbrales son ajustables acá.
+// Es una señal para conversar antes de entrenar, no un diagnóstico ni una predicción clínica.
+// Todos los datos son autoinformados por el atleta en su registro deportivo (tabla athlete_logs).
+const SEM_RULES = {
+  maxAgeDays: 2,          // un registro más viejo que esto = "sin datos", nunca verde
+  painRed: 7,             // dolor >= 7 en el último registro
+  painRedStreak: { days: 3, level: 5 },   // dolor >= 5 en los últimos 3 registros consecutivos
+  painYellow: 4,
+  sleepLastYellow: 6,     // horas anoche
+  sleepAvg3Yellow: 6.5,   // promedio últimos 3 registros
+  fatigueYellow: 8,
+  fatigueRiseYellow: 2,   // fatiga prom. 3 últimos vs. línea base (registros previos de 28 días, mínimo 7)
+  moodYellow: 3,
+  acwrYellow: 1.5,        // carga 7 días / promedio semanal de 28 días (mínimo 21 días con registros en la ventana)
+  baselineMinLogs: 7,
+  acwrMinSpanDays: 21
+};
+const SEM_LABEL = { rojo: 'Revisar con el médico antes de entrenar', amarillo: 'Precaución: conversar con el atleta', verde: 'Sin alertas en los datos cargados', gris: 'Sin datos recientes' };
+
+function semDaysAgo(iso) { return Math.round((new Date(todayISO() + 'T00:00:00') - new Date(iso + 'T00:00:00')) / 86400000); }
+function semFmt(iso) { return iso.slice(8, 10) + '-' + iso.slice(5, 7); }
+function semAvg(arr) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null; }
+function semLoad(l) { return l.trained && l.session_rpe && l.session_minutes ? l.session_rpe * l.session_minutes : 0; }
+
+// logs: filas de athlete_logs de UN paciente (cualquier orden). Devuelve { level, reasons:[{level,text}], last }
+function computeSemaforo(logsIn) {
+  const R = SEM_RULES;
+  const logs = (logsIn || []).slice().sort((a, b) => a.log_date < b.log_date ? 1 : -1);
+  if (!logs.length) return { level: 'gris', reasons: [{ level: 'gris', text: 'Sin registros deportivos cargados.' }], last: null };
+  const last = logs[0];
+  const age = semDaysAgo(last.log_date);
+  if (age > R.maxAgeDays) return { level: 'gris', reasons: [{ level: 'gris', text: 'Último registro hace ' + age + ' días (' + semFmt(last.log_date) + '): no hay dato vigente.' }], last: last };
+
+  const reasons = [];
+  const add = (level, text) => reasons.push({ level: level, text: text });
+  const zone = l => l.pain_zone ? ' en ' + l.pain_zone.toLowerCase() : '';
+
+  if (last.pain_level != null && last.pain_level >= R.painRed) add('rojo', 'Dolor ' + last.pain_level + '/10' + zone(last) + ' el ' + semFmt(last.log_date) + '.');
+  const streak = logs.slice(0, R.painRedStreak.days);
+  if (streak.length === R.painRedStreak.days && streak.every(l => l.pain_level != null && l.pain_level >= R.painRedStreak.level) &&
+      semDaysAgo(streak[streak.length - 1].log_date) <= R.painRedStreak.days + 1 && !(last.pain_level >= R.painRed)) {
+    add('rojo', 'Dolor ≥ ' + R.painRedStreak.level + '/10 en los últimos ' + R.painRedStreak.days + ' registros' + zone(last) + ' (' + semFmt(streak[streak.length - 1].log_date) + ' al ' + semFmt(last.log_date) + ').');
+  }
+  if (last.pain_level != null && last.pain_level >= R.painYellow && last.pain_level < R.painRed && !reasons.some(r => r.level === 'rojo')) {
+    add('amarillo', 'Dolor ' + last.pain_level + '/10' + zone(last) + ' el ' + semFmt(last.log_date) + '.');
+  }
+  if (last.sleep_hours != null && last.sleep_hours < R.sleepLastYellow) add('amarillo', 'Durmió ' + last.sleep_hours + ' h la noche del ' + semFmt(last.log_date) + ' (umbral ' + R.sleepLastYellow + ' h).');
+  const last3 = logs.slice(0, 3);
+  const sl3 = last3.filter(l => l.sleep_hours != null).map(l => Number(l.sleep_hours));
+  if (sl3.length === 3 && semAvg(sl3) < R.sleepAvg3Yellow) {
+    add('amarillo', 'Sueño promedio de ' + semAvg(sl3).toFixed(1) + ' h en los últimos 3 registros (umbral ' + R.sleepAvg3Yellow + ' h).');
+  }
+  if (last.fatigue != null && last.fatigue >= R.fatigueYellow) add('amarillo', 'Fatiga ' + last.fatigue + '/10 el ' + semFmt(last.log_date) + '.');
+  const fat3 = last3.filter(l => l.fatigue != null).map(l => l.fatigue);
+  const base = logs.slice(3).filter(l => semDaysAgo(l.log_date) <= 28 && l.fatigue != null).map(l => l.fatigue);
+  if (fat3.length === 3 && base.length >= R.baselineMinLogs && semAvg(fat3) - semAvg(base) >= R.fatigueRiseYellow && !(last.fatigue >= R.fatigueYellow)) {
+    add('amarillo', 'Fatiga promedio de 3 días (' + semAvg(fat3).toFixed(1) + ') sobre su línea base de 28 días (' + semAvg(base).toFixed(1) + ').');
+  }
+  if (last.mood != null && last.mood <= R.moodYellow) add('amarillo', 'Ánimo ' + last.mood + '/10 el ' + semFmt(last.log_date) + '.');
+
+  const win28 = logs.filter(l => semDaysAgo(l.log_date) <= 27);
+  if (win28.length) {
+    const span = semDaysAgo(win28[win28.length - 1].log_date);
+    const acute = logs.filter(l => semDaysAgo(l.log_date) <= 6).reduce((a, l) => a + semLoad(l), 0);
+    const chronicWeekly = win28.reduce((a, l) => a + semLoad(l), 0) / 4;
+    if (span >= R.acwrMinSpanDays && chronicWeekly > 0 && acute / chronicWeekly > R.acwrYellow) {
+      add('amarillo', 'Carga de 7 días (' + acute + ' u.a.) es ' + (acute / chronicWeekly).toFixed(1) + '× su promedio semanal de 28 días (' + Math.round(chronicWeekly) + ' u.a.).');
+    }
+  }
+
+  const level = reasons.some(r => r.level === 'rojo') ? 'rojo' : reasons.length ? 'amarillo' : 'verde';
+  return { level: level, reasons: reasons, last: last };
+}
+
+function renderSemaforoHTML() {
+  const order = { rojo: 0, amarillo: 1, gris: 2, verde: 3 };
+  const rows = [];
+  activeClients().forEach(c => {
+    const logs = (statusData.logsByPatient || {})[c.id];
+    if (!logs || !logs.length) return;          // solo quienes usan el registro deportivo (últimos 60 días)
+    rows.push({ c: c, s: computeSemaforo(logs) });
+  });
+  let html = `<h3 style="margin:18px 0 4px 0;font-size:15px;">Semáforo de disponibilidad</h3>
+    <div class="sub" style="margin-bottom:10px;font-size:12.5px;color:var(--muted);">Reglas simples sobre el registro deportivo que cada atleta carga. Propuesta pendiente de validación por el Dr. Acuña. Es una señal para conversar antes de entrenar, no un diagnóstico ni una predicción. Cada alerta indica el dato que la origina.</div>`;
+  if (statusData.logsError) return html + `<div class="msg-inline err">Registro deportivo no disponible: ${escapeHtml(statusData.logsError)}. Falta aplicar la migración athlete_logs en Supabase.</div>`;
+  if (!rows.length) return html + `<div class="empty-state">Ningún paciente tiene registros deportivos en los últimos 60 días.</div>`;
+  rows.sort((a, b) => order[a.s.level] - order[b.s.level] || a.c.name.localeCompare(b.c.name));
+  html += `<table class="status-table"><thead><tr><th style="width:44px;"></th><th>Atleta</th><th>Motivos y dato de origen</th><th>Último registro</th></tr></thead><tbody>`;
+  rows.forEach(({ c, s }) => {
+    const items = s.reasons.length ? s.reasons.map(r => `<div class="sem-reason"><span class="sem-dot ${r.level}"></span>${escapeHtml(r.text)}</div>`).join('')
+      : `<div class="sem-reason muted">Sin alertas con los datos de los últimos 28 días.</div>`;
+    html += `<tr>
+      <td><span class="sem-dot big ${s.level}" title="${escapeHtml(SEM_LABEL[s.level])}"></span></td>
+      <td><button class="patient-link" onclick="openPatientFile('${c.id}')">${escapeHtml(c.name)}</button><div class="sem-label">${escapeHtml(SEM_LABEL[s.level])}</div></td>
+      <td>${items}<div class="sem-src">Fuente: registro deportivo autoinformado</div></td>
+      <td>${s.last ? escapeHtml(s.last.log_date) : '—'}</td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+  return html;
+}
+
 function renderStatusHTML() {
   let html = `<button class="detail-back" onclick="backToDashboard()">&larr; Volver</button>`;
   html += `<div class="detail-head"><div><h2>Estado de pacientes</h2><div class="sub">Solo lectura — adherencia de la semana, examen subido y próximo control. No reemplaza la ficha completa.</div></div></div>`;
@@ -985,6 +1099,8 @@ function renderStatusHTML() {
   if (statusData.error) { html += `<div class="msg-inline err">No se pudo cargar el estado: ${escapeHtml(statusData.error)}</div>`; return html; }
   const active = activeClients();
   if (active.length === 0) { html += `<div class="empty-state"><span class="empty-icon">○</span>No hay pacientes activos.</div>`; return html; }
+  html += renderSemaforoHTML();
+  html += `<h3 style="margin:22px 0 8px 0;font-size:15px;">Adherencia, exámenes y controles</h3>`;
   html += `<table class="status-table"><thead><tr>
     <th>Paciente</th><th>Adherencia (7 días)</th><th>Examen</th><th>Próximo control</th><th>Último acceso</th>
   </tr></thead><tbody>`;

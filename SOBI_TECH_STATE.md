@@ -1,0 +1,30 @@
+# Sizigia Lab — estado técnico (actualizado 07-10-2026)
+
+Reemplaza la versión del 17-08-2026, que describía Netlify y no incluía el panel admin.
+
+## Infraestructura
+- Hosting: Cloudflare, sitio estático (`wrangler.jsonc`), dominio `sizigialab.cl`. Repo en GitHub, rama `main`.
+- Supabase: proyecto `rueda-sobi`, organización "Medicina Humana", cuenta ddiegodiaz@gmail.com (no la de Lemu). Auth por magic link.
+- Un workflow de GitHub (`supabase-keepalive.yml`) hace ping cada 2 días para que el plan Free no se pause.
+
+## Tablas conocidas por el código
+`patients`, `checkins` (ratings jsonb), `measurements` (peso, % grasa, masa muscular, FC reposo, sueño, HRV, carga, cargados a mano), `transcripts`, `templates`, `program_days`, `patient_exams` (fecha de examen), `patient_logins`, `admins`.
+Nueva (rama `feat/atleta-semaforo`): `athlete_logs` (registro deportivo diario autoinformado).
+RPC: `is_admin()`.
+
+## Qué existe
+- App de paciente: check-in semanal por tipo de día, rueda de pilares, medidas, historial, sesiones (solo lectura), descarga de datos, modo demo.
+- Panel admin: pacientes y programa de mensajes, plantillas, bitácora, Estado (adherencia 7 días, examen, control, último acceso), ficha con resumen de señales.
+- Rama `feat/atleta-semaforo`: registro deportivo de menos de 30 s y semáforo de disponibilidad con reglas explicables (umbrales en `SEM_RULES` de `admin.html`, pendientes de validación médica).
+
+## Qué NO existe
+- Integración con WHOOP u otro wearable.
+- Roles de profesionales externos. Todo admin lee a todos los pacientes.
+- Consentimiento granular y registro de accesos.
+- Check-ins por WhatsApp. El admin solo arma links `wa.me` con plantillas.
+- Multi-organización.
+
+## Riesgos
+- Las políticas RLS anteriores a octubre 2026 no están en el repo; no se pueden auditar desde el código.
+- Los datos del semáforo son autoinformados. Sin adherencia no hay semáforo.
+- Archivos HTML grandes sin pruebas automáticas.
