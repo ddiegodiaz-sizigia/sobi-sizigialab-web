@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Sizigia Lab · Vista del equipo</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="assets/semaforo.js"></script>
+<style>
+  :root { --ink:#131a17; --muted:#6b7280; --line:#e6e4e1; --accent:#0d9488; --canvas:#faf9f7; --paper:#fffffe; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--canvas); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; font-size:14px; }
+  .wrap { max-width:860px; margin:0 auto; padding:22px 16px 48px; }
+  h1 { font-size:19px; margin:0 0 2px; } .tag { font-size:12px; color:var(--muted); }
+  .top { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding-bottom:14px; border-bottom:1px solid var(--line); margin-bottom:16px; }
+  .btn { border:1px solid var(--line); background:#fff; border-radius:9px; padding:8px 14px; font-size:13px; cursor:pointer; font-family:inherit; }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .note { font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:16px; }
+  .card { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:12px; display:flex; gap:14px; align-items:flex-start; }
+  .card h3 { margin:0 0 2px; font-size:15px; } .lab { font-size:12px; color:var(--muted); margin-bottom:6px; }
+  .reason { font-size:13px; margin:3px 0; } .src { font-size:11px; color:var(--muted); margin-top:6px; }
+  .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:7px; background:#9ca3af; vertical-align:middle; }
+  .big { width:24px; height:24px; margin:2px 0 0; flex:none; }
+  .verde { background:#16a34a; } .amarillo { background:#f59e0b; } .rojo { background:#dc2626; } .gris { background:#9ca3af; }
+  .login { max-width:380px; margin:70px auto; }
+  input { width:100%; border:1px solid var(--line); border-radius:8px; padding:9px 11px; font-size:14px; margin:10px 0; font-family:inherit; }
+  .msg { font-size:13px; margin-top:10px; } .err { color:#b91c1c; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="note">Cargando…</div></div>
+<script>
+const sb = supabase.createClient(window.SOBI_CONFIG.SUPABASE_URL, window.SOBI_CONFIG.SUPABASE_ANON_KEY);
+const app = document.getElementById('app');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+
+function loginScreen(msg, isErr) {
+  app.innerHTML = '<div class="login"><h1>Sizigia Lab</h1><div class="tag">Vista del equipo de entrenamiento y salud</div>' +
+    '<p class="note" style="margin-top:16px;">Entra con el correo con el que te registró el equipo de Sizigia Lab. Sin contraseña: te enviamos un link.</p>' +
+    '<input type="email" id="email" placeholder="tucorreo@ejemplo.com"><button class="btn primary" style="width:100%" onclick="sendLink()">Enviar link de acceso</button>' +
+    '<div class="msg ' + (isErr ? 'err' : '') + '">' + esc(msg || '') + '</div></div>';
+}
+async function sendLink() {
+  const email = document.getElementById('email').value.trim();
+  if (!email) return loginScreen('Ingresa tu correo.', true);
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
+  loginScreen(error ? error.message : 'Revisa tu correo y abre el link para entrar.', !!error);
+}
+
+async function boot() {
+  const { data } = await sb.auth.getSession();
+  if (!data.session) return loginScreen();
+  const { data: claimed, error: ce } = await sb.rpc('claim_professional');
+  if (ce || !claimed) {
+    app.innerHTML = '<div class="login"><h1>Sin acceso</h1><p class="note">Este correo (' + esc(data.session.user.email) + ') no está registrado como profesional. Pide al equipo de Sizigia Lab que te dé de alta.</p><button class="btn" onclick="sb.auth.signOut().then(()=>location.reload())">Salir</button></div>';
+    return;
+  }
+  const { data: rows, error } = await sb.rpc('coach_feed');
+  if (error) { app.innerHTML = '<div class="note err">No se pudo cargar: ' + esc(error.message) + '</div>'; return; }
+  render(data.session.user.email, rows || []);
+}
+
+function render(email, rows) {
+  const by = {};
+  rows.forEach(r => { (by[r.patient_id] = by[r.patient_id] || { name: r.patient_name, logs: [] }); if (r.log_date) by[r.patient_id].logs.push(r); });
+  const order = { rojo: 0, amarillo: 1, gris: 2, verde: 3 };
+  const list = Object.values(by).map(p => ({ name: p.name, s: computeSemaforo(p.logs) })).sort((a, b) => order[a.s.level] - order[b.s.level] || a.name.localeCompare(b.name));
+  let html = '<div class="top"><div><h1>Disponibilidad de tus atletas</h1><div class="tag">' + esc(email) + '</div></div><button class="btn" onclick="sb.auth.signOut().then(()=>location.reload())">Salir</button></div>';
+  html += '<div class="note">Ves solo a los atletas que te dieron permiso, y solo su registro deportivo (sueño, fatiga, ánimo, dolor y carga). Cada consulta queda registrada y el atleta puede verla y retirar el permiso cuando quiera. ' +
+    'El semáforo usa reglas simples pendientes de validación médica y datos que el atleta carga por su cuenta. Es una señal para conversar antes de entrenar, no un diagnóstico ni una predicción.</div>';
+  if (!list.length) html += '<div class="card"><div>Ningún atleta te ha dado acceso todavía.</div></div>';
+  list.forEach(p => {
+    const items = p.s.reasons.length ? p.s.reasons.map(r => '<div class="reason"><span class="dot ' + r.level + '"></span>' + esc(r.text) + '</div>').join('')
+      : '<div class="reason" style="color:var(--muted)">Sin alertas con los datos de los últimos 28 días.</div>';
+    html += '<div class="card"><span class="dot big ' + p.s.level + '"></span><div><h3>' + esc(p.name) + '</h3><div class="lab">' + esc(SEM_LABEL[p.s.level]) + '</div>' + items +
+      '<div class="src">Fuente: registro deportivo autoinformado' + (p.s.last ? ' · último registro ' + esc(p.s.last.log_date) : '') + '</div></div></div>';
+  });
+  app.innerHTML = html;
+}
+boot();
+</script>
+</body>
+</html>

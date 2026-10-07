@@ -9,18 +9,18 @@ Reemplaza la versión del 17-08-2026, que describía Netlify y no incluía el pa
 
 ## Tablas conocidas por el código
 `patients`, `checkins` (ratings jsonb), `measurements` (peso, % grasa, masa muscular, FC reposo, sueño, HRV, carga, cargados a mano), `transcripts`, `templates`, `program_days`, `patient_exams` (fecha de examen), `patient_logins`, `admins`.
-Nueva (rama `feat/atleta-semaforo`): `athlete_logs` (registro deportivo diario autoinformado).
-RPC: `is_admin()`.
+Nuevas: `athlete_logs` (registro deportivo diario autoinformado), `professionals`, `care_links` (permiso revocable del atleta a un profesional), `access_log` (quién consultó qué).
+RPC: `is_admin()`, `claim_professional()`, `list_professionals()`, `grant_care_link()`, `revoke_care_link()`, `coach_feed()`.
 
 ## Qué existe
 - App de paciente: check-in semanal por tipo de día, rueda de pilares, medidas, historial, sesiones (solo lectura), descarga de datos, modo demo.
 - Panel admin: pacientes y programa de mensajes, plantillas, bitácora, Estado (adherencia 7 días, examen, control, último acceso), ficha con resumen de señales.
+- Rama `feat/roles-v0`: profesionales dados de alta por el admin, el atleta concede o retira acceso al semáforo en Mi Data, vista `equipo.html`, registro de accesos visible para el atleta. 34 pruebas de políticas en `supabase/tests`.
 - Rama `feat/atleta-semaforo`: registro deportivo de menos de 30 s y semáforo de disponibilidad con reglas explicables (umbrales en `SEM_RULES` de `admin.html`, pendientes de validación médica).
 
 ## Qué NO existe
 - Integración con WHOOP u otro wearable.
-- Roles de profesionales externos. Todo admin lee a todos los pacientes.
-- Consentimiento granular y registro de accesos.
+- Permisos granulares más allá de `semaforo`. Todo admin sigue leyendo a todos los pacientes, sin registro de acceso.
 - Check-ins por WhatsApp. El admin solo arma links `wa.me` con plantillas.
 - Multi-organización.
 

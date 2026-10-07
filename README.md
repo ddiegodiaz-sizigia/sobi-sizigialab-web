@@ -5,7 +5,9 @@ Sitio estático en producción (`sizigialab.cl`), desplegado en Cloudflare (`wra
 ## Archivos
 - `index.html`, `medicina-humana.html`, `empresas.html`, `guia-sueno.html`: sitio público.
 - `rueda_final.html`: app del paciente o atleta (check-ins, medidas, historial, sesiones, registro deportivo).
-- `admin.html`: panel del equipo clínico (pacientes, plantillas, ficha, Estado, semáforo de disponibilidad). Acceso solo con `is_admin()`.
+- `admin.html`: panel del equipo clínico (pacientes, plantillas, ficha, Estado, semáforo, alta de profesionales). Acceso solo con `is_admin()`.
+- `equipo.html`: vista de entrenadores y otros profesionales. Ven solo el semáforo de los atletas que les dieron permiso; cada consulta queda registrada.
+- `assets/semaforo.js`: reglas del semáforo, compartidas por admin y equipo.
 - `supabase/migrations/`: SQL versionado. Aplicar a mano en Supabase > SQL Editor, en orden de fecha.
 - `supabase/seed_demo_atletas.sql`: 3 atletas 100 % sintéticos para demo y video.
 - `config.js`: URL y clave pública de Supabase (la clave publishable va en el navegador por diseño; la seguridad la dan las políticas RLS).
@@ -16,7 +18,12 @@ Sitio estático en producción (`sizigialab.cl`), desplegado en Cloudflare (`wra
 ## Reglas de copy
 No usar la palabra "SOBI" en nada visible al público. Usar Sizigia Lab o Medicina Humana.
 
+## Pruebas de permisos
+`npm i --no-save @electric-sql/pglite && node supabase/tests/roles_rls.test.mjs` corre 34 pruebas sobre las políticas y funciones de roles en un Postgres en memoria. Supone que `patients` tiene RLS; verificar contra Supabase.
+
 ## Pendiente conocido
 - Las políticas RLS de las tablas anteriores a octubre 2026 no están versionadas en este repo. Exportarlas y agregarlas a `supabase/migrations/`.
-- Permisos por rol de profesional (hoy solo `is_admin`), consentimiento y registro de accesos.
+- Un solo permiso por profesional (`semaforo`). Faltan permisos por tipo de dato, familia, y organizaciones.
+- El acceso de admins a los datos no queda en `access_log`.
+- Texto de consentimiento v0 sin revisión legal.
 - Integración con wearables y check-ins por WhatsApp.

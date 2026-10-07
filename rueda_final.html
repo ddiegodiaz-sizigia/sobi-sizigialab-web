@@ -2679,6 +2679,61 @@ function toggleSession(id) {
 }
 
 /* ============================= TAB: MI DATA ============================= */
+/* ============================= MI EQUIPO Y PERMISOS =============================
+   El atleta decide qué profesional ve su semáforo, y ve quién consultó sus datos y cuándo.
+   Funciones SQL en supabase/migrations/20261008_care_links.sql. Texto de consentimiento v0: pendiente de revisión legal. */
+const ROLE_LABELS = { medico: 'Médico', entrenador: 'Entrenador', preparador: 'Preparador físico', psicologo: 'Psicólogo', nutricionista: 'Nutricionista', kinesiologo: 'Kinesiólogo', familia: 'Familia', otro: 'Otro' };
+let teamData = { loaded: false, loading: false, pros: [], links: [], log: [], error: '' };
+
+async function loadTeamData() {
+  if (isDemoMode || !currentPatientId || teamData.loading) return;
+  teamData.loading = true;
+  try {
+    const [p, l, a] = await Promise.all([
+      supabaseClient.rpc('list_professionals'),
+      supabaseClient.from('care_links').select('professional_id, scopes, revoked_at, granted_at').eq('patient_id', currentPatientId),
+      supabaseClient.from('access_log').select('professional_id, accessed_at').eq('patient_id', currentPatientId).order('accessed_at', { ascending: false }).limit(15)
+    ]);
+    const err = p.error || l.error || a.error;
+    if (err) throw err;
+    teamData = { loaded: true, loading: false, pros: p.data || [], links: l.data || [], log: a.data || [], error: '' };
+  } catch (e) {
+    console.warn('team data', e);
+    teamData = { loaded: true, loading: false, pros: [], links: [], log: [], error: 'No disponible todavía.' };
+  }
+  render();
+}
+async function setCareLink(proId, grant) {
+  const { error } = await supabaseClient.rpc(grant ? 'grant_care_link' : 'revoke_care_link', grant ? { p_professional: proId, p_scopes: ['semaforo'] } : { p_professional: proId });
+  if (error) { alert('No se pudo actualizar el permiso. Intenta de nuevo.'); return; }
+  teamData.loaded = false; teamData.loading = false; loadTeamData();
+}
+function renderTeamCard() {
+  let html = '<div class="card" style="margin-top:16px;"><h3>Mi equipo y permisos</h3>';
+  html += '<div class="card-sub">Tu historia es tuya. Tú decides quién ve tu semáforo de disponibilidad (sueño, fatiga, ánimo, dolor y carga de tu registro deportivo). No ven tus notas, tus check-ins ni tus exámenes. Puedes retirar el permiso cuando quieras y verás cada consulta que hagan. El equipo clínico de Sizigia Lab (Dr. Acuña) accede a tu ficha por su rol médico, aparte de estos permisos.</div>';
+  if (isDemoMode) return html + '<div class="empty-state">No disponible en el modo demo.</div></div>';
+  if (!teamData.loaded) { loadTeamData(); return html + '<div class="empty-state">Cargando…</div></div>'; }
+  if (teamData.error) return html + '<div class="empty-state">' + escapeHtml(teamData.error) + '</div></div>';
+  if (!teamData.pros.length) return html + '<div class="empty-state">Aún no hay profesionales registrados en la plataforma.</div></div>';
+  const active = {};
+  teamData.links.forEach(l => { if (!l.revoked_at && (l.scopes || []).includes('semaforo')) active[l.professional_id] = l; });
+  teamData.pros.forEach(p => {
+    const on = !!active[p.id];
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);flex-wrap:wrap;">' +
+      '<div><strong>' + escapeHtml(p.name) + '</strong> <span style="color:var(--muted);font-size:12px;">· ' + escapeHtml(ROLE_LABELS[p.role] || p.role) + '</span>' +
+      (on ? '<div style="font-size:12px;color:var(--muted);">Acceso al semáforo desde ' + fmtDate(active[p.id].granted_at.slice(0, 10)) + '</div>' : '<div style="font-size:12px;color:var(--muted);">Sin acceso</div>') + '</div>' +
+      '<button class="btn small ' + (on ? 'danger' : 'primary') + '" onclick="setCareLink(\'' + p.id + '\',' + (on ? 'false' : 'true') + ')">' + (on ? 'Retirar acceso' : 'Dar acceso al semáforo') + '</button></div>';
+  });
+  const names = {}; teamData.pros.forEach(p => { names[p.id] = p.name; });
+  html += '<h4 style="margin:16px 0 6px;">Quién consultó tus datos</h4>';
+  if (!teamData.log.length) html += '<div style="font-size:12.5px;color:var(--muted);">Nadie ha consultado tus datos todavía.</div>';
+  else teamData.log.forEach(a => {
+    const d = new Date(a.accessed_at);
+    html += '<div style="font-size:12.5px;padding:3px 0;">' + escapeHtml(names[a.professional_id] || 'Profesional') + ' · ' + d.toLocaleDateString('es-CL') + ' ' + d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) + '</div>';
+  });
+  return html + '</div>';
+}
+
 function renderData() {
   const allIsos = Object.keys(state.checkins).sort();
   const scores = allIsos.map(iso => weightedDailyScore(state.checkins[iso].ratings)).filter(s => s !== null);
@@ -2712,6 +2767,7 @@ function renderData() {
   html += '</div>';
   html += '</div>';
   html += '</div>';
+  html += renderTeamCard();
   return html;
 }
 

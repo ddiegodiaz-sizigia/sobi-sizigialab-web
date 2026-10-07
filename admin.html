@@ -5,6 +5,7 @@
 <title>Rueda de Adherencia SOBI · Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
+<script src="assets/semaforo.js"></script>
 <style>
   :root {
     color-scheme: light;
@@ -330,6 +331,7 @@ function render() {
   else if (view.mode === 'bitacora') app.innerHTML = renderBitacoraHTML();
   else if (view.mode === 'templates') app.innerHTML = renderTemplatesHTML();
   else if (view.mode === 'status') app.innerHTML = renderStatusHTML();
+  else if (view.mode === 'pros') app.innerHTML = renderProsHTML();
   else if (view.mode === 'patientfile') app.innerHTML = renderPatientFileHTML();
   else app.innerHTML = renderDashboardHTML();
 }
@@ -421,6 +423,7 @@ function renderDashboardHTML() {
     </div>
     <div class="top-actions">
       <button class="btn" onclick="openStatusView()">Estado</button>
+      <button class="btn" onclick="openPros()">Profesionales</button>
       <button class="btn" onclick="openTemplates()">Plantillas</button>
       <button class="btn primary" onclick="openModal()">+ Nuevo paciente</button>
       <button class="btn" onclick="sb.auth.signOut()">Salir</button>
@@ -937,6 +940,54 @@ const STATUS_MILESTONES = [
 ];
 let statusData = { checkinsByPatient: {}, lastExamByPatient: {}, lastLoginByPatient: {}, loaded: false, error: null };
 
+// ============ PROFESIONALES (entrenadores, preparadores, etc.) ============
+// El admin da de alta al profesional por email; el atleta decide después si le concede acceso (Mi Data > Mi equipo).
+let prosData = { list: [], links: [], loaded: false, error: null };
+const PRO_ROLES = { medico: 'Médico', entrenador: 'Entrenador', preparador: 'Preparador físico', psicologo: 'Psicólogo', nutricionista: 'Nutricionista', kinesiologo: 'Kinesiólogo', familia: 'Familia', otro: 'Otro' };
+function openPros() { view.mode = 'pros'; render(); loadPros().then(render); }
+async function loadPros() {
+  const [{ data: list, error: e1 }, { data: links, error: e2 }] = await Promise.all([
+    sb.from('professionals').select('*').order('name'),
+    sb.from('care_links').select('professional_id, patient_id, scopes, revoked_at')
+  ]);
+  prosData = { list: list || [], links: links || [], loaded: true, error: (e1 || e2) ? ((e1 || e2).message || 'error') : null };
+}
+function renderProsHTML() {
+  let html = `<button class="detail-back" onclick="backToDashboard()">&larr; Volver</button>`;
+  html += `<div class="detail-head"><div><h2>Profesionales</h2><div class="sub">Dalos de alta por email. Solo ven a un atleta cuando el propio atleta les concede acceso, y cada consulta queda registrada.</div></div></div>`;
+  if (!prosData.loaded) return html + `<div class="empty-state">Cargando…</div>`;
+  if (prosData.error) return html + `<div class="msg-inline err">No se pudo cargar: ${escapeHtml(prosData.error)}. ¿Está aplicada la migración 20261008_care_links?</div>`;
+  html += `<div class="editor" style="margin-bottom:16px;"><h3>Nuevo profesional</h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <input id="proName" placeholder="Nombre" style="flex:1;min-width:160px;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px;">
+      <input id="proEmail" type="email" placeholder="email@ejemplo.com" style="flex:1;min-width:200px;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px;">
+      <select id="proRole" style="border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px;">${Object.keys(PRO_ROLES).map(k => `<option value="${k}">${PRO_ROLES[k]}</option>`).join('')}</select>
+      <button class="btn primary" onclick="createProfessional()">Agregar</button>
+    </div><div id="proMsg"></div></div>`;
+  if (!prosData.list.length) return html + `<div class="empty-state">Aún no hay profesionales.</div>`;
+  html += `<table class="status-table"><thead><tr><th>Nombre</th><th>Rol</th><th>Email</th><th>Acceso a la plataforma</th><th>Atletas con permiso activo</th><th></th></tr></thead><tbody>`;
+  prosData.list.forEach(p => {
+    const n = prosData.links.filter(l => l.professional_id === p.id && !l.revoked_at && (l.scopes || []).length).length;
+    html += `<tr><td>${escapeHtml(p.name)}</td><td>${escapeHtml(PRO_ROLES[p.role] || p.role)}</td><td>${escapeHtml(p.email)}</td>
+      <td>${p.auth_user_id ? '<span class="status-pill ok">Ya entró</span>' : '<span class="status-pill no">Aún no entra</span>'}</td><td>${n}</td>
+      <td><button class="btn" onclick="deleteProfessional('${p.id}')">Eliminar</button></td></tr>`;
+  });
+  return html + `</tbody></table><div class="sub" style="margin-top:10px;">El profesional entra en <b>/equipo.html</b> con el mismo email.</div>`;
+}
+async function createProfessional() {
+  const name = document.getElementById('proName').value.trim(), email = document.getElementById('proEmail').value.trim(), role = document.getElementById('proRole').value;
+  const msg = document.getElementById('proMsg');
+  if (!name || !email) { msg.innerHTML = `<div class="msg-inline err">Nombre y email son obligatorios.</div>`; return; }
+  const { error } = await sb.from('professionals').insert({ name, email, role });
+  if (error) { msg.innerHTML = `<div class="msg-inline err">${escapeHtml(error.message)}</div>`; return; }
+  await loadPros(); render();
+}
+async function deleteProfessional(id) {
+  if (!confirm('¿Eliminar a este profesional? Pierde todo acceso y se borran sus vínculos y registros de acceso.')) return;
+  await sb.from('professionals').delete().eq('id', id);
+  await loadPros(); render();
+}
+
 function openStatusView() { view.mode = 'status'; render(); loadStatusData().then(render); }
 
 async function loadStatusData() {
@@ -987,81 +1038,6 @@ function nextControlLabel(client) {
     }
   }
   return { label: 'Ciclo de 6 meses cumplido', date: '', overdue: false };
-}
-
-// ============ SEMÁFORO DE DISPONIBILIDAD v1 (reglas simples y explicables, sin ML) ============
-// PROPUESTA pendiente de validación por el Dr. Acuña: los umbrales son ajustables acá.
-// Es una señal para conversar antes de entrenar, no un diagnóstico ni una predicción clínica.
-// Todos los datos son autoinformados por el atleta en su registro deportivo (tabla athlete_logs).
-const SEM_RULES = {
-  maxAgeDays: 2,          // un registro más viejo que esto = "sin datos", nunca verde
-  painRed: 7,             // dolor >= 7 en el último registro
-  painRedStreak: { days: 3, level: 5 },   // dolor >= 5 en los últimos 3 registros consecutivos
-  painYellow: 4,
-  sleepLastYellow: 6,     // horas anoche
-  sleepAvg3Yellow: 6.5,   // promedio últimos 3 registros
-  fatigueYellow: 8,
-  fatigueRiseYellow: 2,   // fatiga prom. 3 últimos vs. línea base (registros previos de 28 días, mínimo 7)
-  moodYellow: 3,
-  acwrYellow: 1.5,        // carga 7 días / promedio semanal de 28 días (mínimo 21 días con registros en la ventana)
-  baselineMinLogs: 7,
-  acwrMinSpanDays: 21
-};
-const SEM_LABEL = { rojo: 'Revisar con el médico antes de entrenar', amarillo: 'Precaución: conversar con el atleta', verde: 'Sin alertas en los datos cargados', gris: 'Sin datos recientes' };
-
-function semDaysAgo(iso) { return Math.round((new Date(todayISO() + 'T00:00:00') - new Date(iso + 'T00:00:00')) / 86400000); }
-function semFmt(iso) { return iso.slice(8, 10) + '-' + iso.slice(5, 7); }
-function semAvg(arr) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null; }
-function semLoad(l) { return l.trained && l.session_rpe && l.session_minutes ? l.session_rpe * l.session_minutes : 0; }
-
-// logs: filas de athlete_logs de UN paciente (cualquier orden). Devuelve { level, reasons:[{level,text}], last }
-function computeSemaforo(logsIn) {
-  const R = SEM_RULES;
-  const logs = (logsIn || []).slice().sort((a, b) => a.log_date < b.log_date ? 1 : -1);
-  if (!logs.length) return { level: 'gris', reasons: [{ level: 'gris', text: 'Sin registros deportivos cargados.' }], last: null };
-  const last = logs[0];
-  const age = semDaysAgo(last.log_date);
-  if (age > R.maxAgeDays) return { level: 'gris', reasons: [{ level: 'gris', text: 'Último registro hace ' + age + ' días (' + semFmt(last.log_date) + '): no hay dato vigente.' }], last: last };
-
-  const reasons = [];
-  const add = (level, text) => reasons.push({ level: level, text: text });
-  const zone = l => l.pain_zone ? ' en ' + l.pain_zone.toLowerCase() : '';
-
-  if (last.pain_level != null && last.pain_level >= R.painRed) add('rojo', 'Dolor ' + last.pain_level + '/10' + zone(last) + ' el ' + semFmt(last.log_date) + '.');
-  const streak = logs.slice(0, R.painRedStreak.days);
-  if (streak.length === R.painRedStreak.days && streak.every(l => l.pain_level != null && l.pain_level >= R.painRedStreak.level) &&
-      semDaysAgo(streak[streak.length - 1].log_date) <= R.painRedStreak.days + 1 && !(last.pain_level >= R.painRed)) {
-    add('rojo', 'Dolor ≥ ' + R.painRedStreak.level + '/10 en los últimos ' + R.painRedStreak.days + ' registros' + zone(last) + ' (' + semFmt(streak[streak.length - 1].log_date) + ' al ' + semFmt(last.log_date) + ').');
-  }
-  if (last.pain_level != null && last.pain_level >= R.painYellow && last.pain_level < R.painRed && !reasons.some(r => r.level === 'rojo')) {
-    add('amarillo', 'Dolor ' + last.pain_level + '/10' + zone(last) + ' el ' + semFmt(last.log_date) + '.');
-  }
-  if (last.sleep_hours != null && last.sleep_hours < R.sleepLastYellow) add('amarillo', 'Durmió ' + last.sleep_hours + ' h la noche del ' + semFmt(last.log_date) + ' (umbral ' + R.sleepLastYellow + ' h).');
-  const last3 = logs.slice(0, 3);
-  const sl3 = last3.filter(l => l.sleep_hours != null).map(l => Number(l.sleep_hours));
-  if (sl3.length === 3 && semAvg(sl3) < R.sleepAvg3Yellow) {
-    add('amarillo', 'Sueño promedio de ' + semAvg(sl3).toFixed(1) + ' h en los últimos 3 registros (umbral ' + R.sleepAvg3Yellow + ' h).');
-  }
-  if (last.fatigue != null && last.fatigue >= R.fatigueYellow) add('amarillo', 'Fatiga ' + last.fatigue + '/10 el ' + semFmt(last.log_date) + '.');
-  const fat3 = last3.filter(l => l.fatigue != null).map(l => l.fatigue);
-  const base = logs.slice(3).filter(l => semDaysAgo(l.log_date) <= 28 && l.fatigue != null).map(l => l.fatigue);
-  if (fat3.length === 3 && base.length >= R.baselineMinLogs && semAvg(fat3) - semAvg(base) >= R.fatigueRiseYellow && !(last.fatigue >= R.fatigueYellow)) {
-    add('amarillo', 'Fatiga promedio de 3 días (' + semAvg(fat3).toFixed(1) + ') sobre su línea base de 28 días (' + semAvg(base).toFixed(1) + ').');
-  }
-  if (last.mood != null && last.mood <= R.moodYellow) add('amarillo', 'Ánimo ' + last.mood + '/10 el ' + semFmt(last.log_date) + '.');
-
-  const win28 = logs.filter(l => semDaysAgo(l.log_date) <= 27);
-  if (win28.length) {
-    const span = semDaysAgo(win28[win28.length - 1].log_date);
-    const acute = logs.filter(l => semDaysAgo(l.log_date) <= 6).reduce((a, l) => a + semLoad(l), 0);
-    const chronicWeekly = win28.reduce((a, l) => a + semLoad(l), 0) / 4;
-    if (span >= R.acwrMinSpanDays && chronicWeekly > 0 && acute / chronicWeekly > R.acwrYellow) {
-      add('amarillo', 'Carga de 7 días (' + acute + ' u.a.) es ' + (acute / chronicWeekly).toFixed(1) + '× su promedio semanal de 28 días (' + Math.round(chronicWeekly) + ' u.a.).');
-    }
-  }
-
-  const level = reasons.some(r => r.level === 'rojo') ? 'rojo' : reasons.length ? 'amarillo' : 'verde';
-  return { level: level, reasons: reasons, last: last };
 }
 
 function renderSemaforoHTML() {
