@@ -814,12 +814,28 @@ function generateSeedState() {
     };
   }
 
+  // Registro deportivo sintético (demo): 8 semanas, últimas noches algo más cortas.
+  const athleteLogs = {};
+  for (let k = 55; k >= 0; k--) {
+    const d = new Date(); d.setDate(d.getDate() - k);
+    const iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    const trained = d.getDay() !== 0 && rng() > 0.25;
+    const recent = k <= 2;
+    athleteLogs[iso] = {
+      log_date: iso, sleep_hours: Math.round((recent ? 6 : 7.2 + (rng()-0.5)) * 10) / 10,
+      sleep_quality: recent ? 5 : 6 + Math.round(rng()*2), fatigue: recent ? 7 : 3 + Math.round(rng()*2),
+      mood: 6 + Math.round(rng()*2), pain_level: rng() > 0.9 ? 1 : 0, pain_zone: null, trained: trained,
+      session_rpe: trained ? 5 + Math.round(rng()*2) : null, session_minutes: trained ? 60 + Math.round(rng()*20) : null, notes: null
+    };
+  }
+
   return {
     patient: { name: 'Javiera Ossandón (demo)', startDate: startDate, programMonths: 6, tierPlan: '3m' },
     pillars: pillars,
     checkins: checkins,
     measurements: measurements,
     sessions: sessions,
+    athleteLogs: athleteLogs,
     ui: { tab: 'resumen', selectedMonth: monthKey(todayISO()), historialRange: 'all', highlightPillar: null, checkinsExpanded: false, selectedRingDay: null, selectedMeasureDate: todayISO() }
   };
 }
@@ -884,7 +900,7 @@ async function loadStateForUser(user) {
   }
   currentPatientId = patient.id;
 
-  let checkinRows = [], sessionRows = [], measurementRows = [];
+  let checkinRows = [], sessionRows = [], measurementRows = [], athleteLogRows = [];
   try {
     const [ck, tr, ms] = await Promise.all([
       supabaseClient.from('checkins').select('*').eq('patient_id', patient.id),
@@ -895,6 +911,14 @@ async function loadStateForUser(user) {
     sessionRows = tr.data || [];
     measurementRows = ms.data || [];
   } catch (e) { console.error('Supabase read error', e); }
+  try {
+    const al = await supabaseClient.from('athlete_logs').select('*').eq('patient_id', patient.id).gte('log_date', addDaysISO(todayISO(), -60));
+    if (al.error) console.warn('athlete_logs no disponible (¿migración pendiente?)', al.error.message);
+    else athleteLogRows = al.data || [];
+  } catch (e) { console.warn('athlete_logs read error', e); }
+
+  const athleteLogsMap = {};
+  athleteLogRows.forEach(r => { athleteLogsMap[r.log_date] = r; });
 
   const checkins = {};
   checkinRows.forEach(r => {
@@ -930,6 +954,7 @@ async function loadStateForUser(user) {
     checkins: checkins,
     measurements: measurements,
     sessions: sessions,
+    athleteLogs: athleteLogsMap,
     ui: { tab: 'resumen', selectedMonth: monthKey(todayISO()), historialRange: 'all', highlightPillar: null, checkinsExpanded: false, selectedRingDay: null, selectedMeasureDate: todayISO() }
   };
   try { localStorage.setItem(cacheKey, JSON.stringify(state)); } catch(e) {}
@@ -1179,6 +1204,8 @@ function renderResumen() {
   html += buildDayCard(todayIso, 'summary');
   html += '</div>';
 
+  html += renderAthleteLogCard();
+
   const adherenceInfo = 'Mide qué % de los días que pedían un check-in (lunes a viernes; el fin de semana es tu Zona Sagrada, sin tareas por diseño) sí lo hiciste, desde el día 1 del programa. <strong>100% es cumplimiento total de lo pedido</strong> — no hace falta estar siempre en el máximo para que el proceso funcione, pero es el número que Manuel revisa antes de cada control.';
   const last7Info = 'De los 5 días que piden algo esta semana (lunes a viernes), cuántos ya registraste. Sábado y domingo no cuentan ni suman ni restan: son tu Zona Sagrada.';
   const sesionesInfo = 'Consultas clínicas con Manuel ya registradas en tu ficha — no tus ingresos a esta plataforma. Entrar a Mi Bitácora no suma acá.';
@@ -1226,6 +1253,94 @@ function renderResumen() {
   html += '</div>'; // grid-2
 
   return html;
+}
+
+/* ============================= REGISTRO DEPORTIVO (autoinformado) =============================
+   Tabla athlete_logs (ver supabase/migrations/20261007_athlete_logs.sql). Una fila por día.
+   Pensado para tomar menos de 30 s. Alimenta el semáforo de disponibilidad del panel del equipo.
+   Si la tabla aún no existe, la app sigue funcionando y avisa en la tarjeta. */
+const PAIN_ZONES = ['Cuello', 'Hombro', 'Codo / antebrazo', 'Muñeca / mano', 'Espalda alta', 'Zona lumbar', 'Cadera / ingle', 'Muslo anterior', 'Isquiotibiales', 'Rodilla', 'Pantorrilla / tibia', 'Tobillo / pie', 'Otra'];
+let athleteLogError = '';
+let athleteLogSaving = false;
+
+function athleteLogs() { if (!state.athleteLogs) state.athleteLogs = {}; return state.athleteLogs; }
+function sessionLoad(log) { return log && log.trained && log.session_rpe && log.session_minutes ? log.session_rpe * log.session_minutes : 0; }
+
+function athSliderRow(id, label, hint, val, min) {
+  return '<div class="pillar-row"><div class="pillar-name">' + label + '<div style="font-size:11px;color:var(--muted);font-weight:400;">' + hint + '</div></div>' +
+    '<div class="pillar-slider-wrap"><input type="range" min="' + min + '" max="10" step="1" value="' + val + '" id="ath_sl_' + id + '" oninput="document.getElementById(\'ath_val_' + id + '\').textContent=this.value">' +
+    '<span class="pillar-val" id="ath_val_' + id + '">' + val + '</span></div></div>';
+}
+
+function renderAthleteLogCard() {
+  const iso = todayISO();
+  const logs = athleteLogs();
+  const ex = logs[iso] || null;
+  const v = (k, d) => (ex && ex[k] != null ? ex[k] : d);
+  let html = '<div class="card" style="margin-bottom:16px;">';
+  html += '<h3>Registro deportivo de hoy</h3>';
+  html += '<div class="card-sub">Menos de 30 segundos. Lo ve el equipo clínico de Sizigia Lab y sirve para ajustar tu carga y recuperación.' + (ex ? ' <strong>Ya registrado hoy: puedes editarlo.</strong>' : '') + '</div>';
+  html += '<div class="pillar-row"><div class="pillar-name">Horas de sueño anoche</div><div class="pillar-slider-wrap"><input type="number" id="ath_sleep_hours" min="0" max="16" step="0.5" value="' + v('sleep_hours', 7) + '" style="width:80px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;"></div></div>';
+  html += athSliderRow('sleep_quality', 'Calidad del sueño', '1 = muy mala · 10 = excelente', v('sleep_quality', 6), 1);
+  html += athSliderRow('fatigue', 'Fatiga', '1 = fresco · 10 = agotado', v('fatigue', 5), 1);
+  html += athSliderRow('mood', 'Ánimo', '1 = muy bajo · 10 = muy bien', v('mood', 6), 1);
+  html += athSliderRow('pain_level', 'Dolor o molestia', '0 = sin dolor · 10 = máximo', v('pain_level', 0), 0);
+  html += '<div class="pillar-row"><div class="pillar-name">Zona del dolor</div><div class="pillar-slider-wrap"><select id="ath_pain_zone" style="padding:6px 8px;border:1px solid var(--line);border-radius:8px;"><option value="">— sin dolor —</option>';
+  PAIN_ZONES.forEach(z => { html += '<option value="' + escapeHtml(z) + '"' + (v('pain_zone', '') === z ? ' selected' : '') + '>' + escapeHtml(z) + '</option>'; });
+  html += '</select></div></div>';
+  const trained = !!v('trained', false);
+  html += '<div class="pillar-row"><div class="pillar-name">¿Entrenaste hoy?</div><div class="pillar-slider-wrap"><label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ath_trained" ' + (trained ? 'checked' : '') + ' onchange="document.getElementById(\'ath_session\').style.display=this.checked?\'block\':\'none\'"> Sí, hubo sesión</label></div></div>';
+  html += '<div id="ath_session" style="display:' + (trained ? 'block' : 'none') + ';">';
+  html += athSliderRow('session_rpe', 'Esfuerzo de la sesión', '1 = muy suave · 10 = máximo', v('session_rpe', 6), 1);
+  html += '<div class="pillar-row"><div class="pillar-name">Duración (min)</div><div class="pillar-slider-wrap"><input type="number" id="ath_session_minutes" min="0" max="600" step="5" value="' + v('session_minutes', 60) + '" style="width:80px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;"></div></div>';
+  html += '</div>';
+  html += '<textarea class="checkin-note" id="ath_notes" placeholder="Algo que tu equipo deba saber (opcional)">' + escapeHtml(v('notes', '')) + '</textarea>';
+  if (athleteLogError) html += '<div class="daycard-msg" style="color:#b91c1c;">' + escapeHtml(athleteLogError) + '</div>';
+  html += '<div class="ring-detail-actions"><button class="btn small primary" ' + (athleteLogSaving ? 'disabled' : '') + ' onclick="saveAthleteLog()">' + (ex ? 'Guardar cambios' : 'Guardar registro') + '</button></div>';
+
+  // Resumen de 7 días: solo cifras que el propio atleta cargó.
+  let n = 0, load = 0;
+  for (let i = 0; i < 7; i++) { const l = logs[addDaysISO(iso, -i)]; if (l) { n++; load += sessionLoad(l); } }
+  html += '<div style="font-size:12px;color:var(--muted);margin-top:10px;">Últimos 7 días: ' + n + '/7 registros · carga de entrenamiento ' + load + ' u.a. (esfuerzo × minutos, autoinformado).</div>';
+  html += '</div>';
+  return html;
+}
+
+async function saveAthleteLog() {
+  const iso = todayISO();
+  const num = (id) => { const el = document.getElementById(id); return el && el.value !== '' ? Number(el.value) : null; };
+  const trained = document.getElementById('ath_trained').checked;
+  const zoneEl = document.getElementById('ath_pain_zone');
+  const pain = num('ath_sl_pain_level');
+  const row = {
+    log_date: iso,
+    sleep_hours: num('ath_sleep_hours'),
+    sleep_quality: num('ath_sl_sleep_quality'),
+    fatigue: num('ath_sl_fatigue'),
+    mood: num('ath_sl_mood'),
+    pain_level: pain,
+    pain_zone: pain > 0 && zoneEl.value ? zoneEl.value : null,
+    trained: trained,
+    session_rpe: trained ? num('ath_sl_session_rpe') : null,
+    session_minutes: trained ? num('ath_session_minutes') : null,
+    notes: (document.getElementById('ath_notes').value || '').trim() || null
+  };
+  athleteLogError = '';
+  if (!isDemoMode && currentPatientId) {
+    athleteLogSaving = true;
+    try {
+      const { error } = await supabaseClient.from('athlete_logs').upsert(Object.assign({ patient_id: currentPatientId, updated_at: new Date().toISOString() }, row), { onConflict: 'patient_id,log_date' });
+      if (error) throw error;
+    } catch (e) {
+      console.error('athlete_logs upsert error', e);
+      athleteLogError = 'No se pudo guardar el registro. Reintenta en un momento; si persiste, avisa al equipo.';
+      athleteLogSaving = false; render(); return;
+    }
+    athleteLogSaving = false;
+  }
+  athleteLogs()[iso] = row;
+  saveState();
+  render();
 }
 
 /* ============================= TAB: MI RITMO ============================= */
@@ -1904,7 +2019,7 @@ function renderCrossChartCard() {
 
   let html = '<div class="card" style="margin-bottom:18px;">';
   html += '<h3 style="margin:0 0 2px;">Cruce de variables</h3>';
-  html += '<div class="card-sub">Compara la tendencia de un pilar SOBI con una medición física — útil para ver, por ejemplo, si dormir más se refleja en tu pilar de sueño, o si el movimiento se traduce en composición corporal.</div>';
+  html += '<div class="card-sub">Compara la tendencia de un pilar con una medición física — útil para ver, por ejemplo, si dormir más se refleja en tu pilar de sueño, o si el movimiento se traduce en composición corporal.</div>';
   html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">';
   html += '<select onchange="setCrossPillar(this.value)" style="border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:12.5px;font-family:inherit;">';
   state.pillars.forEach(p => { html += '<option value="' + p.id + '"' + (p.id === pillarId ? ' selected' : '') + '>' + escapeHtml(p.name) + '</option>'; });
@@ -2379,7 +2494,7 @@ function buildHistorialSVG(isos) {
 function renderRecursos() {
   const daysIn = Math.max(0, daysBetween(state.patient.startDate, todayISO()));
   const tier = currentTier();
-  let html = '<div class="section-title">Guías por pilar SOBI — se van desbloqueando a medida que avanzas en el programa y según tu plan</div>';
+  let html = '<div class="section-title">Guías por pilar — se van desbloqueando a medida que avanzas en el programa y según tu plan</div>';
   html += '<div class="resource-grid">';
   RESOURCES.forEach(r => {
     const lockedByPlan = r.level > tier.resourceLevel;
@@ -2564,6 +2679,104 @@ function toggleSession(id) {
 }
 
 /* ============================= TAB: MI DATA ============================= */
+/* ============================= MI EQUIPO Y PERMISOS =============================
+   El atleta decide qué profesional ve su semáforo, y ve quién consultó sus datos y cuándo.
+   Funciones SQL en supabase/migrations/20261008_care_links.sql. Texto de consentimiento v0: pendiente de revisión legal. */
+const ROLE_LABELS = { medico: 'Médico', entrenador: 'Entrenador', preparador: 'Preparador físico', psicologo: 'Psicólogo', nutricionista: 'Nutricionista', kinesiologo: 'Kinesiólogo', familia: 'Familia', otro: 'Otro' };
+let teamData = { loaded: false, loading: false, pros: [], links: [], log: [], error: '' };
+
+async function loadTeamData() {
+  if (isDemoMode || !currentPatientId || teamData.loading) return;
+  teamData.loading = true;
+  try {
+    const [p, l, a] = await Promise.all([
+      supabaseClient.rpc('list_professionals'),
+      supabaseClient.from('care_links').select('professional_id, scopes, revoked_at, granted_at').eq('patient_id', currentPatientId),
+      supabaseClient.from('access_log').select('professional_id, accessed_at').eq('patient_id', currentPatientId).order('accessed_at', { ascending: false }).limit(15)
+    ]);
+    const err = p.error || l.error || a.error;
+    if (err) throw err;
+    teamData = { loaded: true, loading: false, pros: p.data || [], links: l.data || [], log: a.data || [], error: '' };
+  } catch (e) {
+    console.warn('team data', e);
+    teamData = { loaded: true, loading: false, pros: [], links: [], log: [], error: 'No disponible todavía.' };
+  }
+  render();
+}
+/* Consentimiento: el texto vigente (el más reciente de consent_texts) se muestra antes de conceder. La casilla parte sin marcar. */
+let consentFlow = null;   // { proId, version, body, isFinal, checked, error, busy }
+function mdLite(t) { return escapeHtml(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
+async function startGrant(proId) {
+  consentFlow = { proId: proId, version: null, body: '', isFinal: false, checked: false, error: '', busy: true };
+  render();
+  try {
+    const { data, error } = await supabaseClient.from('consent_texts').select('version, body, is_final').order('created_at', { ascending: false }).limit(1);
+    if (error || !data || !data.length) throw (error || new Error('sin texto'));
+    consentFlow.version = data[0].version; consentFlow.body = data[0].body; consentFlow.isFinal = !!data[0].is_final;
+  } catch (e) {
+    console.warn('consent text', e);
+    consentFlow.error = 'No se pudo cargar el texto del permiso. Intenta de nuevo en un momento.';
+  }
+  consentFlow.busy = false; render();
+}
+function cancelGrant() { consentFlow = null; render(); }
+function toggleConsentChecked(el) { consentFlow.checked = el.checked; render(); }
+async function confirmGrant() {
+  if (!consentFlow || !consentFlow.checked || !consentFlow.version || consentFlow.busy) return;
+  consentFlow.busy = true; consentFlow.error = ''; render();
+  const { error } = await supabaseClient.rpc('grant_care_link', { p_professional: consentFlow.proId, p_scopes: ['semaforo'], p_consent_version: consentFlow.version, p_accepted: true });
+  if (error) { consentFlow.busy = false; consentFlow.error = 'No se pudo guardar el permiso. Intenta de nuevo.'; render(); return; }
+  consentFlow = null; teamData.loaded = false; teamData.loading = false; loadTeamData();
+}
+async function revokeCareLink(proId) {
+  if (!confirm('¿Retirar el acceso? Se aplica al instante.')) return;
+  const { error } = await supabaseClient.rpc('revoke_care_link', { p_professional: proId });
+  if (error) { alert('No se pudo retirar el permiso. Intenta de nuevo.'); return; }
+  teamData.loaded = false; teamData.loading = false; loadTeamData();
+}
+function renderConsentPanel(p) {
+  const f = consentFlow;
+  let h = '<div style="margin-top:10px;padding:14px;border:1px solid var(--line);border-radius:10px;background:#fff;">';
+  h += '<h4 style="margin:0 0 8px 0;">Permiso para compartir tu registro deportivo con ' + escapeHtml(p.name) + '</h4>';
+  if (f.version && !f.isFinal) h += '<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:10px;"><strong>Texto en borrador, pendiente de revisión legal.</strong> No usar con atletas reales.</div>';
+  if (f.busy && !f.body) h += '<div class="empty-state">Cargando…</div>';
+  if (f.body) {
+    const body = f.body.replace(/\{\{PROFESIONAL\}\}/g, p.name).replace(/\{\{ROL\}\}/g, (ROLE_LABELS[p.role] || p.role).toLowerCase());
+    h += '<div style="font-size:13px;line-height:1.55;">' + body.split('\n\n').map(x => '<p style="margin:0 0 9px 0;">' + mdLite(x) + '</p>').join('') + '</div>';
+    h += '<div style="font-size:11px;color:var(--muted);margin:6px 0 10px;">Versión ' + escapeHtml(f.version) + '. Se guarda con la fecha y hora en que aceptas.</div>';
+    h += '<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-bottom:10px;"><input type="checkbox" ' + (f.checked ? 'checked' : '') + ' onchange="toggleConsentChecked(this)" style="margin-top:3px;"> <span>Leí este texto y autorizo a ' + escapeHtml(p.name) + ' a ver los datos descritos, hasta que yo retire el permiso.</span></label>';
+  }
+  if (f.error) h += '<div style="color:#b91c1c;font-size:12.5px;margin-bottom:8px;">' + escapeHtml(f.error) + '</div>';
+  h += '<div style="display:flex;gap:8px;"><button class="btn small primary" ' + (f.checked && f.version && !f.busy ? '' : 'disabled') + ' onclick="confirmGrant()">Confirmar permiso</button><button class="btn small" onclick="cancelGrant()">Cancelar</button></div>';
+  return h + '</div>';
+}
+function renderTeamCard() {
+  let html = '<div class="card" style="margin-top:16px;"><h3>Mi equipo y permisos</h3>';
+  html += '<div class="card-sub">Tu historia es tuya. Tú decides quién ve tu semáforo de disponibilidad (sueño, fatiga, ánimo, dolor y carga de tu registro deportivo). No ven tus notas, tus check-ins ni tus exámenes. Puedes retirar el permiso cuando quieras y verás cada consulta que hagan. El equipo clínico de Sizigia Lab (Dr. Acuña) accede a tu ficha por su rol médico, aparte de estos permisos.</div>';
+  if (isDemoMode) return html + '<div class="empty-state">No disponible en el modo demo.</div></div>';
+  if (!teamData.loaded) { loadTeamData(); return html + '<div class="empty-state">Cargando…</div></div>'; }
+  if (teamData.error) return html + '<div class="empty-state">' + escapeHtml(teamData.error) + '</div></div>';
+  if (!teamData.pros.length) return html + '<div class="empty-state">Aún no hay profesionales registrados en la plataforma.</div></div>';
+  const active = {};
+  teamData.links.forEach(l => { if (!l.revoked_at && (l.scopes || []).includes('semaforo')) active[l.professional_id] = l; });
+  teamData.pros.forEach(p => {
+    const on = !!active[p.id];
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);flex-wrap:wrap;">' +
+      '<div><strong>' + escapeHtml(p.name) + '</strong> <span style="color:var(--muted);font-size:12px;">· ' + escapeHtml(ROLE_LABELS[p.role] || p.role) + '</span>' +
+      (on ? '<div style="font-size:12px;color:var(--muted);">Acceso al semáforo desde ' + fmtDate(active[p.id].granted_at.slice(0, 10)) + '</div>' : '<div style="font-size:12px;color:var(--muted);">Sin acceso</div>') + '</div>' +
+      (on ? '<button class="btn small danger" onclick="revokeCareLink(\'' + p.id + '\')">Retirar acceso</button>' : '<button class="btn small primary" onclick="startGrant(\'' + p.id + '\')">Dar acceso al semáforo</button>') + '</div>' +
+      (consentFlow && consentFlow.proId === p.id ? renderConsentPanel(p) : '');
+  });
+  const names = {}; teamData.pros.forEach(p => { names[p.id] = p.name; });
+  html += '<h4 style="margin:16px 0 6px;">Quién consultó tus datos</h4>';
+  if (!teamData.log.length) html += '<div style="font-size:12.5px;color:var(--muted);">Nadie ha consultado tus datos todavía.</div>';
+  else teamData.log.forEach(a => {
+    const d = new Date(a.accessed_at);
+    html += '<div style="font-size:12.5px;padding:3px 0;">' + escapeHtml(names[a.professional_id] || 'Profesional') + ' · ' + d.toLocaleDateString('es-CL') + ' ' + d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) + '</div>';
+  });
+  return html + '</div>';
+}
+
 function renderData() {
   const allIsos = Object.keys(state.checkins).sort();
   const scores = allIsos.map(iso => weightedDailyScore(state.checkins[iso].ratings)).filter(s => s !== null);
@@ -2597,6 +2810,7 @@ function renderData() {
   html += '</div>';
   html += '</div>';
   html += '</div>';
+  html += renderTeamCard();
   return html;
 }
 
