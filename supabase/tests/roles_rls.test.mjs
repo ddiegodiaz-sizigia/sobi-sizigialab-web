@@ -29,6 +29,7 @@ await db.exec(`
 `);
 await db.exec(mig('20261007_athlete_logs.sql'));
 await db.exec(mig('20261008_care_links.sql'));
+await db.exec(mig('20261009_consent_texts.sql'));
 await db.exec('grant all on all tables in schema public to anon, authenticated; grant usage on all sequences in schema public to anon, authenticated;');
 
 const U = { A: '00000000-0000-0000-0000-00000000000a', B: '00000000-0000-0000-0000-00000000000b', C: '00000000-0000-0000-0000-00000000000c', D: '00000000-0000-0000-0000-00000000000d', ADM: '00000000-0000-0000-0000-0000000000ad' };
@@ -79,7 +80,7 @@ t('sin vínculo: sin registro de acceso', (await q(`select count(*)::int n from 
 
 // Paciente A concede. Paciente B no.
 const proIdC = (await q(`select id from public.professionals where email='coach@x.cl'`))[0].id;
-await as(U.A, 'a@x.cl', () => db.query(`select public.grant_care_link($1, array['semaforo'])`, [proIdC]));
+await as(U.A, 'a@x.cl', () => db.query(`select public.grant_care_link($1, array['semaforo'], 'v2-borrador', true)`, [proIdC]));
 r = await coach();
 t('con vínculo: ve solo a A', r.feed.length === 1 && r.feed[0].patient_name === 'Paciente A');
 t('con vínculo: el feed no incluye notas libres', !('notes' in r.feed[0]));
@@ -98,11 +99,11 @@ t('B no ve vínculos de A', await as(U.B, 'b@x.cl', async () => (await q(`select
 t('coach no inserta vínculos directo', await as(U.C, 'coach@x.cl', () => fails(`insert into public.care_links (patient_id, professional_id, scopes) values ('10000000-0000-0000-0000-00000000000b','${proIdC}','{semaforo}')`)));
 t('coach no inserta access_log directo', await as(U.C, 'coach@x.cl', () => fails(`insert into public.access_log (professional_id, patient_id, scope) values ('${proIdC}','10000000-0000-0000-0000-00000000000b','semaforo')`)));
 t('paciente no inserta vínculos directo', await as(U.B, 'b@x.cl', () => fails(`insert into public.care_links (patient_id, professional_id, scopes) values ('10000000-0000-0000-0000-00000000000b','${proIdC}','{semaforo}')`)));
-t('scope inválido rechazado', await as(U.B, 'b@x.cl', () => fails(`select public.grant_care_link('${proIdC}', array['notas_clinicas'])`)));
-t('coach no puede conceder permisos (no es paciente)', await as(U.C, 'coach@x.cl', () => fails(`select public.grant_care_link('${proIdC}', array['semaforo'])`)));
+t('scope inválido rechazado', await as(U.B, 'b@x.cl', () => fails(`select public.grant_care_link('${proIdC}', array['notas_clinicas'], 'v2-borrador', true)`)));
+t('coach no puede conceder permisos (no es paciente)', await as(U.C, 'coach@x.cl', () => fails(`select public.grant_care_link('${proIdC}', array['semaforo'], 'v2-borrador', true)`)));
 
 // Un paciente solo concede sobre sí mismo: B concede y el feed muestra a B sin tocar a A.
-await as(U.B, 'b@x.cl', () => db.query(`select public.grant_care_link($1, array['semaforo'])`, [proIdC]));
+await as(U.B, 'b@x.cl', () => db.query(`select public.grant_care_link($1, array['semaforo'], 'v2-borrador', true)`, [proIdC]));
 r = await coach();
 t('tras segunda concesión ve A y B', new Set(r.feed.map(x => x.patient_name)).size === 2);
 
@@ -115,6 +116,19 @@ t('paciente no obtiene datos por coach_feed', await as(U.A, 'a@x.cl', async () =
 await as(U.A, 'a@x.cl', () => db.query(`select public.revoke_care_link($1)`, [proIdC]));
 r = await coach();
 t('tras revocar: coach ya no ve a A', !r.feed.some(x => x.patient_name === 'Paciente A') && r.feed.some(x => x.patient_name === 'Paciente B'));
+
+
+// Consentimiento versionado.
+t('sin aceptación explícita se rechaza', await as(U.B, 'b@x.cl', () => fails(`select public.grant_care_link('${proIdC}', array['semaforo'], 'v2-borrador', false)`)));
+t('versión inexistente se rechaza', await as(U.B, 'b@x.cl', () => fails(`select public.grant_care_link('${proIdC}', array['semaforo'], 'no-existe', true)`)));
+t('el permiso guarda versión y fecha de aceptación', await as(U.B, 'b@x.cl', async () => { const x = await q(`select consent_version, consent_accepted_at from public.care_links where revoked_at is null`); return x.length === 1 && x[0].consent_version === 'v2-borrador' && x[0].consent_accepted_at != null; }));
+await as(U.B, 'b@x.cl', () => db.query(`select public.grant_care_link($1, array['semaforo'], 'v2-borrador', true)`, [proIdC]));
+t('volver a conceder conserva historial (1 activo + 1 cerrado)', await as(U.B, 'b@x.cl', async () => { const x = await q(`select revoked_at from public.care_links`); return x.length === 2 && x.filter(r => !r.revoked_at).length === 1; }));
+t('paciente lee el texto de consentimiento', await as(U.A, 'a@x.cl', async () => (await q(`select body from public.consent_texts where version='v2-borrador'`))[0].body.includes('Sizigia Lab SpA')));
+t('paciente no puede editar textos de consentimiento', await as(U.A, 'a@x.cl', () => fails(`update public.consent_texts set body = 'x'`)) || await as(U.A, 'a@x.cl', async () => { await db.query(`update public.consent_texts set body = 'x'`); return (await q(`select body from public.consent_texts`))[0].body !== 'x'; }));
+t('paciente no puede publicar textos nuevos', await as(U.A, 'a@x.cl', () => fails(`insert into public.consent_texts (version, body) values ('hack', 'x')`)));
+t('anon no lee textos de consentimiento', await as(null, '', async () => { try { return (await q(`select * from public.consent_texts`)).length === 0; } catch { return true; } }));
+t('el texto está marcado como borrador', (await q(`select is_final from public.consent_texts where version='v2-borrador'`))[0].is_final === false);
 
 // Anónimo no ejecuta funciones.
 t('anon no ejecuta coach_feed', await as(null, '', () => fails(`select * from public.coach_feed()`)));

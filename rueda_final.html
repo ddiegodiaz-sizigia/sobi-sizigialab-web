@@ -2703,10 +2703,52 @@ async function loadTeamData() {
   }
   render();
 }
-async function setCareLink(proId, grant) {
-  const { error } = await supabaseClient.rpc(grant ? 'grant_care_link' : 'revoke_care_link', grant ? { p_professional: proId, p_scopes: ['semaforo'] } : { p_professional: proId });
-  if (error) { alert('No se pudo actualizar el permiso. Intenta de nuevo.'); return; }
+/* Consentimiento: el texto vigente (el más reciente de consent_texts) se muestra antes de conceder. La casilla parte sin marcar. */
+let consentFlow = null;   // { proId, version, body, isFinal, checked, error, busy }
+function mdLite(t) { return escapeHtml(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
+async function startGrant(proId) {
+  consentFlow = { proId: proId, version: null, body: '', isFinal: false, checked: false, error: '', busy: true };
+  render();
+  try {
+    const { data, error } = await supabaseClient.from('consent_texts').select('version, body, is_final').order('created_at', { ascending: false }).limit(1);
+    if (error || !data || !data.length) throw (error || new Error('sin texto'));
+    consentFlow.version = data[0].version; consentFlow.body = data[0].body; consentFlow.isFinal = !!data[0].is_final;
+  } catch (e) {
+    console.warn('consent text', e);
+    consentFlow.error = 'No se pudo cargar el texto del permiso. Intenta de nuevo en un momento.';
+  }
+  consentFlow.busy = false; render();
+}
+function cancelGrant() { consentFlow = null; render(); }
+function toggleConsentChecked(el) { consentFlow.checked = el.checked; render(); }
+async function confirmGrant() {
+  if (!consentFlow || !consentFlow.checked || !consentFlow.version || consentFlow.busy) return;
+  consentFlow.busy = true; consentFlow.error = ''; render();
+  const { error } = await supabaseClient.rpc('grant_care_link', { p_professional: consentFlow.proId, p_scopes: ['semaforo'], p_consent_version: consentFlow.version, p_accepted: true });
+  if (error) { consentFlow.busy = false; consentFlow.error = 'No se pudo guardar el permiso. Intenta de nuevo.'; render(); return; }
+  consentFlow = null; teamData.loaded = false; teamData.loading = false; loadTeamData();
+}
+async function revokeCareLink(proId) {
+  if (!confirm('¿Retirar el acceso? Se aplica al instante.')) return;
+  const { error } = await supabaseClient.rpc('revoke_care_link', { p_professional: proId });
+  if (error) { alert('No se pudo retirar el permiso. Intenta de nuevo.'); return; }
   teamData.loaded = false; teamData.loading = false; loadTeamData();
+}
+function renderConsentPanel(p) {
+  const f = consentFlow;
+  let h = '<div style="margin-top:10px;padding:14px;border:1px solid var(--line);border-radius:10px;background:#fff;">';
+  h += '<h4 style="margin:0 0 8px 0;">Permiso para compartir tu registro deportivo con ' + escapeHtml(p.name) + '</h4>';
+  if (f.version && !f.isFinal) h += '<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:10px;"><strong>Texto en borrador, pendiente de revisión legal.</strong> No usar con atletas reales.</div>';
+  if (f.busy && !f.body) h += '<div class="empty-state">Cargando…</div>';
+  if (f.body) {
+    const body = f.body.replace(/\{\{PROFESIONAL\}\}/g, p.name).replace(/\{\{ROL\}\}/g, (ROLE_LABELS[p.role] || p.role).toLowerCase());
+    h += '<div style="font-size:13px;line-height:1.55;">' + body.split('\n\n').map(x => '<p style="margin:0 0 9px 0;">' + mdLite(x) + '</p>').join('') + '</div>';
+    h += '<div style="font-size:11px;color:var(--muted);margin:6px 0 10px;">Versión ' + escapeHtml(f.version) + '. Se guarda con la fecha y hora en que aceptas.</div>';
+    h += '<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-bottom:10px;"><input type="checkbox" ' + (f.checked ? 'checked' : '') + ' onchange="toggleConsentChecked(this)" style="margin-top:3px;"> <span>Leí este texto y autorizo a ' + escapeHtml(p.name) + ' a ver los datos descritos, hasta que yo retire el permiso.</span></label>';
+  }
+  if (f.error) h += '<div style="color:#b91c1c;font-size:12.5px;margin-bottom:8px;">' + escapeHtml(f.error) + '</div>';
+  h += '<div style="display:flex;gap:8px;"><button class="btn small primary" ' + (f.checked && f.version && !f.busy ? '' : 'disabled') + ' onclick="confirmGrant()">Confirmar permiso</button><button class="btn small" onclick="cancelGrant()">Cancelar</button></div>';
+  return h + '</div>';
 }
 function renderTeamCard() {
   let html = '<div class="card" style="margin-top:16px;"><h3>Mi equipo y permisos</h3>';
@@ -2722,7 +2764,8 @@ function renderTeamCard() {
     html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);flex-wrap:wrap;">' +
       '<div><strong>' + escapeHtml(p.name) + '</strong> <span style="color:var(--muted);font-size:12px;">· ' + escapeHtml(ROLE_LABELS[p.role] || p.role) + '</span>' +
       (on ? '<div style="font-size:12px;color:var(--muted);">Acceso al semáforo desde ' + fmtDate(active[p.id].granted_at.slice(0, 10)) + '</div>' : '<div style="font-size:12px;color:var(--muted);">Sin acceso</div>') + '</div>' +
-      '<button class="btn small ' + (on ? 'danger' : 'primary') + '" onclick="setCareLink(\'' + p.id + '\',' + (on ? 'false' : 'true') + ')">' + (on ? 'Retirar acceso' : 'Dar acceso al semáforo') + '</button></div>';
+      (on ? '<button class="btn small danger" onclick="revokeCareLink(\'' + p.id + '\')">Retirar acceso</button>' : '<button class="btn small primary" onclick="startGrant(\'' + p.id + '\')">Dar acceso al semáforo</button>') + '</div>' +
+      (consentFlow && consentFlow.proId === p.id ? renderConsentPanel(p) : '');
   });
   const names = {}; teamData.pros.forEach(p => { names[p.id] = p.name; });
   html += '<h4 style="margin:16px 0 6px;">Quién consultó tus datos</h4>';

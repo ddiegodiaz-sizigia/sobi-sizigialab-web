@@ -15,7 +15,8 @@ RPC: `is_admin()`, `claim_professional()`, `list_professionals()`, `grant_care_l
 ## Qué existe
 - App de paciente: check-in semanal por tipo de día, rueda de pilares, medidas, historial, sesiones (solo lectura), descarga de datos, modo demo.
 - Panel admin: pacientes y programa de mensajes, plantillas, bitácora, Estado (adherencia 7 días, examen, control, último acceso), ficha con resumen de señales.
-- Rama `feat/roles-v0`: profesionales dados de alta por el admin, el atleta concede o retira acceso al semáforo en Mi Data, vista `equipo.html`, registro de accesos visible para el atleta. 34 pruebas de políticas en `supabase/tests`.
+- Rama `feat/consent-v2`: consentimiento versionado. El atleta lee el texto vigente y marca una casilla (sin marcar por defecto) antes de conceder; se guarda versión y fecha, y el historial de permisos se conserva. Migración `20261009_consent_texts.sql` (cambia la firma de `grant_care_link`).
+- Rama `feat/roles-v0`: profesionales dados de alta por el admin, el atleta concede o retira acceso al semáforo en Mi Data, vista `equipo.html`, registro de accesos visible para el atleta. 43 pruebas de políticas en `supabase/tests`.
 - Rama `feat/atleta-semaforo`: registro deportivo de menos de 30 s y semáforo de disponibilidad con reglas explicables (umbrales en `SEM_RULES` de `admin.html`, pendientes de validación médica).
 
 ## Qué NO existe
