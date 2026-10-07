@@ -6,3 +6,10 @@ bun.lock
 package-lock.json
 .gitignore
 Claude outputs
+
+# No publicar en el sitio: documentacion interna, SQL, pruebas y automatizaciones
+supabase
+.github
+*.md
+*.sql
+*.mjs
