@@ -72,6 +72,57 @@ function computeSemaforo(logsIn) {
   }
 
   const level = reasons.some(r => r.level === 'rojo') ? 'rojo' : reasons.length ? 'amarillo' : 'verde';
-  return { level: level, reasons: reasons, last: last };
+  const checks = semChecks(logs, last);
+  return { level: level, reasons: reasons, last: last, checks: checks, why: semWhy(level, checks, last) };
 }
 
+
+// ============ EXPLICACIÓN: qué se revisó y por qué sale este color ============
+// Cada control dice si pasó, si dio alerta o si no hay dato. Así "verde" siempre viene con su evidencia.
+function semChecks(logs, last) {
+  const R = SEM_RULES, out = [];
+  const add = (key, label, status, detail) => out.push({ key: key, label: label, status: status, detail: detail });
+  const has = v => v != null;
+  const f = n => String(n).replace('.', ',');
+  if (has(last.pain_level)) add('dolor', 'Dolor', last.pain_level >= R.painRed ? 'alert' : last.pain_level >= R.painYellow ? 'warn' : 'ok',
+    last.pain_level + '/10 (precaución desde ' + R.painYellow + ', revisar desde ' + R.painRed + ')');
+  else add('dolor', 'Dolor', 'nodata', 'no informado');
+  if (has(last.sleep_hours)) add('sueno', 'Sueño de anoche', last.sleep_hours < R.sleepLastYellow ? 'warn' : 'ok',
+    f(last.sleep_hours) + ' h (precaución bajo ' + R.sleepLastYellow + ' h)');
+  else add('sueno', 'Sueño de anoche', 'nodata', 'no informado');
+  const sl3 = logs.slice(0, 3).filter(l => has(l.sleep_hours)).map(l => Number(l.sleep_hours));
+  if (sl3.length === 3) add('sueno3', 'Sueño, últimos 3 registros', semAvg(sl3) < R.sleepAvg3Yellow ? 'warn' : 'ok',
+    'promedio ' + f(semAvg(sl3).toFixed(1)) + ' h (precaución bajo ' + f(R.sleepAvg3Yellow) + ' h)');
+  if (has(last.fatigue)) add('fatiga', 'Fatiga', last.fatigue >= R.fatigueYellow ? 'warn' : 'ok', last.fatigue + '/10 (precaución desde ' + R.fatigueYellow + ')');
+  else add('fatiga', 'Fatiga', 'nodata', 'no informado');
+  if (has(last.mood)) add('animo', 'Ánimo', last.mood <= R.moodYellow ? 'warn' : 'ok', last.mood + '/10 (precaución en ' + R.moodYellow + ' o menos)');
+  else add('animo', 'Ánimo', 'nodata', 'no informado');
+  const win28 = logs.filter(l => semDaysAgo(l.log_date) <= 27);
+  const span = win28.length ? semDaysAgo(win28[win28.length - 1].log_date) : 0;
+  const chronic = win28.reduce((a, l) => a + semLoad(l), 0) / 4;
+  if (span >= R.acwrMinSpanDays && chronic > 0) {
+    const acute = logs.filter(l => semDaysAgo(l.log_date) <= 6).reduce((a, l) => a + semLoad(l), 0);
+    const r = acute / chronic;
+    add('carga', 'Carga de la semana', r > R.acwrYellow ? 'warn' : 'ok', f(r.toFixed(1)) + '× su promedio de 28 días (precaución sobre ' + f(R.acwrYellow) + '×)');
+  } else add('carga', 'Carga de la semana', 'nodata', 'faltan registros: se necesitan ' + R.acwrMinSpanDays + ' días de historia con sesiones');
+  return out;
+}
+
+// Texto corto que responde "¿por qué este color?". Verde nunca se declara como "sano".
+function semWhy(level, checks, last) {
+  const ok = checks.filter(c => c.status === 'ok'), nd = checks.filter(c => c.status === 'nodata');
+  if (level === 'gris') return 'Gris porque no hay un registro de los últimos ' + SEM_RULES.maxAgeDays + ' días. Sin dato vigente el semáforo nunca puede ser verde.';
+  if (level === 'verde') {
+    return 'Verde porque el registro del ' + semFmt(last.log_date) + ' pasó los ' + ok.length + ' controles con dato (' + ok.map(c => c.label.toLowerCase()).join(', ') + ')' +
+      (nd.length ? ' y no hay dato para: ' + nd.map(c => c.label.toLowerCase()).join(', ') : '') +
+      '. Verde significa "sin alertas en lo que la persona informó", no que esté sana ni apta: no incluye wearables, exámenes ni evaluación clínica.';
+  }
+  return (level === 'rojo' ? 'Rojo' : 'Amarillo') + ' porque ' + checks.filter(c => c.status !== 'ok' && c.status !== 'nodata').map(c => c.label.toLowerCase() + ' ' + c.detail).join('; ') + '.';
+}
+const SEM_CHECK_ICON = { ok: '✓', warn: '!', alert: '✕', nodata: '–' };
+function semChecksHTML(checks, why, esc) {
+  esc = esc || (s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])));
+  return '<details class="sem-why"><summary>¿Por qué este color?</summary><div class="sem-why-text">' + esc(why) + '</div>' +
+    checks.map(c => '<div class="sem-check ' + c.status + '"><span class="sem-check-ic" aria-hidden="true">' + SEM_CHECK_ICON[c.status] + '</span> <b>' + esc(c.label) + ':</b> ' + esc(c.detail) + '</div>').join('') + '</details>';
+}
+if (typeof module !== 'undefined' && module.exports) module.exports = { SEM_RULES, computeSemaforo, semChecks, semWhy };

@@ -309,6 +309,9 @@
 <canvas id="hiddenExportCanvas" style="display:none;"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/semaforo.js"></script>
+<script src="assets/trend-chart.js"></script>
+<script src="assets/persona.js"></script>
 <script>
 /* ============================= CONFIG / STORAGE ============================= */
 const STORAGE_KEY = 'sobiPatientPortalV2';
@@ -916,6 +919,10 @@ async function loadStateForUser(user) {
     if (al.error) console.warn('athlete_logs no disponible (¿migración pendiente?)', al.error.message);
     else athleteLogRows = al.data || [];
   } catch (e) { console.warn('athlete_logs read error', e); }
+  let journalRows = [], cycleRows = [];
+  try { const jr = await supabaseClient.from('journal_entries').select('*').eq('patient_id', patient.id).order('entry_date', { ascending: false }); if (!jr.error) journalRows = jr.data || []; } catch (e) {}
+  try { const cy = await supabaseClient.from('cycle_logs').select('*').eq('patient_id', patient.id).gte('log_date', addDaysISO(todayISO(), -200)); if (!cy.error) cycleRows = cy.data || []; } catch (e) {}
+  const cycleMap = {}; cycleRows.forEach(r => { cycleMap[r.log_date] = r; });
 
   const athleteLogsMap = {};
   athleteLogRows.forEach(r => { athleteLogsMap[r.log_date] = r; });
@@ -955,6 +962,9 @@ async function loadStateForUser(user) {
     measurements: measurements,
     sessions: sessions,
     athleteLogs: athleteLogsMap,
+    profile: { sex: patient.sex || null, tracksCycle: !!patient.tracks_cycle || patient.sex === 'femenino' },
+    journal: journalRows,
+    cycleLogs: cycleMap,
     ui: { tab: 'resumen', selectedMonth: monthKey(todayISO()), historialRange: 'all', highlightPillar: null, checkinsExpanded: false, selectedRingDay: null, selectedMeasureDate: todayISO() }
   };
   try { localStorage.setItem(cacheKey, JSON.stringify(state)); } catch(e) {}
@@ -1092,29 +1102,24 @@ const TABS = [
   { id: 'medidas', label: 'Medidas' },
   { id: 'historial', label: 'Historial' },
   { id: 'recursos', label: 'Recursos' },
+  { id: 'bitacora', label: 'Mi hoja de vida' },
   { id: 'sesiones', label: 'Sesiones' },
   { id: 'data', label: 'Mi Data' }
 ];
 
 function setTab(id) { state.ui.tab = id; saveState(); render(); }
-function setDemoTier(key) { state.patient.tierPlan = key; saveState(); render(); }
 function dismissUpsell() { state.ui.upsellDismissed = true; saveState(); render(); }
 
 function render() {
   const app = document.getElementById('app');
   const daysIn = daysBetween(state.patient.startDate, todayISO());
   const totalProgramDays = state.patient.programMonths * 30;
-  const dayLabel = daysIn >= 0 ? ('Día ' + (daysIn+1) + ' de ' + totalProgramDays) : 'Programa aún no inicia';
+  const dayLabel = daysIn >= 0 ? ('Día ' + (daysIn+1) + ' en tu bitácora') : 'Tu bitácora aún no inicia';
 
   const tier = currentTier();
   let html = '';
   if (isDemoMode) {
     html += '<div style="background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:12px;font-weight:600;padding:8px 14px;border-radius:10px;margin-bottom:10px;text-align:center;">MODO DEMO — datos de prueba, no se guardan ni afectan pacientes reales</div>';
-    html += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;font-size:12px;color:var(--muted);">';
-    html += 'Previsualizar plan:';
-    html += '<select onchange="setDemoTier(this.value)" style="border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:12px;font-family:inherit;">';
-    Object.keys(TIERS).forEach(key => { html += '<option value="' + key + '"' + (key === state.patient.tierPlan ? ' selected' : '') + '>' + TIERS[key].label + '</option>'; });
-    html += '</select></div>';
   }
   if (!isDemoMode && tier.upsell && daysIn >= tier.upsell.day && !state.ui.upsellDismissed) {
     html += '<div class="card" style="border-left:3px solid var(--gold);background:var(--gold-bg);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">';
@@ -1127,7 +1132,7 @@ function render() {
   html += '    <div class="brand-mark"><span>MH</span></div>';
   html += '    <div class="brand-title"><h1>Mi Bitácora</h1><div class="sub">Medicina Humana · Dr. Manuel Acuña Medina</div></div>';
   html += '  </div>';
-  html += '  <div class="patient-chip"><b>' + escapeHtml(state.patient.name || (currentUser ? currentUser.email : '')) + '</b><span class="dim">· ' + dayLabel + ' · ' + escapeHtml(tier.label) + '</span> <button class="btn small" onclick="handleLogout()" style="margin-left:8px;">Salir</button></div>';
+  html += '  <div class="patient-chip"><b>' + escapeHtml(state.patient.name || (currentUser ? currentUser.email : '')) + '</b><span class="dim">· ' + dayLabel + '</span> <button class="btn small" onclick="handleLogout()" style="margin-left:8px;">Salir</button></div>';
   html += '</div>';
 
   html += '<div class="tabs">';
@@ -1146,8 +1151,10 @@ function render() {
   else if (state.ui.tab === 'medidas') content.innerHTML = renderMedidas();
   else if (state.ui.tab === 'historial') content.innerHTML = renderHistorial();
   else if (state.ui.tab === 'recursos') content.innerHTML = renderRecursos();
+  else if (state.ui.tab === 'bitacora') content.innerHTML = SizigiaPersona.bitacoraTab();
   else if (state.ui.tab === 'sesiones') content.innerHTML = renderSesiones();
   else if (state.ui.tab === 'data') content.innerHTML = renderData();
+  try { SizigiaPersona.afterRender(); } catch (e) { console.warn('persona', e); }
 }
 
 function escapeHtml(s) {
@@ -1170,8 +1177,8 @@ function renderResumen() {
   const firstName = (state.patient.name || '').trim().split(' ')[0] || '';
 
   const dayLabel = daysIn >= 0
-    ? ('Día ' + (daysIn + 1) + ' de ' + totalProgramDays + ' del programa')
-    : 'Tu programa aún no inicia';
+    ? ('Día ' + (daysIn + 1) + ' en tu bitácora')
+    : 'Tu bitácora aún no inicia';
 
   /* Adherencia global — mismo cálculo que la pestaña Mi Data (computeAdherence, único en todo el archivo) */
   const adherence = computeAdherence(startIso, todayIso, state.checkins);
@@ -1188,7 +1195,7 @@ function renderResumen() {
 
   html += '<div class="card" style="margin-bottom:16px;">';
   html += '  <h3 style="margin:0 0 2px 0;">Hola' + (firstName ? ', ' + escapeHtml(firstName) : '') + '</h3>';
-  html += '  <div class="card-sub" style="margin:0;">' + dayLabel + ' · Plan ' + state.patient.programMonths + ' meses · ' + escapeHtml(tier.label) + ' · inicio ' + fmtDate(startIso) + '</div>';
+  html += '  <div class="card-sub" style="margin:0;">' + dayLabel + ' · desde el ' + fmtDate(startIso) + '</div>';
   html += '</div>';
 
   html += '<div class="grid-2">';
@@ -1204,14 +1211,16 @@ function renderResumen() {
   html += buildDayCard(todayIso, 'summary');
   html += '</div>';
 
+  html += SizigiaPersona.semaforoCard();
   html += renderAthleteLogCard();
+  html += SizigiaPersona.restCards();
 
   const adherenceInfo = 'Mide qué % de los días que pedían un check-in (lunes a viernes; el fin de semana es tu Zona Sagrada, sin tareas por diseño) sí lo hiciste, desde el día 1 del programa. <strong>100% es cumplimiento total de lo pedido</strong> — no hace falta estar siempre en el máximo para que el proceso funcione, pero es el número que Manuel revisa antes de cada control.';
   const last7Info = 'De los 5 días que piden algo esta semana (lunes a viernes), cuántos ya registraste. Sábado y domingo no cuentan ni suman ni restan: son tu Zona Sagrada.';
   const sesionesInfo = 'Consultas clínicas con Manuel ya registradas en tu ficha — no tus ingresos a esta plataforma. Entrar a Mi Bitácora no suma acá.';
 
   html += '<div class="stat-chips" style="margin-bottom:16px;">';
-  html += statChip(adherence !== null ? adherence + '%' : '—', 'Adherencia del programa', adherenceInfo);
+  html += statChip(adherence !== null ? adherence + '%' : '—', 'Adherencia', adherenceInfo);
   html += statChip(last7.done + '/' + last7.eligible, 'Check-ins esta semana', last7Info);
   html += statChip(state.sessions.length, 'Consultas registradas', sesionesInfo);
   html += '</div>';
@@ -1908,7 +1917,7 @@ function renderProgreso() {
   html += statChip((adherence !== null ? adherence : 0) + '%', 'Adherencia global');
   html += statChip(streak + (streak === 1 ? ' día' : ' días'), 'Racha actual');
   html += '<div class="stat-chip"><div class="num">' + (currentAvg !== null ? currentAvg.toFixed(1) : '—') + '</div><div class="lbl">Bienestar (últ. 30d)</div>' + deltaHtml + '</div>';
-  html += statChip(progPct + '%', 'Avance del programa');
+  html += statChip(daysSinceStart, 'Días en tu bitácora');
   html += '</div>';
 
   html += renderWeeklySummaryCard();

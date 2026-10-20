@@ -1,0 +1,12 @@
+import { createRequire } from 'node:module'; import assert from 'node:assert/strict';
+const S = createRequire(import.meta.url)('../assets/semaforo.js');
+const d = n => { const x = new Date(); x.setDate(x.getDate() - n); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+const logs = []; for (let i = 0; i < 30; i++) logs.push({ log_date: d(i), sleep_hours: 7.4, fatigue: 3, mood: 7, pain_level: 1, trained: true, session_rpe: 6, session_minutes: 60 });
+const r = S.computeSemaforo(logs);
+assert.equal(r.level, 'verde'); assert.match(r.why, /^Verde porque/); assert.match(r.why, /no que esté sana/);
+assert.ok(r.checks.every(c => c.status === 'ok'));
+const y = S.computeSemaforo([{ ...logs[0], sleep_hours: 5.2 }, ...logs.slice(1)]);
+assert.equal(y.level, 'amarillo'); assert.match(y.why, /^Amarillo porque sueño de anoche 5,2 h/);
+assert.equal(S.computeSemaforo([]).level, 'gris');
+const few = S.computeSemaforo(logs.slice(0, 3)); assert.equal(few.checks.find(c => c.key === 'carga').status, 'nodata');
+console.log('semaforo: OK');

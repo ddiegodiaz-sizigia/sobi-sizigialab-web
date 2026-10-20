@@ -20,7 +20,7 @@
   .note { font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:16px; }
   .card { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:12px; display:flex; gap:14px; align-items:flex-start; }
   .card h3 { margin:0 0 2px; font-size:15px; } .lab { font-size:12px; color:var(--muted); margin-bottom:6px; }
-  .reason { font-size:13px; margin:3px 0; } .src { font-size:11px; color:var(--muted); margin-top:6px; }
+  .reason { font-size:13px; margin:3px 0; } .sem-why { margin-top:8px; font-size:12.5px; } .sem-why summary { cursor:pointer; color:var(--muted); } .sem-why-text { margin:6px 0; } .sem-check { margin:2px 0; } .sem-check.warn,.sem-check.alert { font-weight:600; } .sem-check.nodata { color:var(--muted); } .src { font-size:11px; color:var(--muted); margin-top:6px; }
   .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:7px; background:#9ca3af; vertical-align:middle; }
   .big { width:24px; height:24px; margin:2px 0 0; flex:none; }
   .verde { background:#16a34a; } .amarillo { background:#f59e0b; } .rojo { background:#dc2626; } .gris { background:#9ca3af; }
@@ -75,7 +75,7 @@ function render(email, rows) {
     const items = p.s.reasons.length ? p.s.reasons.map(r => '<div class="reason"><span class="dot ' + r.level + '"></span>' + esc(r.text) + '</div>').join('')
       : '<div class="reason" style="color:var(--muted)">Sin alertas con los datos de los últimos 28 días.</div>';
     html += '<div class="card"><span class="dot big ' + p.s.level + '"></span><div><h3>' + esc(p.name) + '</h3><div class="lab">' + esc(SEM_LABEL[p.s.level]) + '</div>' + items +
-      '<div class="src">Fuente: registro deportivo autoinformado' + (p.s.last ? ' · último registro ' + esc(p.s.last.log_date) : '') + '</div></div></div>';
+      semChecksHTML(p.s.checks || [], p.s.why || '', esc) + '<div class="src">Fuente: registro deportivo autoinformado' + (p.s.last ? ' · último registro ' + esc(p.s.last.log_date) : '') + '</div></div></div>';
   });
   app.innerHTML = html;
 }
