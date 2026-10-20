@@ -1,9 +1,11 @@
 import { createRequire } from 'node:module'; import assert from 'node:assert/strict'; import { readFileSync } from 'node:fs';
 const Q = createRequire(import.meta.url)('../assets/mi-equipo.js');
 
-// Tipos de dato: los mismos 7 que acepta care_links_scopes_check (migración 20261020)
-assert.deepEqual(Q.SCOPES.map(s => s.key), ['semaforo', 'lesiones', 'ciclo', 'nutricion', 'examenes', 'salud_mental', 'bitacora']);
-assert.deepEqual(Q.SCOPES.filter(s => s.live).map(s => s.key), ['semaforo', 'lesiones', 'nutricion', 'examenes'], 'lo que hoy se ve en equipo.html');
+// Tipos de dato: los mismos 8 que acepta care_links_scopes_check (migraciones 20261020 y 20261029)
+assert.deepEqual(Q.SCOPES.map(s => s.key), ['semaforo', 'lesiones', 'ciclo', 'nutricion', 'examenes', 'salud_mental', 'bitacora', 'equipo']);
+assert.deepEqual(Q.SCOPES.filter(s => s.live).map(s => s.key), ['semaforo', 'lesiones', 'nutricion', 'examenes', 'equipo'], 'lo que hoy se ve en equipo.html');
+const chk = readFileSync(new URL('../supabase/migrations/20261029_caso_equipo.sql', import.meta.url), 'utf8').match(/scopes <@ array\[([^\]]+)\]/)[1];
+assert.deepEqual(chk.split(',').map(s => s.trim().replace(/'/g, '')).sort(), Q.SCOPES.map(s => s.key).sort(),'la app y el check SQL aceptan los mismos permisos');
 assert.ok(Q.SCOPES.find(s => s.key === 'ciclo').sensitive && Q.SCOPES.find(s => s.key === 'salud_mental').sensitive);
 assert.deepEqual(Q.normalizeScopes(['bitacora', 'x', 'semaforo', 'semaforo']), ['semaforo', 'bitacora'], 'filtra, deduplica y ordena');
 

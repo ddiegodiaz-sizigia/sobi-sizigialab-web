@@ -2,6 +2,7 @@
 // persona le dio. Lista: my_linked_patients() (solo nombre y permisos; migración 20261028). Cada sección se carga recién
 // al abrirla con patient_lesiones / patient_examenes / patient_nutricion, que validan el permiso y registran el acceso.
 // Un profesional con permiso 'nutricion' puede editar el plan (set_nutrition_plan con p_patient; queda a su nombre).
+// Pestaña 'Caso' (permiso 'equipo'): conversación del equipo, la dibuja assets/caso.js (case_feed registra el acceso).
 // Reutiliza los núcleos puros de lesiones.js, examenes.js y nutricion.js: mismas reglas que ve la persona.
 // Núcleo puro exportado para Node (tests/ficha-profesional.test.mjs).
 (function (root) {
@@ -12,6 +13,7 @@
   var N = node ? require('./nutricion.js') : root.SizigiaNutricion;
 
   var SECTIONS = [
+    { key: 'equipo', label: 'Caso', rpc: 'case_feed' },
     { key: 'lesiones', label: 'Lesiones', rpc: 'patient_lesiones' },
     { key: 'examenes', label: 'Exámenes', rpc: 'patient_examenes' },
     { key: 'nutricion', label: 'Nutrición', rpc: 'patient_nutricion' }
@@ -59,6 +61,7 @@
     var out = (panel || []).map(function (p, k) {
       var sc = ['semaforo'];
       if (k % 2 === 0) sc.push('lesiones');
+      if (k % 2 === 0 || p.patient_id === 'demo-1') sc.push('equipo');
       if (k % 3 === 0) sc.push('examenes', 'nutricion');
       return { patient_id: p.patient_id, patient_name: p.patient_name, scopes: sc };
     });
@@ -210,7 +213,8 @@
     var h = '<div class="fp-back" onclick="if(event.target===this)SizigiaFicha.close()"><div class="fp-sheet" role="dialog" aria-modal="true" aria-label="Ficha de ' + E(p.patient_name) + '">' +
       '<div class="fp-top"><div><h2>' + E(p.patient_name) + '</h2><div class="fp-meta">Ves solo lo que te autorizó. Abrir cada sección queda registrado y la persona lo ve.</div></div><button class="btn" onclick="SizigiaFicha.close()">Cerrar</button></div>' +
       '<div class="fp-tabs">' + secs.map(function (s) { return '<button class="fp-tab' + (s.key === ui.tab ? ' on' : '') + '" onclick="SizigiaFicha.setTab(\'' + s.key + '\')">' + E(s.label) + '</button>'; }).join('') + '</div>';
-    if (ui.err) h += '<div class="fp-card fp-err">' + E(ui.err) + '</div>';
+    if (ui.tab === 'equipo') h += root.SizigiaCaso ? root.SizigiaCaso.html() : '';
+    else if (ui.err) h += '<div class="fp-card fp-err">' + E(ui.err) + '</div>';
     else if (!data) h += '<div class="fp-card fp-meta">Cargando…</div>';
     else if (ui.tab === 'lesiones') h += lesionesHTML(lesionesView(data, today()));
     else if (ui.tab === 'examenes') h += examenesHTML(examenesView(data));
@@ -232,6 +236,7 @@
 
   async function load() {
     var key = ui.open + ':' + ui.tab;
+    if (ui.tab === 'equipo') return root.SizigiaCaso.open({ mode: 'pro', sb: ui.sb, demo: ui.demo, patientId: ui.open, patientName: person(ui.open).patient_name, onChange: render });
     if (ui.data[key]) return render();
     ui.err = ''; render();
     if (ui.demo) { ui.data[key] = demoData(ui.tab, today(), ui.open); return render(); }
@@ -240,10 +245,11 @@
     else ui.data[key] = r.data || {};
     render();
   }
-  function open(id) {
+  // tab opcional ('equipo' desde la bandeja de mensajes).
+  function open(id, tab) {
     var p = person(id), secs = p ? sections(p.scopes) : [];
     if (!secs.length) return;
-    ui.open = id; ui.tab = secs[0].key; ui.draft = null; ui.msg = ''; load();
+    ui.open = id; ui.tab = secs.some(function (s) { return s.key === tab; }) ? tab : secs[0].key; ui.draft = null; ui.msg = ''; load();
   }
   function syncDraft() {
     var d = ui.draft; if (!d || !document.getElementById('fpm_notes')) return;
@@ -276,7 +282,10 @@
 
   root.SizigiaFicha = Object.assign({}, core, {
     mount: mount, button: button, open: open,
-    close: function () { ui.open = null; ui.draft = null; ui.msg = ''; ui.err = ''; render(); },
+    close: function () {
+      ui.open = null; ui.draft = null; ui.msg = ''; ui.err = ''; render();
+      if (root.SizigiaCaso) { root.SizigiaCaso.close(); root.SizigiaCaso.refreshInbox(); }
+    },
     setTab: function (k) { ui.tab = k; ui.draft = null; ui.msg = ''; load(); },
     editPlan: function () {
       var v = nutricionView(ui.data[ui.open + ':nutricion'], today()), p = v.plan;

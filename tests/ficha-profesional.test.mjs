@@ -6,7 +6,8 @@ const T = '2026-10-20';
 assert.deepEqual(F.sections(['nutricion', 'semaforo', 'lesiones', 'ciclo']).map(s => s.key), ['lesiones', 'nutricion']);
 assert.deepEqual(F.sections(['semaforo']), []);
 assert.deepEqual(F.sections(null), []);
-assert.deepEqual(F.SECTIONS.map(s => s.rpc), ['patient_lesiones', 'patient_examenes', 'patient_nutricion'], 'cada sección se lee por su función con registro de acceso');
+assert.deepEqual(F.SECTIONS.map(s => s.rpc), ['case_feed', 'patient_lesiones', 'patient_examenes', 'patient_nutricion'], 'cada sección se lee por su función con registro de acceso');
+assert.deepEqual(F.sections(['lesiones', 'equipo']).map(s => s.label), ['Caso', 'Lesiones'], 'el Caso va primero');
 
 // "Otras personas": con ficha pero fuera del panel del semáforo
 const linked = [{ patient_id: 'a', scopes: ['semaforo', 'lesiones'] }, { patient_id: 'b', scopes: ['nutricion'] }, { patient_id: 'c', scopes: ['ciclo'] }];
@@ -40,9 +41,10 @@ const empty = F.nutricionView({}, T); assert.equal(empty.plan, null); assert.equ
 assert.equal(F.nutricionView({ plans: [{ id: 'z', valid_from: '2026-10-21', created_at: '2026-10-21T01:00:00Z', meals: [{ key: 'm1', name: 'A' }] }] }, T).plan.id, 'z');
 
 // Demo: las personas del panel conservan su id y se agregan dos solo con ficha
-const dl = F.demoLinked([{ patient_id: 'p0', patient_name: 'Ana' }, { patient_id: 'p1', patient_name: 'Beto' }]);
-assert.deepEqual(dl[0].scopes, ['semaforo', 'lesiones', 'examenes', 'nutricion']); assert.deepEqual(dl[1].scopes, ['semaforo']);
-assert.equal(F.extraPeople(dl, ['p0', 'p1']).length, 2);
+const dl = F.demoLinked([{ patient_id: 'p0', patient_name: 'Ana' }, { patient_id: 'p1', patient_name: 'Beto' }, { patient_id: 'demo-1', patient_name: 'Matías' }]);
+assert.deepEqual(dl[0].scopes, ['semaforo', 'lesiones', 'equipo', 'examenes', 'nutricion']); assert.deepEqual(dl[1].scopes, ['semaforo']);
+assert.ok(dl[2].scopes.includes('equipo'), 'demo: Matías tiene caso (lo abre la bandeja del panel)');
+assert.equal(F.extraPeople(dl, ['p0', 'p1', 'demo-1']).length, 2);
 
 // Migración: lista sin datos de salud y solo para usuarios con sesión
 const sql = readFileSync(new URL('../supabase/migrations/20261028_ficha_profesional.sql', import.meta.url), 'utf8');
