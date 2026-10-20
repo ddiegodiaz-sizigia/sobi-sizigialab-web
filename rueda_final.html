@@ -309,6 +309,9 @@
 <canvas id="hiddenExportCanvas" style="display:none;"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/semaforo.js"></script>
+<script src="assets/trend-chart.js"></script>
+<script src="assets/persona.js"></script>
 <script>
 /* ============================= CONFIG / STORAGE ============================= */
 const STORAGE_KEY = 'sobiPatientPortalV2';
@@ -916,6 +919,10 @@ async function loadStateForUser(user) {
     if (al.error) console.warn('athlete_logs no disponible (¿migración pendiente?)', al.error.message);
     else athleteLogRows = al.data || [];
   } catch (e) { console.warn('athlete_logs read error', e); }
+  let journalRows = [], cycleRows = [];
+  try { const jr = await supabaseClient.from('journal_entries').select('*').eq('patient_id', patient.id).order('entry_date', { ascending: false }); if (!jr.error) journalRows = jr.data || []; } catch (e) {}
+  try { const cy = await supabaseClient.from('cycle_logs').select('*').eq('patient_id', patient.id).gte('log_date', addDaysISO(todayISO(), -200)); if (!cy.error) cycleRows = cy.data || []; } catch (e) {}
+  const cycleMap = {}; cycleRows.forEach(r => { cycleMap[r.log_date] = r; });
 
   const athleteLogsMap = {};
   athleteLogRows.forEach(r => { athleteLogsMap[r.log_date] = r; });
@@ -955,6 +962,9 @@ async function loadStateForUser(user) {
     measurements: measurements,
     sessions: sessions,
     athleteLogs: athleteLogsMap,
+    profile: { sex: patient.sex || null, tracksCycle: !!patient.tracks_cycle || patient.sex === 'femenino' },
+    journal: journalRows,
+    cycleLogs: cycleMap,
     ui: { tab: 'resumen', selectedMonth: monthKey(todayISO()), historialRange: 'all', highlightPillar: null, checkinsExpanded: false, selectedRingDay: null, selectedMeasureDate: todayISO() }
   };
   try { localStorage.setItem(cacheKey, JSON.stringify(state)); } catch(e) {}
@@ -1092,12 +1102,12 @@ const TABS = [
   { id: 'medidas', label: 'Medidas' },
   { id: 'historial', label: 'Historial' },
   { id: 'recursos', label: 'Recursos' },
+  { id: 'bitacora', label: 'Mi hoja de vida' },
   { id: 'sesiones', label: 'Sesiones' },
   { id: 'data', label: 'Mi Data' }
 ];
 
 function setTab(id) { state.ui.tab = id; saveState(); render(); }
-function setDemoTier(key) { state.patient.tierPlan = key; saveState(); render(); }
 function dismissUpsell() { state.ui.upsellDismissed = true; saveState(); render(); }
 
 function render() {
@@ -1141,8 +1151,10 @@ function render() {
   else if (state.ui.tab === 'medidas') content.innerHTML = renderMedidas();
   else if (state.ui.tab === 'historial') content.innerHTML = renderHistorial();
   else if (state.ui.tab === 'recursos') content.innerHTML = renderRecursos();
+  else if (state.ui.tab === 'bitacora') content.innerHTML = SizigiaPersona.bitacoraTab();
   else if (state.ui.tab === 'sesiones') content.innerHTML = renderSesiones();
   else if (state.ui.tab === 'data') content.innerHTML = renderData();
+  try { SizigiaPersona.afterRender(); } catch (e) { console.warn('persona', e); }
 }
 
 function escapeHtml(s) {
@@ -1199,7 +1211,9 @@ function renderResumen() {
   html += buildDayCard(todayIso, 'summary');
   html += '</div>';
 
+  html += SizigiaPersona.semaforoCard();
   html += renderAthleteLogCard();
+  html += SizigiaPersona.restCards();
 
   const adherenceInfo = 'Mide qué % de los días que pedían un check-in (lunes a viernes; el fin de semana es tu Zona Sagrada, sin tareas por diseño) sí lo hiciste, desde el día 1 del programa. <strong>100% es cumplimiento total de lo pedido</strong> — no hace falta estar siempre en el máximo para que el proceso funcione, pero es el número que Manuel revisa antes de cada control.';
   const last7Info = 'De los 5 días que piden algo esta semana (lunes a viernes), cuántos ya registraste. Sábado y domingo no cuentan ni suman ni restan: son tu Zona Sagrada.';
