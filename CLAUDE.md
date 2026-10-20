@@ -24,7 +24,7 @@ Hecho y en la rama (migraciones 20261020 y 20261021 ya aplicadas en Supabase):
 - Tablas: `cycle_logs`, `journal_entries`; RPC `set_my_profile`; `patients.sex`, `tracks_cycle`.
 - Alta de paciente (admin.html) pide sexo; sin planes de 3/6 meses.
 
-Módulo 1 hecho en rama `feat/lesiones` (migración `20261022_lesiones.sql` PENDIENTE de aplicar en Supabase):
+Módulo 1 hecho en rama `feat/lesiones` (migración `20261022_lesiones.sql` aplicada en Supabase el 2026-10-20 y probada con transacción que se deshace):
 - `assets/lesiones.js` + `tests/lesiones.test.mjs`: historial por lesión, dolor diario (EVA) por lesión abierta con gráfico, alta/recaída, sugerencia desde el registro diario si coincide la zona. Pestaña "Lesiones" en `rueda_final.html`.
 - Tablas `injuries`, `injury_pain_logs`; trigger `injuries_to_journal` escribe cada cambio en `journal_entries` (kind `lesion`, scope `lesiones`); el dolor diario no va a la bitácora. Profesional con permiso `lesiones` lee por `patient_lesiones(p_patient)` con registro en `access_log`.
 - Sin Node en el PC de Diego: las pruebas se verificaron con Edge headless. Instalar Node para `node tests/*.test.mjs`.
