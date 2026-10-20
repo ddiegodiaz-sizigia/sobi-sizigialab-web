@@ -14,7 +14,8 @@
     { key: 'nutricion', label: 'Nutrición', desc: 'tu plan de alimentación, adherencia y composición corporal', live: true },
     { key: 'examenes', label: 'Exámenes y documentos', desc: 'exámenes de laboratorio e informes que subas (sus resultados; el archivo, solo tú)', live: true },
     { key: 'salud_mental', label: 'Salud mental', desc: 'registros y notas de salud mental', live: false, sensitive: true },
-    { key: 'bitacora', label: 'Hoja de vida', desc: 'tu línea de tiempo: notas, objetivos, hitos y consultas', live: false }
+    { key: 'bitacora', label: 'Hoja de vida', desc: 'tu línea de tiempo: notas, objetivos, hitos y consultas', live: false },
+    { key: 'equipo', label: 'Conversación del equipo', desc: 'escribirte y escribir sobre ti al resto de tu equipo, en hilos por tema. Solo lee los temas que también le compartes (por ejemplo, lesiones). De lo que tus profesionales hablan solo entre ellos ves que existe, no el contenido', live: true }
   ];
   var SCOPE_BY = {}; SCOPES.forEach(function (s) { SCOPE_BY[s.key] = s; });
   var LINK_EQUIPO = 'https://sizigialab.cl/equipo.html';
@@ -87,9 +88,11 @@
   function demoData() {
     var now = Date.now(), h = 3600000, d = 24 * h, iso = function (ms) { return new Date(ms).toISOString(); };
     var rows = [
-      { link_id: 'l1', professional_id: 'p1', name: 'Paula Rojas', role: 'kinesiologo', email: 'paula@ejemplo.cl', has_account: true, scopes: ['semaforo', 'lesiones'], consent_version: 'v3-borrador', granted_at: iso(now - 9 * d), revoked_at: null },
+      { link_id: 'l3', professional_id: 'p3', name: 'Dr. Manuel Acuña', role: 'medico', email: 'manuel@ejemplo.cl', has_account: true, scopes: ['semaforo', 'lesiones', 'ciclo', 'nutricion', 'examenes', 'salud_mental', 'bitacora', 'equipo'], consent_version: 'v3-borrador', granted_at: iso(now - 30 * d), revoked_at: null },
+      { link_id: 'l4', professional_id: 'p4', name: 'Valentina Mora', role: 'psicologo', email: 'valentina@ejemplo.cl', has_account: true, scopes: ['salud_mental', 'equipo'], consent_version: 'v3-borrador', granted_at: iso(now - 20 * d), revoked_at: null },
+      { link_id: 'l1', professional_id: 'p1', name: 'Paula Rojas', role: 'kinesiologo', email: 'paula@ejemplo.cl', has_account: true, scopes: ['semaforo', 'lesiones', 'equipo'], consent_version: 'v3-borrador', granted_at: iso(now - 9 * d), revoked_at: null },
       { link_id: 'l0', professional_id: 'p1', name: 'Paula Rojas', role: 'kinesiologo', email: 'paula@ejemplo.cl', has_account: true, scopes: ['lesiones'], consent_version: 'v3-borrador', granted_at: iso(now - 12 * d), revoked_at: iso(now - 9 * d) },
-      { link_id: 'l2', professional_id: 'p2', name: 'Tomás Fuentes', role: 'entrenador', email: 'tomas@ejemplo.cl', has_account: false, scopes: ['semaforo'], consent_version: 'v3-borrador', granted_at: iso(now - 2 * d), revoked_at: null }
+      { link_id: 'l2', professional_id: 'p2', name: 'Tomás Fuentes', role: 'entrenador', email: 'tomas@ejemplo.cl', has_account: false, scopes: ['semaforo', 'lesiones', 'equipo'], consent_version: 'v3-borrador', granted_at: iso(now - 2 * d), revoked_at: null }
     ];
     var log = [];
     [0, 0.1, 0.2, 1, 2, 3].forEach(function (k) { log.push({ accessed_at: iso(now - k * d - 2 * h), name: 'Paula Rojas', role: 'kinesiologo', scope: 'semaforo' }); });
@@ -187,6 +190,8 @@
     if (flow && flow.proId == null) h += flowBox(null);
     else h += '<div style="margin-top:12px"><button class="btn small primary" onclick="SizigiaEquipo.invite()">Invitar a un profesional</button></div>';
     h += '</div>';
+    // Conversación con el equipo (assets/caso.js, se dibuja sola dentro de su tarjeta).
+    if (root.SizigiaCaso) h += root.SizigiaCaso.personaCard({ sb: supabaseClient, demo: isDemoMode || !currentPatientId, patientId: currentPatientId });
     var log = groupAccessLog(data.log);
     h += '<div class="card"><h3>Quién consultó tus datos</h3><div class="card-sub">Cada vez que alguien de tu equipo abre tus datos, queda aquí.</div>';
     if (!log.length) h += '<div class="tc-empty">Nadie ha consultado tus datos todavía.</div>';

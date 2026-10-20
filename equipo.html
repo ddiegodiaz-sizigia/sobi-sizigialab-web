@@ -15,6 +15,7 @@
 <script src="assets/examenes.js"></script>
 <script src="assets/nutricion.js"></script>
 <script src="assets/ficha-profesional.js"></script>
+<script src="assets/caso.js"></script>
 <style>
   :root { --ink:#131a17; --muted:#6b7280; --line:#e6e4e1; --accent:#0d9488; --canvas:#faf9f7; --paper:#fffffe; }
   * { box-sizing:border-box; }
@@ -65,6 +66,7 @@ async function boot() {
   if (demo) {
     const feed = SizigiaCoach.demoFeed(SizigiaCoach.localISO(new Date()));
     SizigiaFicha.mount({ el: fichaEl, demo: true, linked: SizigiaFicha.demoLinked(feed), panelIds: feed.map(p => p.patient_id) });
+    SizigiaCaso.mountInbox({ demo: true });
     return SizigiaCoach.mount({ el: app, sb: null, demo: true, email: 'coach@ejemplo.cl', link, feed });
   }
   const { data } = await sb.auth.getSession();
@@ -80,6 +82,8 @@ async function boot() {
   // my_linked_patients(): nombre y permisos de cada persona (sin datos de salud). La ficha carga cada sección al abrirla.
   const { data: linked } = await sb.rpc('my_linked_patients');
   SizigiaFicha.mount({ el: fichaEl, sb, linked: linked || [], panelIds: (rows || []).map(p => p.patient_id) });
+  // my_case_inbox(): personas con mensajes del equipo sin leer (sin contenido). "Abrir caso" abre la ficha en la pestaña Caso.
+  SizigiaCaso.mountInbox({ sb });
   SizigiaCoach.mount({ el: app, sb, email: data.session.user.email, link, feed: rows || [] });
 }
 boot();

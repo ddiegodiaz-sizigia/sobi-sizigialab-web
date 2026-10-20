@@ -197,6 +197,8 @@
     h += '<div class="pc-sum">' + chip('todos', s.total, 'personas') + chip('rojo', s.rojo, 'rojo') + chip('amarillo', s.amarillo, 'amarillo') + chip('gris', s.gris, 'sin datos') + chip('verde', s.verde, 'verde') +
       '<button class="pc-chip' + (f.pending ? ' on' : '') + '" onclick="SizigiaCoach.togglePending()"><b>' + s.pending + '</b> con pendientes</button>' +
       (s.adherencePct != null ? '<span class="pc-chip" style="cursor:default">Constancia del grupo: <b>' + s.adherencePct + ' %</b></span>' : '') + '</div>';
+    // Bandeja de mensajes del equipo (assets/caso.js): personas con mensajes sin leer, sin contenido.
+    if (root.SizigiaCaso) h += root.SizigiaCaso.inboxHTML();
     h += '<div class="pc-fil"><input type="search" id="pc_q" placeholder="Buscar por nombre" value="' + E(f.q) + '" oninput="SizigiaCoach.setQ(this.value)">' +
       '<select onchange="SizigiaCoach.setMode(this.value)">' + [['todos', 'Todos los registros'], ['deportivo', 'Deportivo'], ['comun', 'General']].map(function (o) { return '<option value="' + o[0] + '"' + (f.mode === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>';
     return h;
