@@ -50,6 +50,12 @@ Módulo 4, Panel del coach (rama `feat/panel-coach`; migración `20261025_panel_
 - `coach_feed_v2()` se redefinió para devolver `last_contact` (contacto de ese profesional).
 - Cambiar diario <-> semanal no pierde historia (`semLogsComun` en `semaforo.js`, decisión de Diego): en semanal, cada semana sin registro semanal se arma con el promedio de sus días (hábitos = días cumplidos); en diario, las semanas sin días conservan su semanal como referencia para hábitos y tendencias, y el semáforo usa el semanal de esta semana o la anterior si no hay día vigente. La constancia diaria cuenta solo días. Nada se reescribe en la base.
 
+Módulo 5a, Exámenes y documentos (rama `feat/examenes`; migración `20261026_examenes.sql` aplicada y probada):
+- `assets/examenes.js` + `tests/examenes.test.mjs`: pestaña "Exámenes". Subir PDF o imagen (máx. 10 MB) al bucket privado `documentos` (ruta `<patient_id>/<fecha>-<aleatorio>.<ext>`, sin el nombre original), visor con URL firmada de 5 minutos, resultados por documento (catálogo de 20 marcadores u "Otro"), "Mis biomarcadores" con último valor, variación y gráfico. Acepta coma decimal.
+- Fuera de rango compara con el rango del laboratorio que anota la persona; el catálogo sugiere un rango general editable por sexo (`BIOMARKERS`, pendiente de validación por Manuel). Informativo, sin veredicto.
+- Tablas `documents` y `biomarker_results`: la persona lee lo suyo, admin lee todo; nadie escribe directo. Escritura solo por `save_document(p_patient, p_doc, p_results)` y `delete_document(p_id)` (persona o admin), que dejan entrada `examen` / scope `examenes` en la bitácora (texto en `document_journal_body`, igual a `journalText()`). Profesional con permiso `examenes` lee por `patient_examenes(p_patient)` con registro en `access_log` (sin el archivo).
+- Falta: que el profesional vea el archivo (firmar la URL desde una Edge Function que registre el acceso), pantalla del profesional (`SCOPES.examenes.live` sigue en false), lectura automática de PDF (los valores se anotan a mano).
+
 Pruebas: este PC no tiene Node. Se corren en Edge headless con un perfil aparte (`--user-data-dir`), cargando el módulo con `module={exports:{}}`, un shim de `assert` y uno de `require` (panel-coach usa semaforo y registro-comun). Edge solo entrega `--dump-dom` con `Start-Process -RedirectStandardOutput`. Para ver páginas en el navegador integrado hace falta un servidor local (sin Node: un `HttpListener` de PowerShell). Si se instala Node, basta `node tests/*.test.mjs`.
 
 ## Módulos por construir (en este orden)
@@ -58,7 +64,7 @@ Cada uno: `assets/<modulo>.js` + migración con RLS + `tests/<modulo>.test.mjs` 
 2. ~~**Mi equipo y permisos**~~ (hecho, ver arriba): la persona invita coach/nutri/psicólogo/médico, permiso por tipo de dato (semaforo, ciclo, lesiones, nutricion, examenes, salud_mental, bitacora), revocable, con registro de accesos visible (`care_links`, `grant_care_link`, `revoke_care_link`, `access_log` ya existen en backend; falta la pantalla).
 3. ~~**Registro de persona común**~~ (hecho, ver arriba): versión sin RPE (energía, sueño, estrés, hábitos), diario o semanal según el coach.
 4. ~~**Panel del coach**~~ (hecho, ver arriba). Falta: plantillas propias del coach, notas del coach por persona, y que `admin.html` calcule el semáforo del registro general.
-5. **Exámenes y documentos** (subida, visor, biomarcadores, entrada automática en la bitácora) y **Nutrición** (plan por comida, adherencia, peso/composición).
+5. ~~**Exámenes y documentos**~~ (hecho, ver arriba) y **Nutrición** (plan por comida, adherencia, peso/composición).
 
 ## Deuda a retirar
 - La app de la persona aún muestra residuos del cronograma de 6 meses: tarjeta "Próximo control · Mes 6", "Hoy te toca · Hábito Ancla", `programMonths`, `tier_plan` (tope de resumen de sesiones). Reemplazar por contenido basado en la bitácora.
