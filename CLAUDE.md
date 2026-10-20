@@ -24,9 +24,14 @@ Hecho y en la rama (migraciones 20261020 y 20261021 ya aplicadas en Supabase):
 - Tablas: `cycle_logs`, `journal_entries`; RPC `set_my_profile`; `patients.sex`, `tracks_cycle`.
 - Alta de paciente (admin.html) pide sexo; sin planes de 3/6 meses.
 
+Módulo 1 hecho en rama `feat/lesiones` (migración `20261022_lesiones.sql` aplicada en Supabase el 2026-10-20 y probada con transacción que se deshace):
+- `assets/lesiones.js` + `tests/lesiones.test.mjs`: historial por lesión, dolor diario (EVA) por lesión abierta con gráfico, alta/recaída, sugerencia desde el registro diario si coincide la zona. Pestaña "Lesiones" en `rueda_final.html`.
+- Tablas `injuries`, `injury_pain_logs`; trigger `injuries_to_journal` escribe cada cambio en `journal_entries` (kind `lesion`, scope `lesiones`); el dolor diario no va a la bitácora. Profesional con permiso `lesiones` lee por `patient_lesiones(p_patient)` con registro en `access_log`.
+- Sin Node en el PC de Diego: las pruebas se verificaron con Edge headless. Instalar Node para `node tests/*.test.mjs`.
+
 ## Módulos por construir (en este orden)
 Cada uno: `assets/<modulo>.js` + migración con RLS + `tests/<modulo>.test.mjs` + pestaña en la app de la persona vía hook mínimo. Sirven a coach con clientes comunes, a Manuel y al deportista.
-1. **Lesiones y rehabilitación** (prioridad, viene de Matías Lacroix): historial por lesión (fecha, zona, EVA, tratante, estado, alta, notas), dolor diario enlazado a la lesión abierta, cada cambio genera entrada en `journal_entries` (kind 'lesion'). Scope de permiso: `lesiones`.
+1. ~~**Lesiones y rehabilitación**~~ (hecho, ver arriba; viene de Matías Lacroix): historial por lesión (fecha, zona, EVA, tratante, estado, alta, notas), dolor diario enlazado a la lesión abierta, cada cambio genera entrada en `journal_entries` (kind 'lesion'). Scope de permiso: `lesiones`.
 2. **Mi equipo y permisos**: la persona invita coach/nutri/psicólogo/médico, permiso por tipo de dato (semaforo, ciclo, lesiones, nutricion, examenes, salud_mental, bitacora), revocable, con registro de accesos visible (`care_links`, `grant_care_link`, `revoke_care_link`, `access_log` ya existen en backend; falta la pantalla).
 3. **Registro de persona común**: versión sin RPE (energía, sueño, estrés, hábitos), diario o semanal según el coach.
 4. **Panel del coach** (`equipo.html`): 30–80 clientes, semáforo, adherencia, pendientes, filtros, mensajes con plantilla por WhatsApp.

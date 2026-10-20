@@ -41,7 +41,7 @@
     var t = todayISO();
     return [
       { id: uid(), entry_date: addDaysISO(t, -3), kind: 'plan', title: 'Ajuste de carga por 2 semanas', body: 'Bajar volumen 20 % mientras mejora el sueño.', author_kind: 'profesional' },
-      { id: uid(), entry_date: addDaysISO(t, -12), kind: 'lesion', title: 'Molestia en rodilla derecha', body: 'Aparece al aterrizar saltos. EVA 3/10.', author_kind: 'paciente' },
+      { id: uid(), entry_date: addDaysISO(t, -12), kind: 'lesion', title: 'Nueva lesión: Rodilla (lado derecho)', body: 'Molestia al aterrizar saltos (posible tendinopatía rotuliana). EVA inicial 5/10. Tratante: Kinesióloga del club', author_kind: 'paciente', scope: 'lesiones' },
       { id: uid(), entry_date: addDaysISO(t, -40), kind: 'objetivo', title: 'Llegar al torneo regional en forma', body: 'Foco: sueño y recuperación entre sesiones.', author_kind: 'paciente' }
     ];
   }
@@ -187,7 +187,7 @@
     semaforoCard: semaforoCard,
     restCards: function () { ensure(); return trendsCard() + profileCard() + cycleCard(); },
     bitacoraTab: bitacoraTab,
-    afterRender: function () { if (state && state.ui && state.ui.tab === 'resumen') mountTrend(); },
+    afterRender: function () { if (state && state.ui && state.ui.tab === 'resumen') mountTrend(); if (state && state.ui && state.ui.tab === 'lesiones' && root.SizigiaLesiones) root.SizigiaLesiones.afterRender(); },
     setMetric: function (m) { ui.metric = m; render(); },
     setFilter: function (f) { ui.filter = f; render(); },
     saveProfile: saveProfile, enableCycle: enableCycle, saveCycle: saveCycle, saveJournal: saveJournal
