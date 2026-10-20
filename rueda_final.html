@@ -314,6 +314,7 @@
 <script src="assets/persona.js"></script>
 <script src="assets/lesiones.js"></script>
 <script src="assets/examenes.js"></script>
+<script src="assets/nutricion.js"></script>
 <script src="assets/mi-equipo.js"></script>
 <script src="assets/registro-comun.js"></script>
 <script>
@@ -1109,6 +1110,7 @@ const TABS = [
   { id: 'bitacora', label: 'Mi hoja de vida' },
   { id: 'lesiones', label: 'Lesiones' },
   { id: 'examenes', label: 'Exámenes' },
+  { id: 'nutricion', label: 'Nutrición' },
   { id: 'equipo', label: 'Mi equipo' },
   { id: 'sesiones', label: 'Sesiones' },
   { id: 'data', label: 'Mi Data' }
@@ -1161,6 +1163,7 @@ function render() {
   else if (state.ui.tab === 'bitacora') content.innerHTML = SizigiaPersona.bitacoraTab();
   else if (state.ui.tab === 'lesiones') content.innerHTML = SizigiaLesiones.tab();
   else if (state.ui.tab === 'examenes') content.innerHTML = SizigiaExamenes.tab();
+  else if (state.ui.tab === 'nutricion') content.innerHTML = SizigiaNutricion.tab();
   else if (state.ui.tab === 'equipo') content.innerHTML = SizigiaEquipo.tab();
   else if (state.ui.tab === 'sesiones') content.innerHTML = renderSesiones();
   else if (state.ui.tab === 'data') content.innerHTML = renderData();

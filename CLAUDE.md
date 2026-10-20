@@ -56,6 +56,12 @@ Módulo 5a, Exámenes y documentos (rama `feat/examenes`; migración `20261026_e
 - Tablas `documents` y `biomarker_results`: la persona lee lo suyo, admin lee todo; nadie escribe directo. Escritura solo por `save_document(p_patient, p_doc, p_results)` y `delete_document(p_id)` (persona o admin), que dejan entrada `examen` / scope `examenes` en la bitácora (texto en `document_journal_body`, igual a `journalText()`). Profesional con permiso `examenes` lee por `patient_examenes(p_patient)` con registro en `access_log` (sin el archivo).
 - Falta: que el profesional vea el archivo (firmar la URL desde una Edge Function que registre el acceso), pantalla del profesional (`SCOPES.examenes.live` sigue en false), lectura automática de PDF (los valores se anotan a mano).
 
+Módulo 5b, Nutrición (rama `feat/nutricion`; migración `20261027_nutricion.sql` aplicada y probada):
+- `assets/nutricion.js` + `tests/nutricion.test.mjs`: pestaña "Nutrición". Plan por comida (1 a 8: nombre, hora, qué comer) más indicaciones; base de 4 comidas para partir. Registro por comida: Cumplí / Parcial / No, hasta 7 días atrás (tocar de nuevo borra). Adherencia 7/28 días: % cumplido de lo registrado (parcial = ½) y constancia aparte (lo no registrado no es incumplido), por comida y gráfico diario. Peso y composición se leen de Medidas (`state.measurements`), sin duplicar.
+- Tablas `nutrition_plans` (cada cambio es una versión nueva; vigente = la última con `valid_from` <= día, en fecha de Chile) y `meal_logs` (la persona escribe por RLS, solo sobre un plan propio y dentro de 7 días; admin lee).
+- `set_nutrition_plan(p_patient, p_meals, p_notes)`: persona, admin o profesional con vínculo activo y scope `nutricion`; deja entrada `plan` / scope `nutricion` en la bitácora con lo que cambió (igual a `planJournal()`). `patient_nutricion(p_patient)`: plan, registros 90 días y peso/composición 1 año, con registro en `access_log`.
+- Falta: pantalla del profesional (`SCOPES.nutricion.live` sigue en false). Hoy no hay profesionales con cuenta en la base: el camino del profesional se probó con uno temporal dentro de la transacción.
+
 Pruebas: este PC no tiene Node. Se corren en Edge headless con un perfil aparte (`--user-data-dir`), cargando el módulo con `module={exports:{}}`, un shim de `assert` y uno de `require` (panel-coach usa semaforo y registro-comun). Edge solo entrega `--dump-dom` con `Start-Process -RedirectStandardOutput`. Para ver páginas en el navegador integrado hace falta un servidor local (sin Node: un `HttpListener` de PowerShell). Si se instala Node, basta `node tests/*.test.mjs`.
 
 ## Módulos por construir (en este orden)
@@ -64,7 +70,8 @@ Cada uno: `assets/<modulo>.js` + migración con RLS + `tests/<modulo>.test.mjs` 
 2. ~~**Mi equipo y permisos**~~ (hecho, ver arriba): la persona invita coach/nutri/psicólogo/médico, permiso por tipo de dato (semaforo, ciclo, lesiones, nutricion, examenes, salud_mental, bitacora), revocable, con registro de accesos visible (`care_links`, `grant_care_link`, `revoke_care_link`, `access_log` ya existen en backend; falta la pantalla).
 3. ~~**Registro de persona común**~~ (hecho, ver arriba): versión sin RPE (energía, sueño, estrés, hábitos), diario o semanal según el coach.
 4. ~~**Panel del coach**~~ (hecho, ver arriba). Falta: plantillas propias del coach, notas del coach por persona, y que `admin.html` calcule el semáforo del registro general.
-5. ~~**Exámenes y documentos**~~ (hecho, ver arriba) y **Nutrición** (plan por comida, adherencia, peso/composición).
+5. ~~**Exámenes y documentos**~~ y ~~**Nutrición**~~ (hechos, ver arriba).
+Siguiente lógico: la vista del profesional en `equipo.html` para lesiones, exámenes y nutrición (las RPC `patient_*` ya existen).
 
 ## Deuda a retirar
 - La app de la persona aún muestra residuos del cronograma de 6 meses: tarjeta "Próximo control · Mes 6", "Hoy te toca · Hábito Ancla", `programMonths`, `tier_plan` (tope de resumen de sesiones). Reemplazar por contenido basado en la bitácora.
