@@ -9,10 +9,10 @@
   // live: el profesional ya lo ve en su pantalla. Mantener al día cuando cada módulo tenga su vista del profesional.
   var SCOPES = [
     { key: 'semaforo', label: 'Semáforo y registro', desc: 'tu registro diario o semanal: sueño, fatiga, ánimo, dolor y carga si es deportivo; energía, sueño, estrés y hábitos si es general', live: true },
-    { key: 'lesiones', label: 'Lesiones', desc: 'tus lesiones, su estado, tratante y tu dolor diario por lesión', live: false },
+    { key: 'lesiones', label: 'Lesiones', desc: 'tus lesiones, su estado, tratante y tu dolor diario por lesión', live: true },
     { key: 'ciclo', label: 'Ciclo menstrual', desc: 'días de sangrado, flujo y síntomas', live: false, sensitive: true },
-    { key: 'nutricion', label: 'Nutrición', desc: 'tu plan de alimentación, adherencia y composición corporal', live: false },
-    { key: 'examenes', label: 'Exámenes y documentos', desc: 'exámenes de laboratorio e informes que subas', live: false },
+    { key: 'nutricion', label: 'Nutrición', desc: 'tu plan de alimentación, adherencia y composición corporal', live: true },
+    { key: 'examenes', label: 'Exámenes y documentos', desc: 'exámenes de laboratorio e informes que subas (sus resultados; el archivo, solo tú)', live: true },
     { key: 'salud_mental', label: 'Salud mental', desc: 'registros y notas de salud mental', live: false, sensitive: true },
     { key: 'bitacora', label: 'Hoja de vida', desc: 'tu línea de tiempo: notas, objetivos, hitos y consultas', live: false }
   ];

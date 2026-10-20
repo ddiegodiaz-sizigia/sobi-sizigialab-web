@@ -62,6 +62,11 @@ Módulo 5b, Nutrición (rama `feat/nutricion`; migración `20261027_nutricion.sq
 - `set_nutrition_plan(p_patient, p_meals, p_notes)`: persona, admin o profesional con vínculo activo y scope `nutricion`; deja entrada `plan` / scope `nutricion` en la bitácora con lo que cambió (igual a `planJournal()`). `patient_nutricion(p_patient)`: plan, registros 90 días y peso/composición 1 año, con registro en `access_log`.
 - Falta: pantalla del profesional (`SCOPES.nutricion.live` sigue en false). Hoy no hay profesionales con cuenta en la base: el camino del profesional se probó con uno temporal dentro de la transacción.
 
+Ficha del profesional (rama `feat/ficha-profesional`; migración `20261028_ficha_profesional.sql` aplicada y probada):
+- `assets/ficha-profesional.js` + `tests/ficha-profesional.test.mjs`: en `equipo.html`, hoja lateral por persona con una pestaña por permiso (Lesiones, Exámenes, Nutrición). Reutiliza los núcleos de `lesiones.js`, `examenes.js` y `nutricion.js` (mismas reglas que ve la persona). Cada sección se carga recién al abrirla con `patient_lesiones` / `patient_examenes` / `patient_nutricion` (registran el acceso). Con permiso `nutricion` el profesional edita el plan (`set_nutrition_plan`, queda a su nombre). Demo: `equipo.html?demo=1`.
+- `my_linked_patients()`: nombre y permisos de cada vínculo activo, sin datos de salud (no registra acceso). Botón "Ver ficha" en la fila del panel (hook en `panel-coach.js`) y lista "Otras personas" para quienes dieron ficha pero no semáforo.
+- `SCOPES[].live` en `mi-equipo.js`: semaforo, lesiones, examenes y nutricion. El profesional ve los resultados de exámenes pero no el archivo (falta Edge Function que firme la URL y registre el acceso).
+
 Pruebas: este PC no tiene Node. Se corren en Edge headless con un perfil aparte (`--user-data-dir`), cargando el módulo con `module={exports:{}}`, un shim de `assert` y uno de `require` (panel-coach usa semaforo y registro-comun). Edge solo entrega `--dump-dom` con `Start-Process -RedirectStandardOutput`. Para ver páginas en el navegador integrado hace falta un servidor local (sin Node: un `HttpListener` de PowerShell). Si se instala Node, basta `node tests/*.test.mjs`.
 
 ## Módulos por construir (en este orden)
@@ -71,7 +76,7 @@ Cada uno: `assets/<modulo>.js` + migración con RLS + `tests/<modulo>.test.mjs` 
 3. ~~**Registro de persona común**~~ (hecho, ver arriba): versión sin RPE (energía, sueño, estrés, hábitos), diario o semanal según el coach.
 4. ~~**Panel del coach**~~ (hecho, ver arriba). Falta: plantillas propias del coach, notas del coach por persona, y que `admin.html` calcule el semáforo del registro general.
 5. ~~**Exámenes y documentos**~~ y ~~**Nutrición**~~ (hechos, ver arriba).
-Siguiente lógico: la vista del profesional en `equipo.html` para lesiones, exámenes y nutrición (las RPC `patient_*` ya existen).
+~~Vista del profesional para lesiones, exámenes y nutrición~~ (hecha, ver "Ficha del profesional").
 
 ## Deuda a retirar
 - La app de la persona aún muestra residuos del cronograma de 6 meses: tarjeta "Próximo control · Mes 6", "Hoy te toca · Hábito Ancla", `programMonths`, `tier_plan` (tope de resumen de sesiones). Reemplazar por contenido basado en la bitácora.
