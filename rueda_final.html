@@ -312,6 +312,7 @@
 <script src="assets/semaforo.js"></script>
 <script src="assets/trend-chart.js"></script>
 <script src="assets/persona.js"></script>
+<script src="assets/lesiones.js"></script>
 <script>
 /* ============================= CONFIG / STORAGE ============================= */
 const STORAGE_KEY = 'sobiPatientPortalV2';
@@ -1103,6 +1104,7 @@ const TABS = [
   { id: 'historial', label: 'Historial' },
   { id: 'recursos', label: 'Recursos' },
   { id: 'bitacora', label: 'Mi hoja de vida' },
+  { id: 'lesiones', label: 'Lesiones' },
   { id: 'sesiones', label: 'Sesiones' },
   { id: 'data', label: 'Mi Data' }
 ];
@@ -1152,6 +1154,7 @@ function render() {
   else if (state.ui.tab === 'historial') content.innerHTML = renderHistorial();
   else if (state.ui.tab === 'recursos') content.innerHTML = renderRecursos();
   else if (state.ui.tab === 'bitacora') content.innerHTML = SizigiaPersona.bitacoraTab();
+  else if (state.ui.tab === 'lesiones') content.innerHTML = SizigiaLesiones.tab();
   else if (state.ui.tab === 'sesiones') content.innerHTML = renderSesiones();
   else if (state.ui.tab === 'data') content.innerHTML = renderData();
   try { SizigiaPersona.afterRender(); } catch (e) { console.warn('persona', e); }
