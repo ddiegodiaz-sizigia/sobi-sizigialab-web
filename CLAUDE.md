@@ -40,16 +40,24 @@ Módulo 3, Registro de persona común (rama `feat/registro-comun`; migración `2
 - Convivencia: cada persona usa UN registro (`log_settings.mode`: `deportivo` por defecto, o `comun`). Sin fila = deportivo diario, nada cambia para quien ya registra. `persona.js` cambia semáforo y tendencias (energía, sueño, estrés, hábitos %) según el modo.
 - Semáforo general en `assets/semaforo.js` (`SEM_RULES_COMUN`, `computeSemaforoComun`): solo amarillo/verde/gris (sin dolor ni carga no hay rojo); sueño < 6 h, promedio 3 registros < 6,5 h (solo diario), energía ≤ 3, estrés ≥ 8; gris si no hay registro en 2 días o de esta semana/la anterior. Los hábitos no cambian el color. Pendiente de validación por Manuel.
 - Tablas `log_settings` (solo se escribe por `set_log_settings`: la persona, admin o profesional con vínculo activo y scope `semaforo`; cada cambio deja entrada `plan` en la bitácora) y `wellness_logs` (persona todo lo suyo, admin solo lee). `coach_feed_v2()` reemplaza a `coach_feed()` en `equipo.html`: devuelve modo, frecuencia y registros (sin notas) y registra un acceso por persona. `coach_feed()` queda por compatibilidad.
-- Falta: el coach aún no tiene pantalla para configurar el registro (la RPC ya lo permite; va en el módulo 4). `admin.html` sigue calculando el semáforo solo con `athlete_logs`: para personas en modo general muestra gris.
+- Falta: `admin.html` sigue calculando el semáforo solo con `athlete_logs`: para personas en modo general muestra gris.
 
-Pruebas: este PC no tiene Node. Se corren en Edge headless con un perfil aparte (`--user-data-dir`), cargando el módulo con `module={exports:{}}` y un shim de `assert`. Si se instala Node, basta `node tests/*.test.mjs`.
+Módulo 4, Panel del coach (rama `feat/panel-coach`; migración `20261025_panel_coach.sql` aplicada y probada):
+- `assets/panel-coach.js` + `tests/panel-coach.test.mjs`: `equipo.html` ahora es una lista compacta (30-80 personas) ordenada rojo > amarillo > sin datos > verde. Resumen por color (filtro con un clic), "con pendientes", constancia del grupo, búsqueda sin tildes y filtro por tipo de registro. Demo sin red: `equipo.html?demo=1`.
+- Pendientes por persona: alerta (rojo/amarillo no contactado desde el último registro), sin registro (gris; no vuelve hasta 3 días después de contactar), constancia baja (< 50 %), sin hábitos (registro general).
+- Mensajes por WhatsApp con 5 plantillas (`TEMPLATES`, sincronizadas con el check SQL): `wa.me/?text=` sin número, el coach elige el contacto; el teléfono de la persona no se expone. Al abrir WhatsApp o "Ya le escribí" se llama `mark_contacted` (tabla `coach_contacts`: quién, cuándo, plantilla; sin texto ni datos de salud) y los pendientes se limpian.
+- El coach configura el registro de cada persona (`set_log_settings(p_patient, ...)`); queda en la bitácora con su nombre.
+- `coach_feed_v2()` se redefinió para devolver `last_contact` (contacto de ese profesional).
+- Cambiar diario <-> semanal no pierde historia (`semLogsComun` en `semaforo.js`, decisión de Diego): en semanal, cada semana sin registro semanal se arma con el promedio de sus días (hábitos = días cumplidos); en diario, las semanas sin días conservan su semanal como referencia para hábitos y tendencias, y el semáforo usa el semanal de esta semana o la anterior si no hay día vigente. La constancia diaria cuenta solo días. Nada se reescribe en la base.
+
+Pruebas: este PC no tiene Node. Se corren en Edge headless con un perfil aparte (`--user-data-dir`), cargando el módulo con `module={exports:{}}`, un shim de `assert` y uno de `require` (panel-coach usa semaforo y registro-comun). Edge solo entrega `--dump-dom` con `Start-Process -RedirectStandardOutput`. Para ver páginas en el navegador integrado hace falta un servidor local (sin Node: un `HttpListener` de PowerShell). Si se instala Node, basta `node tests/*.test.mjs`.
 
 ## Módulos por construir (en este orden)
 Cada uno: `assets/<modulo>.js` + migración con RLS + `tests/<modulo>.test.mjs` + pestaña en la app de la persona vía hook mínimo. Sirven a coach con clientes comunes, a Manuel y al deportista.
 1. ~~**Lesiones y rehabilitación**~~ (hecho, ver arriba; viene de Matías Lacroix): historial por lesión (fecha, zona, EVA, tratante, estado, alta, notas), dolor diario enlazado a la lesión abierta, cada cambio genera entrada en `journal_entries` (kind 'lesion'). Scope de permiso: `lesiones`.
 2. ~~**Mi equipo y permisos**~~ (hecho, ver arriba): la persona invita coach/nutri/psicólogo/médico, permiso por tipo de dato (semaforo, ciclo, lesiones, nutricion, examenes, salud_mental, bitacora), revocable, con registro de accesos visible (`care_links`, `grant_care_link`, `revoke_care_link`, `access_log` ya existen en backend; falta la pantalla).
 3. ~~**Registro de persona común**~~ (hecho, ver arriba): versión sin RPE (energía, sueño, estrés, hábitos), diario o semanal según el coach.
-4. **Panel del coach** (`equipo.html`): 30–80 clientes, semáforo, adherencia, pendientes, filtros, mensajes con plantilla por WhatsApp. Base: `coach_feed_v2()` ya trae modo, hábitos y registros; falta que el coach configure el registro (`set_log_settings(p_patient, ...)`).
+4. ~~**Panel del coach**~~ (hecho, ver arriba). Falta: plantillas propias del coach, notas del coach por persona, y que `admin.html` calcule el semáforo del registro general.
 5. **Exámenes y documentos** (subida, visor, biomarcadores, entrada automática en la bitácora) y **Nutrición** (plan por comida, adherencia, peso/composición).
 
 ## Deuda a retirar

@@ -58,8 +58,8 @@ assert.deepEqual(R.habitStats(days, ['Caminar', 'Agua', 'Yoga'], 'diaria', '2026
 assert.deepEqual(R.habitStats(weeks, ['Caminar'], 'semanal', '2026-10-20'), [{ habit: 'Caminar', done: 8, possible: 14, pct: 57 }], 'la semana del 14-09 queda fuera de las 4 semanas');
 assert.equal(R.habitPct({ habits: { Caminar: 4, Agua: 7 } }, 'semanal'), 79);
 assert.equal(R.habitPct({ habits: {} }, 'diaria'), null);
-assert.deepEqual(R.trendPointsFrom(days.slice(0, 2), 'diaria', 'habits'), [{ iso: '2026-10-20', value: 100 }, { iso: '2026-10-19', value: 50 }]);
-assert.deepEqual(R.trendPointsFrom([...days, ...weeks], 'semanal', 'energy').map(p => p.iso), ['2026-10-19', '2026-10-05', '2026-09-14']);
+assert.deepEqual(R.trendPointsFrom(days.slice(0, 2), 'diaria', 'habits'), [{ iso: '2026-10-19', value: 50 }, { iso: '2026-10-20', value: 100 }], 'en orden de fecha');
+assert.deepEqual(R.trendPointsFrom([...days, ...weeks], 'semanal', 'energy').map(p => p.iso), ['2026-09-14', '2026-10-05', '2026-10-12', '2026-10-19'], 'la semana del 12-10 solo tenía días: se arma con ellos');
 assert.deepEqual(Object.keys(R.TREND_METRICS), ['energy', 'sleep', 'stress', 'habits']);
 
 // Migración: idempotente, con RLS, sin escritura directa de la configuración y con acceso registrado del profesional
@@ -83,4 +83,13 @@ assert.doesNotMatch(sql.slice(sql.indexOf('function public.coach_feed_v2')), /'n
 // Textos de la hoja de vida iguales a settingsSummary()
 for (const s of ['deportivo diario', 'general semanal', 'general diario', 'Sueño, fatiga, ánimo, dolor y carga de cada sesión.', 'Energía, sueño y estrés. Sin hábitos definidos.', "'Energía, sueño y estrés. Hábitos: '", "' Definido por '"]) assert.ok(sql.includes(s), 'SQL contiene ' + s);
 assert.doesNotMatch(sql, /drop table|delete from|truncate/i, 'no borra datos');
+// Cambio de frecuencia sin perder historia (semLogsComun en semaforo.js). Hoy: martes 2026-10-20.
+const dias = ['2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15', '2026-10-16', '2026-10-17', '2026-10-18'].map((x, i) => ({ period: 'dia', log_date: x, energy: 6, sleep_hours: 7, stress: 4, habits: { Agua: i < 4 ? 1 : 0 } }));
+assert.equal(R.adherence(dias, 'semanal', '2026-10-20').done, 1, 'la semana con registros diarios cuenta en el semanal');
+assert.deepEqual(R.habitStats(dias, ['Agua'], 'semanal', '2026-10-20')[0], { habit: 'Agua', done: 4, possible: 7, pct: 57 });
+const mezcla = [{ period: 'semana', log_date: '2026-09-28', energy: 7, sleep_hours: 7, stress: 3, habits: { Agua: 7 } },
+  { period: 'dia', log_date: '2026-10-19', energy: 6, sleep_hours: 7, stress: 4, habits: { Agua: 1 } }, { period: 'dia', log_date: '2026-10-20', energy: 5, sleep_hours: 6, stress: 4, habits: { Agua: 0 } }];
+assert.equal(R.habitStats(mezcla, ['Agua'], 'diaria', '2026-10-20')[0].pct, 89, 'en diario, la semana registrada como semanal sigue contando (7/7 + 1/2)');
+assert.equal(R.trendPointsFrom(mezcla, 'diaria', 'energy').length, 3, 'la tendencia diaria muestra también el semanal anterior');
+assert.equal(R.adherence(mezcla, 'diaria', '2026-10-20').done, 2, 'la constancia diaria cuenta solo días registrados');
 console.log('registro-comun: OK');

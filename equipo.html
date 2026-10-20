@@ -4,15 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Sizigia Lab · Vista del equipo</title>
+<title>Sizigia Lab · Panel del equipo</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="assets/semaforo.js"></script>
+<script src="assets/registro-comun.js"></script>
+<script src="assets/panel-coach.js"></script>
 <style>
   :root { --ink:#131a17; --muted:#6b7280; --line:#e6e4e1; --accent:#0d9488; --canvas:#faf9f7; --paper:#fffffe; }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--canvas); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; font-size:14px; }
-  .wrap { max-width:860px; margin:0 auto; padding:22px 16px 48px; }
+  .wrap { max-width:920px; margin:0 auto; padding:22px 16px 48px; }
   h1 { font-size:19px; margin:0 0 2px; } .tag { font-size:12px; color:var(--muted); }
   .top { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding-bottom:14px; border-bottom:1px solid var(--line); margin-bottom:16px; }
   .btn { border:1px solid var(--line); background:#fff; border-radius:9px; padding:8px 14px; font-size:13px; cursor:pointer; font-family:inherit; }
@@ -32,7 +34,9 @@
 <body>
 <div class="wrap" id="app"><div class="note">Cargando…</div></div>
 <script>
-const sb = supabase.createClient(window.SOBI_CONFIG.SUPABASE_URL, window.SOBI_CONFIG.SUPABASE_ANON_KEY);
+// ?demo=1: panel con personas de ejemplo, sin red ni sesión (assets/panel-coach.js, demoFeed).
+const demo = new URLSearchParams(location.search).get('demo') === '1';
+const sb = demo ? null : supabase.createClient(window.SOBI_CONFIG.SUPABASE_URL, window.SOBI_CONFIG.SUPABASE_ANON_KEY);
 const app = document.getElementById('app');
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 
@@ -50,6 +54,8 @@ async function sendLink() {
 }
 
 async function boot() {
+  const link = location.origin + '/rueda_final.html';
+  if (demo) return SizigiaCoach.mount({ el: app, sb: null, demo: true, email: 'coach@ejemplo.cl', link, feed: SizigiaCoach.demoFeed(SizigiaCoach.localISO(new Date())) });
   const { data } = await sb.auth.getSession();
   if (!data.session) return loginScreen();
   const { data: claimed, error: ce } = await sb.rpc('claim_professional');
@@ -57,29 +63,10 @@ async function boot() {
     app.innerHTML = '<div class="login"><h1>Sin acceso</h1><p class="note">Este correo (' + esc(data.session.user.email) + ') no está registrado como profesional. Pide al equipo de Sizigia Lab que te dé de alta.</p><button class="btn" onclick="sb.auth.signOut().then(()=>location.reload())">Salir</button></div>';
     return;
   }
+  // coach_feed_v2(): una fila por persona con su tipo de registro (deportivo o general), sus registros y tu último contacto.
   const { data: rows, error } = await sb.rpc('coach_feed_v2');
   if (error) { app.innerHTML = '<div class="note err">No se pudo cargar: ' + esc(error.message) + '</div>'; return; }
-  render(data.session.user.email, rows || []);
-}
-
-// rows: coach_feed_v2(): una fila por persona con su tipo de registro (deportivo o general) y sus registros.
-function semFor(p) { return p.mode === 'comun' ? computeSemaforoComun(p.wellness || [], p.frequency) : computeSemaforo(p.athlete || []); }
-function render(email, rows) {
-  const order = { rojo: 0, amarillo: 1, gris: 2, verde: 3 };
-  const list = (rows || []).map(p => ({ name: p.patient_name, comun: p.mode === 'comun', weekly: p.frequency === 'semanal', s: semFor(p) })).sort((a, b) => order[a.s.level] - order[b.s.level] || a.name.localeCompare(b.name));
-  let html = '<div class="top"><div><h1>Disponibilidad de tus atletas y clientes</h1><div class="tag">' + esc(email) + '</div></div><button class="btn" onclick="sb.auth.signOut().then(()=>location.reload())">Salir</button></div>';
-  html += '<div class="note">Ves solo a las personas que te dieron permiso, y solo su registro: el deportivo (sueño, fatiga, ánimo, dolor y carga) o el general (energía, sueño y estrés, diario o semanal). Cada consulta queda registrada y la persona puede verla y retirar el permiso cuando quiera. ' +
-    'El semáforo usa reglas simples pendientes de validación médica y datos que la persona carga por su cuenta. Es una señal para conversar, no un diagnóstico ni una predicción.</div>';
-  if (!list.length) html += '<div class="card"><div>Nadie te ha dado acceso todavía.</div></div>';
-  list.forEach(p => {
-    const items = p.s.reasons.length ? p.s.reasons.map(r => '<div class="reason"><span class="dot ' + r.level + '"></span>' + esc(r.text) + '</div>').join('')
-      : '<div class="reason" style="color:var(--muted)">Sin alertas en el último registro.</div>';
-    const label = p.comun ? SEM_LABEL_COMUN[p.s.level] : SEM_LABEL[p.s.level];
-    const src = p.comun ? 'registro general ' + (p.weekly ? 'semanal' : 'diario') : 'registro deportivo';
-    html += '<div class="card"><span class="dot big ' + p.s.level + '"></span><div><h3>' + esc(p.name) + '</h3><div class="lab">' + esc(label) + '</div>' + items +
-      semChecksHTML(p.s.checks || [], p.s.why || '', esc) + '<div class="src">Fuente: ' + src + ' autoinformado' + (p.s.last ? ' · último registro ' + esc(p.s.last.log_date) : '') + '</div></div></div>';
-  });
-  app.innerHTML = html;
+  SizigiaCoach.mount({ el: app, sb, email: data.session.user.email, link, feed: rows || [] });
 }
 boot();
 </script>

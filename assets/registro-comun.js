@@ -6,6 +6,7 @@
 // escapeHtml, todayISO, addDaysISO, fmtDate) y computeSemaforoComun de semaforo.js.
 (function (root) {
   'use strict';
+  var mergeLogs = (typeof module !== 'undefined' && module.exports ? require('./semaforo.js') : root).semLogsComun;
   var MODES = { deportivo: 'Deportivo', comun: 'General' };
   var FREQS = { diaria: 'Cada día', semanal: 'Una vez por semana' };
   var MAX_HABITS = 8;
@@ -94,28 +95,28 @@
   // Constancia: diario, últimos 7 días; semanal, últimas 4 semanas (incluida la actual).
   function adherence(logs, freq, today) {
     var weekly = freq === 'semanal', n = weekly ? 4 : 7, set = {}, done = 0;
-    byPeriod(logs, freq).forEach(function (l) { set[l.log_date] = true; });
+    (weekly ? mergeLogs(logs, 'semanal') : byPeriod(logs, freq)).forEach(function (l) { set[l.log_date] = true; });
     for (var i = 0; i < n; i++) if (set[weekly ? addDays(mondayOf(today), -7 * i) : addDays(today, -i)]) done++;
     return { done: done, expected: n, text: (weekly ? 'Últimas 4 semanas: ' : 'Últimos 7 días: ') + done + '/' + n + ' registros' };
   }
   // Cumplimiento de cada hábito en los últimos 28 días, sobre los registros que lo incluían.
   function habitStats(logs, habits, freq, today) {
     var weekly = freq === 'semanal', from = weekly ? addDays(mondayOf(today), -21) : addDays(today, -27);
-    var win = byPeriod(logs, freq).filter(function (l) { return l.log_date >= from && l.log_date <= today; });
+    var win = mergeLogs(logs, freq).filter(function (l) { return l.log_date >= from && l.log_date <= today; });
     return (habits || []).map(function (h) {
       var done = 0, possible = 0;
-      win.forEach(function (l) { var v = (l.habits || {})[h]; if (v != null) { done += Number(v); possible += weekly ? 7 : 1; } });
+      win.forEach(function (l) { var v = (l.habits || {})[h]; if (v != null) { done += Number(v); possible += l.period === 'semana' ? (l.derived || 7) : 1; } });
       return { habit: h, done: done, possible: possible, pct: possible ? Math.round(done / possible * 100) : null };
     });
   }
   // % de hábitos cumplidos en un registro (para la tendencia). null si no tenía hábitos.
   function habitPct(row, freq) {
-    var h = row.habits || {}, ks = Object.keys(h), max = freq === 'semanal' ? 7 : 1;
+    var h = row.habits || {}, ks = Object.keys(h), max = (row.period || (freq === 'semanal' ? 'semana' : 'dia')) === 'semana' ? (row.derived || 7) : 1;
     if (!ks.length) return null;
     return Math.round(ks.reduce(function (a, k) { return a + Number(h[k]); }, 0) / (ks.length * max) * 100);
   }
   function trendPointsFrom(logs, freq, metric) {
-    return byPeriod(logs, freq).map(function (l) {
+    return mergeLogs(logs, freq).map(function (l) {
       var v = metric === 'habits' ? habitPct(l, freq) : metric === 'sleep' ? l.sleep_hours : l[metric];
       return blank(v) ? null : { iso: l.log_date, value: Number(v) };
     }).filter(Boolean);
