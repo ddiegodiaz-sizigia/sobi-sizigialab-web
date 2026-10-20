@@ -67,6 +67,14 @@ Ficha del profesional (rama `feat/ficha-profesional`; migración `20261028_ficha
 - `my_linked_patients()`: nombre y permisos de cada vínculo activo, sin datos de salud (no registra acceso). Botón "Ver ficha" en la fila del panel (hook en `panel-coach.js`) y lista "Otras personas" para quienes dieron ficha pero no semáforo.
 - `SCOPES[].live` en `mi-equipo.js`: semaforo, lesiones, examenes y nutricion. El profesional ve los resultados de exámenes pero no el archivo (falta Edge Function que firme la URL y registre el acceso).
 
+Caso: conversación del equipo (rama `feat/caso-equipo`; migración `20261029_caso_equipo.sql` aplicada y probada):
+- `assets/caso.js` + `tests/caso.test.mjs`: hilos por persona con tema (general, semáforo, lesiones, exámenes, nutrición, salud mental, ciclo), enlace opcional a una lesión o examen, destinatarios ("el equipo y la persona", "solo profesionales", "solo a quienes elija"), menciones, acuses de lectura, editar (versión nueva, la anterior visible), retirar (oculta el texto, la fila queda) y pasar a la hoja de vida como nota o consulta (después no se edita ni se retira).
+- Permiso nuevo `equipo` en `care_links` (`SCOPES` en `mi-equipo.js`). Un profesional lee un mensaje solo si va dirigido a él y hoy tiene `equipo` + el permiso del tema; `case_recipients` guarda quién podía leerlo al enviarlo.
+- Decisiones de Diego: la persona ve completo lo dirigido a ella; de lo que es solo entre profesionales ve que existe (fecha, quién, tema), sin contenido ni título; lo que pasa a la hoja de vida siempre lo ve. El admin no lee estas tablas (RLS sin políticas). La persona puede escribirle a un solo profesional. Sin correo: aviso por WhatsApp sin contenido.
+- Funciones: `post_case_message`, `edit_case_message`, `retract_case_message`, `promote_case_message`, `case_feed(p_patient)` (registra acceso `equipo` y marca leído), `my_case_feed()`, `my_case_inbox()` (sin contenido, no registra acceso), `my_case_unread()`.
+- Pantallas: pestaña "Caso" en la ficha del profesional (primera), bandeja "Mensajes del equipo" en el panel (hook en `panel-coach.js`), tarjeta "Conversación con mi equipo" en "Mi equipo" (hook en `mi-equipo.js`). Demo: `equipo.html?demo=1` (Matías) y `rueda_final.html?demo=1`.
+- Falta (fases 2 y 3): adjuntar archivos (Edge Function que firme URL y registre acceso), transcripción de audio, correo, y que la persona enlace hilos a sus lesiones o exámenes. El texto de consentimiento no cambió de versión: el permiso se describe en `{{DATOS}}`; va a la revisión legal.
+
 Pruebas: este PC no tiene Node. Se corren en Edge headless con un perfil aparte (`--user-data-dir`), cargando el módulo con `module={exports:{}}`, un shim de `assert` y uno de `require` (panel-coach usa semaforo y registro-comun). Edge solo entrega `--dump-dom` con `Start-Process -RedirectStandardOutput`. Para ver páginas en el navegador integrado hace falta un servidor local (sin Node: un `HttpListener` de PowerShell). Si se instala Node, basta `node tests/*.test.mjs`.
 
 ## Módulos por construir (en este orden)
@@ -77,6 +85,7 @@ Cada uno: `assets/<modulo>.js` + migración con RLS + `tests/<modulo>.test.mjs` 
 4. ~~**Panel del coach**~~ (hecho, ver arriba). Falta: plantillas propias del coach, notas del coach por persona, y que `admin.html` calcule el semáforo del registro general.
 5. ~~**Exámenes y documentos**~~ y ~~**Nutrición**~~ (hechos, ver arriba).
 ~~Vista del profesional para lesiones, exámenes y nutrición~~ (hecha, ver "Ficha del profesional").
+6. **Caso, conversación del equipo**: fase 1 hecha (ver "Caso"). Fase 2: adjuntos con Edge Function. Fase 3: transcripción de consultas y correo.
 
 ## Deuda a retirar
 - La app de la persona aún muestra residuos del cronograma de 6 meses: tarjeta "Próximo control · Mes 6", "Hoy te toca · Hábito Ancla", `programMonths`, `tier_plan` (tope de resumen de sesiones). Reemplazar por contenido basado en la bitácora.
@@ -92,4 +101,4 @@ Cada uno: `assets/<modulo>.js` + migración con RLS + `tests/<modulo>.test.mjs` 
 Si hay `.git/*.lock` huérfanos, renombrarlos a `.git/stale-*`. Commits con autor Diego Díaz.
 Diego prefiere que Claude haga todo: aplicar la migración en Supabase (SQL Editor en el navegador integrado, con prueba en transacción que se deshace), commit, `git push` y crear el PR en GitHub (navegador integrado; `gh` no está instalado). El merge a `main` lo aprueba Diego (publica en producción). Después: verificar en `sizigialab.cl/rueda_final.html?demo=1`.
 SQL Editor: escribir el SQL en una sola línea, sin comentarios y sin barras invertidas (el editor autocompleta al presionar Enter y el teclado simulado altera `\`); verificar el largo leyendo el modelo de Monaco antes de Run.
-Más rápido: cargar el SQL con `monaco.editor.getModels()[0].setValue(...)` desde la herramienta de JavaScript del navegador (Ctrl+V no funciona). Prueba en transacción: un bloque `do` que termina en `raise exception` con los resultados se deshace solo; después, contar que no quedan filas de prueba.
+Más rápido: cargar el SQL con `monaco.editor.getModels()[0].setValue(...)` desde la herramienta de JavaScript del navegador (Ctrl+V no funciona). Para una migración larga: push de la rama y `fetch('https://raw.githubusercontent.com/ddiegodiaz-sizigia/sobi-sizigialab-web/<commit>/supabase/migrations/<archivo>')` desde la pestaña de Supabase (el repo es público; localhost está bloqueado), comparando el largo con el archivo. Prueba en transacción: un bloque `do` que termina en `raise exception` con los resultados se deshace solo; después, contar que no quedan filas de prueba.
