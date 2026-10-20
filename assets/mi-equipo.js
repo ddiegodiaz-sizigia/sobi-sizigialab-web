@@ -179,7 +179,7 @@
     ensureCss();
     if (!data.loaded) { load(); if (!data.loaded) return '<div class="card"><h3>Mi equipo</h3><div class="tc-empty">Cargando…</div></div>'; }
     var h = '<div class="card" style="margin-bottom:16px"><h3>Mi equipo y permisos</h3><div class="card-sub">Tu historia es tuya. Tú decides qué profesional ve qué dato, y puedes cambiarlo o retirarlo cuando quieras. Cada consulta queda registrada abajo. El equipo clínico de Sizigia Lab (Dr. Acuña) accede a tu ficha por su rol médico, aparte de estos permisos.</div>';
-    if (isDemoMode) h += '<div class="eq-meta">Modo demo: los cambios no se guardan.</div>';
+    if (isDemoMode) h += '<div class="eq-meta">Modo demo: los cambios no se guardan. <a href="equipo.html?demo=1">Ver lo que ve tu profesional →</a></div>';
     if (data.error) return h + '<div class="eq-err">' + E(data.error) + '</div><button class="btn small" onclick="SizigiaEquipo.reload()">Reintentar</button></div>';
     var team = teamFromLinks(data.team);
     if (!team.length) h += '<div class="tc-empty">Aún no has invitado a nadie. Invita a tu coach, kinesiólogo, nutricionista, psicólogo o médico.</div>';
