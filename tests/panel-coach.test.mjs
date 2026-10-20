@@ -26,7 +26,9 @@ const gray = C.buildRow(p('Ben', { athlete: ath(30).slice(5) }), today);
 assert.equal(gray.level, 'gris'); assert.equal(gray.pending[0].key, 'sin_registro'); assert.equal(gray.pending[0].template, 'recordatorio');
 assert.match(gray.pending[0].text, /^Sin registro desde el \d\d-\d\d$/);
 assert.equal(C.buildRow(p('N', {}), today).pending[0].text, 'Nunca ha registrado');
-assert.equal(C.buildRow(p('W', { mode: 'comun', frequency: 'semanal', habits: ['Caminar'], wellness: well(5) }), today).pending[0].text, 'Sin registro semanal todavía', 'cambió de diario a semanal');
+const switched = C.buildRow(p('W', { mode: 'comun', frequency: 'semanal', habits: ['Caminar'], wellness: well(5) }), today);
+assert.notEqual(switched.level, 'gris', 'pasó de diario a semanal: sus días de esta semana cuentan'); assert.ok(!switched.pending.some(x => x.key === 'sin_registro'));
+assert.equal(C.buildRow(p('D', { wellness: well(5) }), today).pending[0].text, 'Sin registro diario todavía', 'pasó de general a deportivo');
 assert.deepEqual(C.buildRow(p('Ben', { athlete: ath(30).slice(5), last_contact: contactedToday }), today).pending, []);
 
 // Constancia baja: 3 de 7 días, con dato vigente

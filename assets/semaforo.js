@@ -142,10 +142,48 @@ const SEM_LABEL_COMUN = { amarillo: 'Precaución: conversar con la persona', ver
 
 function semMonday(iso) { const d = new Date(iso + 'T00:00:00'); const k = (d.getDay() + 6) % 7; d.setDate(d.getDate() - k); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 
-// logs: filas de wellness_logs de UN paciente con el period que corresponde a frequency ('diaria' | 'semanal').
+// Cambiar entre diario y semanal no pierde historia. Semanal: cada semana sin registro semanal pero con registros
+// diarios se arma con el promedio de esos días (hábitos = días cumplidos, derived: n de días). Diario: las semanas sin
+// ningún registro diario conservan su registro semanal como referencia (ref: true). Los datos guardados no cambian.
+function semWeekFromDays(monday, days) {
+  const avg = (k, dec) => { const v = days.filter(l => l[k] != null && l[k] !== '').map(l => Number(l[k])); return v.length ? Math.round(semAvg(v) * dec) / dec : null; };
+  const habits = {};
+  days.forEach(l => Object.keys(l.habits || {}).forEach(h => { habits[h] = Math.min(7, (habits[h] || 0) + Number(l.habits[h])); }));
+  return { period: 'semana', log_date: monday, energy: avg('energy', 1), sleep_hours: avg('sleep_hours', 10), sleep_quality: avg('sleep_quality', 1), stress: avg('stress', 1), habits: habits, derived: days.length };
+}
+function semLogsComun(logsIn, frequency) {
+  const all = logsIn || [], day = all.filter(l => (l.period || 'dia') === 'dia'), week = all.filter(l => l.period === 'semana');
+  const byDate = (a, b) => a.log_date < b.log_date ? -1 : a.log_date > b.log_date ? 1 : 0;
+  if (frequency === 'semanal') {
+    const have = {}, groups = {};
+    week.forEach(w => { have[w.log_date] = true; });
+    day.forEach(l => { const m = semMonday(l.log_date); if (!have[m]) (groups[m] = groups[m] || []).push(l); });
+    return week.concat(Object.keys(groups).map(m => semWeekFromDays(m, groups[m]))).sort(byDate);
+  }
+  const withDays = {};
+  day.forEach(l => { withDays[semMonday(l.log_date)] = true; });
+  return day.concat(week.filter(w => !withDays[w.log_date]).map(w => Object.assign({}, w, { ref: true }))).sort(byDate);
+}
+
+// logs: filas de wellness_logs de UN paciente (ambos period). frequency: 'diaria' | 'semanal', la configuración vigente.
+// Semanal: usa semLogsComun (semanas armadas desde días). Diario: usa solo días; si no hay día vigente pero sí un
+// registro semanal de esta semana o la anterior, lo usa como referencia (source: 'semanal').
 function computeSemaforoComun(logsIn, frequency) {
-  const R = SEM_RULES_COMUN, weekly = frequency === 'semanal', period = weekly ? 'semana' : 'dia';
-  const logs = (logsIn || []).filter(l => (l.period || 'dia') === period).sort((a, b) => a.log_date < b.log_date ? 1 : -1);
+  const R = SEM_RULES_COMUN, weekly = frequency === 'semanal';
+  const logs = (weekly ? semLogsComun(logsIn, 'semanal') : (logsIn || []).filter(l => (l.period || 'dia') === 'dia')).sort((a, b) => a.log_date < b.log_date ? 1 : -1);
+  if (!weekly) {
+    const r = semComunFrom(logs, false), real = (logsIn || []).filter(l => l.period === 'semana');
+    if (r.level !== 'gris' || !real.length) return r;
+    const w = computeSemaforoComun(real, 'semanal');
+    if (w.level === 'gris') return r;
+    return Object.assign(w, { source: 'semanal', why: 'No hay registro diario de los últimos ' + R.maxAgeDays + ' días: se usa como referencia su registro semanal (semana del ' + semFmt(w.last.log_date) + '). ' + w.why });
+  }
+  const r = semComunFrom(logs, true);
+  if (r.last && r.last.derived && r.level !== 'gris') r.why = 'La semana del ' + semFmt(r.last.log_date) + ' se armó con el promedio de ' + r.last.derived + (r.last.derived === 1 ? ' registro diario' : ' registros diarios') + '. ' + r.why;
+  return r;
+}
+function semComunFrom(logs, weekly) {
+  const R = SEM_RULES_COMUN;
   if (!logs.length) return { level: 'gris', reasons: [{ level: 'gris', text: 'Sin registros cargados.' }], last: null, checks: [], why: semWhyComun('gris', [], null, weekly) };
   const last = logs[0];
   const stale = weekly ? semDaysAgo(last.log_date) - semDaysAgo(semMonday(semToday())) > 7 * R.maxAgeWeeks : semDaysAgo(last.log_date) > R.maxAgeDays;
@@ -190,4 +228,4 @@ function semWhyComun(level, checks, last, weekly) {
   return 'Amarillo porque ' + checks.filter(c => c.status === 'warn').map(c => c.label.toLowerCase() + ' ' + c.detail).join('; ') + '. Este registro no tiene rojo porque no pide dolor ni carga.';
 }
 
-if (typeof module !== 'undefined' && module.exports) module.exports = { SEM_RULES, computeSemaforo, semChecks, semWhy, SEM_RULES_COMUN, computeSemaforoComun, semMonday };
+if (typeof module !== 'undefined' && module.exports) module.exports = { SEM_RULES, computeSemaforo, semChecks, semWhy, SEM_RULES_COMUN, computeSemaforoComun, semMonday, semLogsComun };

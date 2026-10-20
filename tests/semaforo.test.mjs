@@ -18,7 +18,10 @@ const ca = S.computeSemaforoComun([W(0, { energy: 2, stress: 9 }), W(1)], 'diari
 assert.equal(ca.level, 'amarillo'); assert.equal(ca.reasons.length, 2); assert.match(ca.why, /^Amarillo porque energía 2\/10/);
 assert.equal(S.computeSemaforoComun([W(0, { energy: 1, stress: 10, sleep_hours: 3 })], 'diaria').level, 'amarillo', 'nunca rojo');
 assert.equal(S.computeSemaforoComun([W(3)], 'diaria').level, 'gris');
-assert.equal(S.computeSemaforoComun([W(0)], 'semanal').level, 'gris', 'un registro diario no sirve para el semanal');
+// Pasó de diario a semanal: la semana se arma con el promedio de sus registros diarios (la historia no se pierde)
+const fromDays = S.computeSemaforoComun([W(0, { sleep_hours: 5 }), W(1, { sleep_hours: 6 })], 'semanal');
+assert.notEqual(fromDays.level, 'gris', 'los registros diarios de la semana cuentan para el semanal');
+assert.match(fromDays.why, /se armó con el promedio de \d+ registros? diarios?/);
 assert.equal(S.computeSemaforoComun([W(0, { sleep_hours: null })], 'diaria').checks[0].status, 'nodata');
 const mon = S.semMonday(d(0)), monAgo = k => { const x = new Date(mon + 'T00:00:00'); x.setDate(x.getDate() - 7 * k); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
 const wk = k => ({ period: 'semana', log_date: monAgo(k), energy: 6, sleep_hours: 5.5, stress: 5, habits: {} });
@@ -26,5 +29,16 @@ const sw = S.computeSemaforoComun([wk(1)], 'semanal');
 assert.equal(sw.level, 'amarillo', 'la semana pasada sigue vigente'); assert.match(sw.reasons[0].text, /^Sueño promedio de la semana: 5,5 h/);
 assert.ok(!sw.checks.some(c => c.key === 'sueno3'), 'en el semanal no se promedian 3 registros');
 assert.equal(S.computeSemaforoComun([wk(2)], 'semanal').level, 'gris'); assert.match(S.computeSemaforoComun([wk(2)], 'semanal').why, /esta semana ni de la anterior/);
+// Pasó de semanal a diario: sin día vigente, su registro semanal reciente sirve de referencia
+const ref = S.computeSemaforoComun([wk(0)], 'diaria');
+assert.equal(ref.source, 'semanal'); assert.equal(ref.level, 'amarillo'); assert.match(ref.why, /^No hay registro diario/);
+assert.equal(S.computeSemaforoComun([W(0), wk(0)], 'diaria').source, undefined, 'con día vigente manda el diario');
+assert.equal(S.computeSemaforoComun([wk(2)], 'diaria').level, 'gris', 'un semanal viejo no sirve de referencia');
+// Mezcla: semanas con registro semanal se respetan; semanas solo con días se arman; en diario, semanas sin días quedan como referencia
+const mix = S.semLogsComun([wk(1), W(0, { habits: { Agua: 1 } }), W(1, { habits: { Agua: 1 } })], 'semanal');
+assert.ok(mix.some(l => l.log_date === monAgo(1) && !l.derived)); 
+assert.ok(mix.every(l => l.period === 'semana'));
+const mixD = S.semLogsComun([wk(3), W(0)], 'diaria');
+assert.equal(mixD.length, 2); assert.ok(mixD.find(l => l.period === 'semana').ref);
 assert.equal(S.SEM_RULES_COMUN.energyYellow, 3); assert.equal(S.SEM_RULES_COMUN.stressYellow, 8);
 console.log('semaforo: OK');
