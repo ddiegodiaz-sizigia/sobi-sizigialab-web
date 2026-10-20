@@ -65,7 +65,7 @@
     var now = last ? last.eva : from;
     var text;
     if (now == null) text = 'Sin registros de dolor todavía.';
-    else if (!last) text = 'EVA inicial ' + from + '/10. Sin registros diarios todavía.';
+    else if (!last) text = 'EVA inicial ' + from + '/10. Sin registros diarios' + (i.status === 'alta' ? '.' : ' todavía.');
     else if (from === now) text = 'Dolor ' + now + '/10 (último registro ' + dmy(last.log_date) + ').';
     else text = 'Dolor ' + (now < from ? 'bajó' : 'subió') + ' de ' + from + ' a ' + now + '/10' + (last ? ' (último registro ' + dmy(last.log_date) + ')' : '') + '.';
     return { days: days, evaFrom: from, evaNow: now, lastLog: last ? last.log_date : null, loggedToday: !!(last && last.log_date === today), text: text };

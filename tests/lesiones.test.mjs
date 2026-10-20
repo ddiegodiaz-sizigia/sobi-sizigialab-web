@@ -34,6 +34,7 @@ assert.equal(s.days, 12); assert.equal(s.evaNow, 3); assert.equal(s.loggedToday,
 assert.equal(s.text, 'Dolor bajó de 5 a 3/10 (último registro 19-10-2026).');
 s = L.summary({ ...base, eva_initial: null }, [], T); assert.equal(s.text, 'Sin registros de dolor todavía.');
 s = L.summary(base, [], T); assert.equal(s.text, 'EVA inicial 5/10. Sin registros diarios todavía.');
+assert.equal(L.summary({ ...base, status: 'alta', discharge_date: T }, [], T).text, 'EVA inicial 5/10. Sin registros diarios.');
 s = L.summary({ ...base, status: 'alta', discharge_date: '2026-10-18' }, [{ log_date: T, eva: 6 }], T);
 assert.equal(s.days, 10, 'duración hasta el alta'); assert.match(s.text, /subió de 5 a 6/); assert.equal(s.loggedToday, true);
 
