@@ -167,7 +167,7 @@
     }).join('');
   }
   function adhHTML(a, label) {
-    return '<div style="margin-top:6px"><b style="font-size:13px">' + label + '</b><div class="fp-meta">' + E(N.adherenceText(a)) + '</div>' +
+    return '<div style="margin-top:6px"><b style="font-size:13px">' + label + '</b><div class="fp-meta">' + E(N.adherenceText(a, true)) + '</div>' +
       (a.logged ? a.byMeal.map(function (b) { return '<div style="font-size:12.5px;margin-top:4px"><div class="fp-row"><span>' + E(b.name) + '</span><span class="fp-meta">' + (b.pct == null ? 'sin registro' : b.pct + ' % · ' + b.logged + '/' + b.expected) + '</span></div><div class="fp-bar"><i style="width:' + (b.pct || 0) + '%"></i></div></div>'; }).join('') : '') + '</div>';
   }
   function editorHTML() {

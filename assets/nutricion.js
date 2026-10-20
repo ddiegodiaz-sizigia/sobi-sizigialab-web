@@ -90,11 +90,13 @@
       daily: out.daily
     };
   }
-  function adherenceText(a) {
+  // otra = true: en tercera persona, para la ficha del profesional.
+  function adherenceText(a, otra) {
     if (a.expected === 0) return 'Sin plan en este período.';
     if (a.logged === 0) return 'Sin registros en los últimos ' + a.days + ' días.';
     var low = a.byMeal.filter(function (b) { return b.pct != null && b.logged >= 3; }).sort(function (x, y) { return x.pct - y.pct; })[0];
-    return 'Cumpliste el ' + a.pct + ' % de lo que registraste. Registraste ' + a.logged + ' de ' + a.expected + ' comidas (' + a.constancia + ' %).' +
+    var v = otra ? ['Cumplió', 'registró', 'Registró'] : ['Cumpliste', 'registraste', 'Registraste'];
+    return v[0] + ' el ' + a.pct + ' % de lo que ' + v[1] + '. ' + v[2] + ' ' + a.logged + ' de ' + a.expected + ' comidas (' + a.constancia + ' %).' +
       (low && low.pct < a.pct ? ' La que más cuesta: ' + low.name + ' (' + low.pct + ' %).' : '');
   }
 

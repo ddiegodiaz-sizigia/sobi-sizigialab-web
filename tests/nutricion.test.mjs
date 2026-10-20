@@ -44,6 +44,7 @@ a = N.adherence([], logs, T, 7); assert.equal(a.pct, null); assert.equal(N.adher
 assert.equal(N.adherenceText(N.adherence([p1], {}, T, 7)), 'Sin registros en los últimos 7 días.');
 const many = {}; for (let k = 0; k < 5; k++) many['2026-10-' + (16 + k)] = { m1: 2, m2: k % 2 ? 0 : 1 };
 assert.equal(N.adherenceText(N.adherence([p1], many, T, 7)), 'Cumpliste el 65 % de lo que registraste. Registraste 10 de 14 comidas (71 %). La que más cuesta: Almuerzo (30 %).');
+assert.equal(N.adherenceText(N.adherence([p1], many, T, 7), true), 'Cumplió el 65 % de lo que registró. Registró 10 de 14 comidas (71 %). La que más cuesta: Almuerzo (30 %).', 'ficha del profesional: tercera persona');
 
 // Peso y composición desde Medidas
 const m = { '2026-09-10': { weight_kg: 72.4, body_fat_pct: 22 }, '2026-09-25': { weight_kg: 71.8 }, '2026-10-18': { weight_kg: 71.1, body_fat_pct: 21.2, muscle_mass_kg: null } };
