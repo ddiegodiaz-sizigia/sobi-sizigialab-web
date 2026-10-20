@@ -8,7 +8,7 @@
   var ROLES = { medico: 'Médico', entrenador: 'Entrenador', preparador: 'Preparador físico', psicologo: 'Psicólogo', nutricionista: 'Nutricionista', kinesiologo: 'Kinesiólogo', familia: 'Familia', otro: 'Otro' };
   // live: el profesional ya lo ve en su pantalla. Mantener al día cuando cada módulo tenga su vista del profesional.
   var SCOPES = [
-    { key: 'semaforo', label: 'Semáforo y registro deportivo', desc: 'sueño, fatiga, ánimo, dolor y carga de tu registro diario', live: true },
+    { key: 'semaforo', label: 'Semáforo y registro', desc: 'tu registro diario o semanal: sueño, fatiga, ánimo, dolor y carga si es deportivo; energía, sueño, estrés y hábitos si es general', live: true },
     { key: 'lesiones', label: 'Lesiones', desc: 'tus lesiones, su estado, tratante y tu dolor diario por lesión', live: false },
     { key: 'ciclo', label: 'Ciclo menstrual', desc: 'días de sangrado, flujo y síntomas', live: false, sensitive: true },
     { key: 'nutricion', label: 'Nutrición', desc: 'tu plan de alimentación, adherencia y composición corporal', live: false },

@@ -314,6 +314,7 @@
 <script src="assets/persona.js"></script>
 <script src="assets/lesiones.js"></script>
 <script src="assets/mi-equipo.js"></script>
+<script src="assets/registro-comun.js"></script>
 <script>
 /* ============================= CONFIG / STORAGE ============================= */
 const STORAGE_KEY = 'sobiPatientPortalV2';
@@ -1218,7 +1219,7 @@ function renderResumen() {
   html += '</div>';
 
   html += SizigiaPersona.semaforoCard();
-  html += renderAthleteLogCard();
+  html += SizigiaRegistro.card(renderAthleteLogCard);
   html += SizigiaPersona.restCards();
 
   const adherenceInfo = 'Mide qué % de los días que pedían un check-in (lunes a viernes; el fin de semana es tu Zona Sagrada, sin tareas por diseño) sí lo hiciste, desde el día 1 del programa. <strong>100% es cumplimiento total de lo pedido</strong> — no hace falta estar siempre en el máximo para que el proceso funcione, pero es el número que Manuel revisa antes de cada control.';

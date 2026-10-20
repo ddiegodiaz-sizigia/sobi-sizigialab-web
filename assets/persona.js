@@ -1,4 +1,5 @@
 // Pantalla de la persona: semáforo explicado, tendencias, ciclo, perfil y hoja de vida (bitácora).
+// Si la persona usa el registro general, el semáforo y las tendencias salen de registro-comun.js (SizigiaRegistro).
 // Usa los globals de rueda_final.html (state, athleteLogs, supabaseClient, currentPatientId, isDemoMode, render, saveState,
 // escapeHtml, todayISO, addDaysISO, daysBetween, fmtDate, sessionLoad) y los módulos semaforo.js y trend-chart.js.
 (function (root) {
@@ -50,11 +51,11 @@
   function semaforoCard() {
     ensure();
     if (typeof computeSemaforo !== 'function') return '';
-    var r = computeSemaforo(Object.keys(athleteLogs()).map(function (k) { return athleteLogs()[k]; }));
+    var r = comun() ? root.SizigiaRegistro.semaforo() : computeSemaforo(Object.keys(athleteLogs()).map(function (k) { return athleteLogs()[k]; }));
     var col = { verde: '#2f7d4f', amarillo: '#c9921b', rojo: '#b3382c', gris: '#8a8578' }[r.level];
     var nm = { verde: 'Verde', amarillo: 'Amarillo', rojo: 'Rojo', gris: 'Gris' }[r.level];
     var h = '<div class="card" style="margin-bottom:16px;"><div class="p-sem"><span class="p-dot" style="background:' + col + '"></span><div style="flex:1">';
-    h += '<h3 style="margin:0">Tu semáforo de hoy: ' + nm + '</h3><div class="card-sub" style="margin:2px 0 0">' + E({rojo:'Conviene revisar tu carga con tu médico antes de entrenar fuerte',amarillo:'Precaución: conversa con tu equipo si se mantiene',verde:'Sin alertas en lo que registraste',gris:'Sin datos recientes: registra hoy para actualizarlo'}[r.level]) + '</div>';
+    h += '<h3 style="margin:0">Tu semáforo de hoy: ' + nm + '</h3><div class="card-sub" style="margin:2px 0 0">' + E({rojo:'Conviene revisar tu carga con tu médico antes de entrenar fuerte',amarillo:'Precaución: conversa con tu equipo si se mantiene',verde:'Sin alertas en lo que registraste',gris:'Sin datos recientes: completa tu registro para actualizarlo'}[r.level]) + '</div>';
     r.reasons.forEach(function (x) { h += '<div style="font-size:13px;margin:4px 0">' + E(x.text) + '</div>'; });
     h += semChecksHTML(r.checks || [], r.why || '', escapeHtml);
     h += '<div class="tc-note">Señal informativa calculada con lo que registras. No es un diagnóstico ni una recomendación médica automática.</div></div></div></div>';
@@ -62,21 +63,28 @@
   }
 
   // ---------- Tendencias ----------
+  // Registro general (assets/registro-comun.js): otro semáforo y otras métricas, mismo gráfico.
+  function comun() { return !!(root.SizigiaRegistro && root.SizigiaRegistro.isComun()); }
+  function metrics() { return comun() ? root.SizigiaRegistro.TREND_METRICS : METRICS; }
+  function metricKey() { var m = metrics(); return m[ui.metric] ? ui.metric : Object.keys(m)[0]; }
   function trendPoints(m) {
+    if (comun()) return root.SizigiaRegistro.trendPoints(m);
     var logs = athleteLogs(), out = [];
     Object.keys(logs).forEach(function (iso) { var v = METRICS[m].get(logs[iso]); if (v != null && v !== '') out.push({ iso: iso, value: Number(v) }); });
     return out;
   }
   function trendsCard() {
+    var M = metrics(), cur = metricKey();
     var h = '<div class="card" style="margin-bottom:16px;"><h3>Tendencias</h3><div class="card-sub">Eje ajustado a tus datos y franja con tu rango habitual.</div><div class="p-chips">';
-    Object.keys(METRICS).forEach(function (k) { h += '<button type="button" class="p-chip' + (k === ui.metric ? ' on' : '') + '" onclick="SizigiaPersona.setMetric(\'' + k + '\')">' + METRICS[k].label + '</button>'; });
+    Object.keys(M).forEach(function (k) { h += '<button type="button" class="p-chip' + (k === cur ? ' on' : '') + '" onclick="SizigiaPersona.setMetric(\'' + k + '\')">' + M[k].label + '</button>'; });
     return h + '</div><div id="persona-trend"></div></div>';
   }
   function mountTrend() {
     var el = document.getElementById('persona-trend');
     if (!el || !root.SizigiaCharts) return;
-    var map = { sleep: 'sleep', fatigue: 'fatigue', mood: 'mood', pain: 'pain', load: 'load' };
-    root.SizigiaCharts.mount(el, trendPoints(ui.metric), { metric: map[ui.metric], label: METRICS[ui.metric].label, today: todayISO(), days: 14 });
+    var k = metricKey(), weekly = comun() && root.SizigiaRegistro.settings().frequency === 'semanal';
+    var chart = comun() ? root.SizigiaRegistro.TREND_METRICS[k].chart : k;
+    root.SizigiaCharts.mount(el, trendPoints(k), { metric: chart, label: metrics()[k].label, today: todayISO(), days: weekly ? 60 : 14 });
   }
 
   // ---------- Perfil y ciclo ----------

@@ -57,25 +57,27 @@ async function boot() {
     app.innerHTML = '<div class="login"><h1>Sin acceso</h1><p class="note">Este correo (' + esc(data.session.user.email) + ') no está registrado como profesional. Pide al equipo de Sizigia Lab que te dé de alta.</p><button class="btn" onclick="sb.auth.signOut().then(()=>location.reload())">Salir</button></div>';
     return;
   }
-  const { data: rows, error } = await sb.rpc('coach_feed');
+  const { data: rows, error } = await sb.rpc('coach_feed_v2');
   if (error) { app.innerHTML = '<div class="note err">No se pudo cargar: ' + esc(error.message) + '</div>'; return; }
   render(data.session.user.email, rows || []);
 }
 
+// rows: coach_feed_v2(): una fila por persona con su tipo de registro (deportivo o general) y sus registros.
+function semFor(p) { return p.mode === 'comun' ? computeSemaforoComun(p.wellness || [], p.frequency) : computeSemaforo(p.athlete || []); }
 function render(email, rows) {
-  const by = {};
-  rows.forEach(r => { (by[r.patient_id] = by[r.patient_id] || { name: r.patient_name, logs: [] }); if (r.log_date) by[r.patient_id].logs.push(r); });
   const order = { rojo: 0, amarillo: 1, gris: 2, verde: 3 };
-  const list = Object.values(by).map(p => ({ name: p.name, s: computeSemaforo(p.logs) })).sort((a, b) => order[a.s.level] - order[b.s.level] || a.name.localeCompare(b.name));
-  let html = '<div class="top"><div><h1>Disponibilidad de tus atletas</h1><div class="tag">' + esc(email) + '</div></div><button class="btn" onclick="sb.auth.signOut().then(()=>location.reload())">Salir</button></div>';
-  html += '<div class="note">Ves solo a los atletas que te dieron permiso, y solo su registro deportivo (sueño, fatiga, ánimo, dolor y carga). Cada consulta queda registrada y el atleta puede verla y retirar el permiso cuando quiera. ' +
-    'El semáforo usa reglas simples pendientes de validación médica y datos que el atleta carga por su cuenta. Es una señal para conversar antes de entrenar, no un diagnóstico ni una predicción.</div>';
-  if (!list.length) html += '<div class="card"><div>Ningún atleta te ha dado acceso todavía.</div></div>';
+  const list = (rows || []).map(p => ({ name: p.patient_name, comun: p.mode === 'comun', weekly: p.frequency === 'semanal', s: semFor(p) })).sort((a, b) => order[a.s.level] - order[b.s.level] || a.name.localeCompare(b.name));
+  let html = '<div class="top"><div><h1>Disponibilidad de tus atletas y clientes</h1><div class="tag">' + esc(email) + '</div></div><button class="btn" onclick="sb.auth.signOut().then(()=>location.reload())">Salir</button></div>';
+  html += '<div class="note">Ves solo a las personas que te dieron permiso, y solo su registro: el deportivo (sueño, fatiga, ánimo, dolor y carga) o el general (energía, sueño y estrés, diario o semanal). Cada consulta queda registrada y la persona puede verla y retirar el permiso cuando quiera. ' +
+    'El semáforo usa reglas simples pendientes de validación médica y datos que la persona carga por su cuenta. Es una señal para conversar, no un diagnóstico ni una predicción.</div>';
+  if (!list.length) html += '<div class="card"><div>Nadie te ha dado acceso todavía.</div></div>';
   list.forEach(p => {
     const items = p.s.reasons.length ? p.s.reasons.map(r => '<div class="reason"><span class="dot ' + r.level + '"></span>' + esc(r.text) + '</div>').join('')
-      : '<div class="reason" style="color:var(--muted)">Sin alertas con los datos de los últimos 28 días.</div>';
-    html += '<div class="card"><span class="dot big ' + p.s.level + '"></span><div><h3>' + esc(p.name) + '</h3><div class="lab">' + esc(SEM_LABEL[p.s.level]) + '</div>' + items +
-      semChecksHTML(p.s.checks || [], p.s.why || '', esc) + '<div class="src">Fuente: registro deportivo autoinformado' + (p.s.last ? ' · último registro ' + esc(p.s.last.log_date) : '') + '</div></div></div>';
+      : '<div class="reason" style="color:var(--muted)">Sin alertas en el último registro.</div>';
+    const label = p.comun ? SEM_LABEL_COMUN[p.s.level] : SEM_LABEL[p.s.level];
+    const src = p.comun ? 'registro general ' + (p.weekly ? 'semanal' : 'diario') : 'registro deportivo';
+    html += '<div class="card"><span class="dot big ' + p.s.level + '"></span><div><h3>' + esc(p.name) + '</h3><div class="lab">' + esc(label) + '</div>' + items +
+      semChecksHTML(p.s.checks || [], p.s.why || '', esc) + '<div class="src">Fuente: ' + src + ' autoinformado' + (p.s.last ? ' · último registro ' + esc(p.s.last.log_date) : '') + '</div></div></div>';
   });
   app.innerHTML = html;
 }
