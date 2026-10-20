@@ -18,7 +18,7 @@ assert.match(Q.validateInvite({ ...ok, scopes: [] }), /al menos un dato/);
 // Consentimiento: nombra al profesional, su rol y solo los datos elegidos
 const body = Q.consentBody('Autorizas a {{PROFESIONAL}} ({{ROL}}):\n{{DATOS}}\nNada más.', { name: 'Paula', role: 'kinesiologo' }, ['lesiones', 'semaforo']);
 assert.match(body, /^Autorizas a Paula \(kinesiólogo\):/);
-assert.match(body, /- Semáforo y registro deportivo: .*\.\n- Lesiones: /, 'en orden fijo');
+assert.match(body, /- Semáforo y registro: .*\.\n- Lesiones: /, 'en orden fijo');
 assert.doesNotMatch(body, /Ciclo|Salud mental/);
 
 // Equipo: activo primero, historial separado

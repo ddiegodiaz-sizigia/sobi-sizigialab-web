@@ -9,4 +9,22 @@ const y = S.computeSemaforo([{ ...logs[0], sleep_hours: 5.2 }, ...logs.slice(1)]
 assert.equal(y.level, 'amarillo'); assert.match(y.why, /^Amarillo porque sueño de anoche 5,2 h/);
 assert.equal(S.computeSemaforo([]).level, 'gris');
 const few = S.computeSemaforo(logs.slice(0, 3)); assert.equal(few.checks.find(c => c.key === 'carga').status, 'nodata');
+
+// Registro general (persona común): sin rojo, reglas visibles, diario o semanal
+const W = (n, o) => ({ period: 'dia', log_date: d(n), energy: 7, sleep_hours: 7.5, sleep_quality: 7, stress: 4, habits: {}, ...o });
+const cv = S.computeSemaforoComun([W(0), W(1), W(2)], 'diaria');
+assert.equal(cv.level, 'verde'); assert.match(cv.why, /no tiene rojo/); assert.deepEqual(cv.checks.map(c => c.key), ['sueno', 'sueno3', 'energia', 'estres']);
+const ca = S.computeSemaforoComun([W(0, { energy: 2, stress: 9 }), W(1)], 'diaria');
+assert.equal(ca.level, 'amarillo'); assert.equal(ca.reasons.length, 2); assert.match(ca.why, /^Amarillo porque energía 2\/10/);
+assert.equal(S.computeSemaforoComun([W(0, { energy: 1, stress: 10, sleep_hours: 3 })], 'diaria').level, 'amarillo', 'nunca rojo');
+assert.equal(S.computeSemaforoComun([W(3)], 'diaria').level, 'gris');
+assert.equal(S.computeSemaforoComun([W(0)], 'semanal').level, 'gris', 'un registro diario no sirve para el semanal');
+assert.equal(S.computeSemaforoComun([W(0, { sleep_hours: null })], 'diaria').checks[0].status, 'nodata');
+const mon = S.semMonday(d(0)), monAgo = k => { const x = new Date(mon + 'T00:00:00'); x.setDate(x.getDate() - 7 * k); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+const wk = k => ({ period: 'semana', log_date: monAgo(k), energy: 6, sleep_hours: 5.5, stress: 5, habits: {} });
+const sw = S.computeSemaforoComun([wk(1)], 'semanal');
+assert.equal(sw.level, 'amarillo', 'la semana pasada sigue vigente'); assert.match(sw.reasons[0].text, /^Sueño promedio de la semana: 5,5 h/);
+assert.ok(!sw.checks.some(c => c.key === 'sueno3'), 'en el semanal no se promedian 3 registros');
+assert.equal(S.computeSemaforoComun([wk(2)], 'semanal').level, 'gris'); assert.match(S.computeSemaforoComun([wk(2)], 'semanal').why, /esta semana ni de la anterior/);
+assert.equal(S.SEM_RULES_COMUN.energyYellow, 3); assert.equal(S.SEM_RULES_COMUN.stressYellow, 8);
 console.log('semaforo: OK');
