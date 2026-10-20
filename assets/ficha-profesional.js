@@ -67,13 +67,14 @@
       { patient_id: 'demo-n2', patient_name: 'Tomás Herrera', scopes: ['nutricion'] }
     ]);
   }
-  function demoData(scope, today) {
+  // pid 'demo-1' (Matías, alerta roja por dolor 7/10 en el panel): su rodilla vuelve a subir hoy, para que panel y ficha cuenten lo mismo.
+  function demoData(scope, today, pid) {
     var d = function (k) { return addDays(today, -k); };
     if (scope === 'lesiones') return {
       injuries: [
         { id: 'i1', onset_date: d(12), zone: 'Rodilla', side: 'derecha', title: 'Molestia al aterrizar saltos', eva_initial: 5, treating: 'Kinesióloga del club', status: 'rehabilitacion', discharge_date: null, notes: 'Excéntricos 3x/semana.' },
         { id: 'i2', onset_date: d(150), zone: 'Tobillo / pie', side: 'izquierda', title: 'Esguince grado I', eva_initial: 6, treating: null, status: 'alta', discharge_date: d(122), notes: null }],
-      pain: [5, 5, 4, 4, 3, 3, 2].map(function (v, k) { return { injury_id: 'i1', log_date: d(6 - k), eva: v }; })
+      pain: (pid === 'demo-1' ? [5, 5, 4, 4, 3, 3, 7] : [5, 5, 4, 4, 3, 3, 2]).map(function (v, k) { return { injury_id: 'i1', log_date: d(6 - k), eva: v }; })
     };
     if (scope === 'examenes') {
       var r = function (doc, k, code, name, v, unit, lo, hi) { return { document_id: doc, result_date: d(k), marker: code, marker_name: name, value: v, unit: unit, ref_low: lo, ref_high: hi }; };
@@ -166,7 +167,7 @@
     }).join('');
   }
   function adhHTML(a, label) {
-    return '<div style="margin-top:6px"><b style="font-size:13px">' + label + '</b><div class="fp-meta">' + E(N.adherenceText(a)) + '</div>' +
+    return '<div style="margin-top:6px"><b style="font-size:13px">' + label + '</b><div class="fp-meta">' + E(N.adherenceText(a, true)) + '</div>' +
       (a.logged ? a.byMeal.map(function (b) { return '<div style="font-size:12.5px;margin-top:4px"><div class="fp-row"><span>' + E(b.name) + '</span><span class="fp-meta">' + (b.pct == null ? 'sin registro' : b.pct + ' % · ' + b.logged + '/' + b.expected) + '</span></div><div class="fp-bar"><i style="width:' + (b.pct || 0) + '%"></i></div></div>'; }).join('') : '') + '</div>';
   }
   function editorHTML() {
@@ -233,7 +234,7 @@
     var key = ui.open + ':' + ui.tab;
     if (ui.data[key]) return render();
     ui.err = ''; render();
-    if (ui.demo) { ui.data[key] = demoData(ui.tab, today()); return render(); }
+    if (ui.demo) { ui.data[key] = demoData(ui.tab, today(), ui.open); return render(); }
     var r = await ui.sb.rpc(BY_KEY[ui.tab].rpc, { p_patient: ui.open });
     if (r.error) ui.err = /sin permiso/.test(r.error.message) ? 'La persona retiró este permiso.' : 'No se pudo cargar. Reintenta.';
     else ui.data[key] = r.data || {};

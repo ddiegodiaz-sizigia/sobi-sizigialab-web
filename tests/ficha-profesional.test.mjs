@@ -19,6 +19,8 @@ assert.equal(les[0].name, 'Rodilla (lado derecho)'); assert.equal(les[0].status,
 assert.equal(les[0].summary.text, 'Dolor bajó de 5 a 2/10 (último registro 20-10-2026).');
 assert.equal(les[0].pain.length, 7); assert.equal(les[1].summary.days, 28);
 assert.deepEqual(F.lesionesView({}, T), []);
+const lesM = F.lesionesView(F.demoData('lesiones', T, 'demo-1'), T);
+assert.equal(lesM[0].pain[6].eva, 7, 'demo: Matías coincide con su alerta roja del panel (dolor 7/10 hoy)');
 
 // Exámenes: documentos con sus resultados, serie por marcador y lo que está fuera del rango del laboratorio
 const ex = F.examenesView(F.demoData('examenes', T));

@@ -192,7 +192,7 @@
   function topHTML() {
     var s = summary(ui.rows), f = ui.f;
     var chip = function (lv, n, label) { return '<button class="pc-chip' + (f.level === lv ? ' on' : '') + '" onclick="SizigiaCoach.setLevel(\'' + lv + '\')">' + (lv !== 'todos' ? '<span class="dot ' + lv + '"></span>' : '') + '<b>' + n + '</b> ' + label + '</button>'; };
-    var h = '<div class="top"><div><h1>Tus personas</h1><div class="tag">' + E(ui.email) + (ui.demo ? ' · demo sin datos reales' : '') + '</div></div>' +
+    var h = '<div class="top"><div><h1>Tus personas</h1><div class="tag">' + E(ui.email) + (ui.demo ? ' · demo sin datos reales · <a href="rueda_final.html?demo=1">ver la app de la persona</a>' : '') + '</div></div>' +
       (ui.demo ? '' : '<button class="btn" onclick="SizigiaCoach.signOut()">Salir</button>') + '</div>';
     h += '<div class="pc-sum">' + chip('todos', s.total, 'personas') + chip('rojo', s.rojo, 'rojo') + chip('amarillo', s.amarillo, 'amarillo') + chip('gris', s.gris, 'sin datos') + chip('verde', s.verde, 'verde') +
       '<button class="pc-chip' + (f.pending ? ' on' : '') + '" onclick="SizigiaCoach.togglePending()"><b>' + s.pending + '</b> con pendientes</button>' +
