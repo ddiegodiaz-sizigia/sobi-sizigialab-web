@@ -3,7 +3,7 @@ const Q = createRequire(import.meta.url)('../assets/mi-equipo.js');
 
 // Tipos de dato: los mismos 7 que acepta care_links_scopes_check (migración 20261020)
 assert.deepEqual(Q.SCOPES.map(s => s.key), ['semaforo', 'lesiones', 'ciclo', 'nutricion', 'examenes', 'salud_mental', 'bitacora']);
-assert.deepEqual(Q.SCOPES.filter(s => s.live).map(s => s.key), ['semaforo'], 'solo el semáforo se ve hoy en equipo.html');
+assert.deepEqual(Q.SCOPES.filter(s => s.live).map(s => s.key), ['semaforo', 'lesiones', 'nutricion', 'examenes'], 'lo que hoy se ve en equipo.html');
 assert.ok(Q.SCOPES.find(s => s.key === 'ciclo').sensitive && Q.SCOPES.find(s => s.key === 'salud_mental').sensitive);
 assert.deepEqual(Q.normalizeScopes(['bitacora', 'x', 'semaforo', 'semaforo']), ['semaforo', 'bitacora'], 'filtra, deduplica y ordena');
 

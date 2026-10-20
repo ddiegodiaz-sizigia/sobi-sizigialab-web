@@ -251,12 +251,12 @@
     if (r.habitStats.length) h += '<div class="pc-sec"><h4>Hábitos, últimas 4 semanas</h4><div class="pc-small">' + r.habitStats.map(function (x) {
       return '<div><span class="pc-bar" style="width:' + Math.max(4, x.pct * 0.8) + 'px"></span>' + E(x.habit) + ': ' + x.pct + ' %</div>';
     }).join('') + '</div></div>';
-    return h + msgHTML(r) + cfgHTML(r) + '</div>';
+    return h + (root.SizigiaFicha ? root.SizigiaFicha.button(r.id) : '') + msgHTML(r) + cfgHTML(r) + '</div>';
   }
 
   function listHTML() {
     var rows = filterRows(ui.rows, ui.f);
-    if (!ui.rows.length) return '<div class="pc-list"><div class="pc-empty">Nadie te ha dado acceso todavía. Cuando una persona te invite desde "Mi equipo" con el permiso "Semáforo y registro", aparece acá.</div></div>';
+    if (!ui.rows.length) return '<div class="pc-list"><div class="pc-empty">Nadie te ha dado acceso todavía. Cuando una persona te invite desde "Mi equipo" con el permiso "Semáforo y registro", aparece acá. Quienes solo te dieron acceso a su ficha aparecen más abajo.</div></div>';
     if (!rows.length) return '<div class="pc-list"><div class="pc-empty">Nadie coincide con el filtro.</div></div>';
     return '<div class="pc-list">' + rows.map(function (r) { return '<div class="pc-row" id="pc_row_' + E(r.id) + '">' + headHTML(r) + (ui.open === r.id ? bodyHTML(r) : '') + '</div>'; }).join('') + '</div>';
   }

@@ -10,6 +10,11 @@
 <script src="assets/semaforo.js"></script>
 <script src="assets/registro-comun.js"></script>
 <script src="assets/panel-coach.js"></script>
+<script src="assets/trend-chart.js"></script>
+<script src="assets/lesiones.js"></script>
+<script src="assets/examenes.js"></script>
+<script src="assets/nutricion.js"></script>
+<script src="assets/ficha-profesional.js"></script>
 <style>
   :root { --ink:#131a17; --muted:#6b7280; --line:#e6e4e1; --accent:#0d9488; --canvas:#faf9f7; --paper:#fffffe; }
   * { box-sizing:border-box; }
@@ -33,6 +38,7 @@
 </head>
 <body>
 <div class="wrap" id="app"><div class="note">Cargando…</div></div>
+<div class="wrap" id="ficha" style="padding-top:0"></div>
 <script>
 // ?demo=1: panel con personas de ejemplo, sin red ni sesión (assets/panel-coach.js, demoFeed).
 const demo = new URLSearchParams(location.search).get('demo') === '1';
@@ -55,7 +61,12 @@ async function sendLink() {
 
 async function boot() {
   const link = location.origin + '/rueda_final.html';
-  if (demo) return SizigiaCoach.mount({ el: app, sb: null, demo: true, email: 'coach@ejemplo.cl', link, feed: SizigiaCoach.demoFeed(SizigiaCoach.localISO(new Date())) });
+  const fichaEl = document.getElementById('ficha');
+  if (demo) {
+    const feed = SizigiaCoach.demoFeed(SizigiaCoach.localISO(new Date()));
+    SizigiaFicha.mount({ el: fichaEl, demo: true, linked: SizigiaFicha.demoLinked(feed), panelIds: feed.map(p => p.patient_id) });
+    return SizigiaCoach.mount({ el: app, sb: null, demo: true, email: 'coach@ejemplo.cl', link, feed });
+  }
   const { data } = await sb.auth.getSession();
   if (!data.session) return loginScreen();
   const { data: claimed, error: ce } = await sb.rpc('claim_professional');
@@ -66,6 +77,9 @@ async function boot() {
   // coach_feed_v2(): una fila por persona con su tipo de registro (deportivo o general), sus registros y tu último contacto.
   const { data: rows, error } = await sb.rpc('coach_feed_v2');
   if (error) { app.innerHTML = '<div class="note err">No se pudo cargar: ' + esc(error.message) + '</div>'; return; }
+  // my_linked_patients(): nombre y permisos de cada persona (sin datos de salud). La ficha carga cada sección al abrirla.
+  const { data: linked } = await sb.rpc('my_linked_patients');
+  SizigiaFicha.mount({ el: fichaEl, sb, linked: linked || [], panelIds: (rows || []).map(p => p.patient_id) });
   SizigiaCoach.mount({ el: app, sb, email: data.session.user.email, link, feed: rows || [] });
 }
 boot();
