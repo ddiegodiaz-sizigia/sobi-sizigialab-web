@@ -182,7 +182,7 @@
   .sem-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:7px; vertical-align:middle; background:#9ca3af; }
   .sem-dot.big { width:22px; height:22px; margin:0; }
   .sem-dot.verde { background:#16a34a; } .sem-dot.amarillo { background:#f59e0b; } .sem-dot.rojo { background:#dc2626; } .sem-dot.gris { background:#9ca3af; }
-  .sem-reason { font-size:13px; margin:2px 0; } .sem-reason.muted { color:var(--muted); }
+  .sem-reason { font-size:13px; margin:2px 0; } .sem-why { margin-top:6px; font-size:12.5px; } .sem-why summary { cursor:pointer; color:var(--muted); } .sem-why-text { margin:6px 0; } .sem-check { margin:2px 0; } .sem-check.warn,.sem-check.alert { font-weight:600; } .sem-check.nodata { color:var(--muted); } .sem-reason.muted { color:var(--muted); }
   .sem-label { font-size:11.5px; color:var(--muted); margin-top:2px; } .sem-src { font-size:11px; color:var(--muted); margin-top:5px; }
 </style>
 </head>
@@ -201,13 +201,16 @@
     <input type="email" id="npEmail" placeholder="paciente@ejemplo.com">
     <label>WhatsApp (opcional, con código país. Ej: 56912345678)</label>
     <input type="tel" id="npPhone" placeholder="56912345678">
-    <label>Inicio del programa (día 1)</label>
+    <label>Sexo (ajusta referencias clínicas y activa el seguimiento de ciclo cuando corresponde)</label>
+    <select id="npSex">
+      <option value="">Selecciona…</option>
+      <option value="femenino">Femenino</option>
+      <option value="masculino">Masculino</option>
+      <option value="no_indica">Prefiere no indicar</option>
+    </select>
+    <label>Fecha de alta (inicio de su bitácora)</label>
     <input type="date" id="npDate">
-    <label>Duración del programa</label>
-    <div class="modal-months" id="npMonthsToggle">
-      <button type="button" data-months="3" onclick="setNpMonths(3)">3 meses</button>
-      <button type="button" data-months="6" onclick="setNpMonths(6)">6 meses</button>
-    </div>
+    <div class="sub" style="font-size:12px;color:var(--muted);margin-top:6px;">Sin plazo: la bitácora sigue mientras la persona use su cuenta.</div>
     <div class="modal-actions">
       <button class="btn" onclick="closeModal()">Cancelar</button>
       <button class="btn primary" onclick="confirmCreatePatient()">Crear</button>
@@ -1060,7 +1063,7 @@ function renderSemaforoHTML() {
     html += `<tr>
       <td><span class="sem-dot big ${s.level}" title="${escapeHtml(SEM_LABEL[s.level])}"></span></td>
       <td><button class="patient-link" onclick="openPatientFile('${c.id}')">${escapeHtml(c.name)}</button><div class="sem-label">${escapeHtml(SEM_LABEL[s.level])}</div></td>
-      <td>${items}<div class="sem-src">Fuente: registro deportivo autoinformado</div></td>
+      <td>${items}${semChecksHTML(s.checks || [], s.why || '', escapeHtml)}<div class="sem-src">Fuente: registro deportivo autoinformado</div></td>
       <td>${s.last ? escapeHtml(s.last.log_date) : '—'}</td>
     </tr>`;
   });
@@ -1364,7 +1367,7 @@ function openModal() {
   document.getElementById('npEmail').value='';
   document.getElementById('npPhone').value='';
   document.getElementById('npDate').value = todayISO();
-  setNpMonths(6);
+  document.getElementById('npSex').value='';
   document.getElementById('modalOverlay').classList.remove('hidden');
   setTimeout(()=>document.getElementById('npName').focus(),50);
 }
@@ -1376,7 +1379,14 @@ async function confirmCreatePatient() {
   if (!email) { alert('Ingresa el email del paciente — lo necesita para entrar a su Rueda.'); return; }
   const phone = document.getElementById('npPhone').value.trim();
   const startDate = document.getElementById('npDate').value || todayISO();
-  const { data, error } = await sb.from('patients').insert({ name, email, phone, start_date: startDate, program_months: npMonths }).select().single();
+  const sex = document.getElementById('npSex').value;
+  if (!sex) { alert('Selecciona el sexo (puede ser "Prefiere no indicar").'); return; }
+  let { data, error } = await sb.from('patients').insert({ name, email, phone, start_date: startDate, program_months: npMonths, sex }).select().single();
+  // Si la migración 20261020 aún no se aplicó en Supabase, crear igual sin el campo y avisar.
+  if (error && /sex/i.test(error.message)) {
+    ({ data, error } = await sb.from('patients').insert({ name, email, phone, start_date: startDate, program_months: npMonths }).select().single());
+    if (!error) alert('Paciente creado SIN sexo: falta aplicar la migración 20261020_bitacora_sexo_ciclo.sql en Supabase.');
+  }
   if (error) { alert('No se pudo crear: ' + error.message); return; }
   state.clients.unshift({ id: data.id, name, phone, email, linked:false, startDate, programMonths: npMonths, days: emptyDaysRange(npMonths*DAYS_PER_MONTH), archived:false });
   closeModal();
