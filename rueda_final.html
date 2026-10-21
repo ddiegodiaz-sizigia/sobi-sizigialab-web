@@ -449,6 +449,7 @@ async function bootstrap() {
 }
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (isDemoMode) return; /* ?demo=1 con sesión abierta: la sesión no debe cargarse encima de la demo */
   if (event === 'SIGNED_IN' && session && session.user && (!currentUser || currentUser.id !== session.user.id)) {
     loadStateForUser(session.user).then((ok) => {
       if (ok) render(); else renderNotActivated(session.user.email);

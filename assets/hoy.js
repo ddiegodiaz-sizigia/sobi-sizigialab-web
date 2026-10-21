@@ -1,5 +1,6 @@
 // Versión nueva de la app de la persona (fase 2 del rediseño): pantalla Hoy y cuatro espacios con barra inferior
-// (Hoy, Mi historia, Mi cuerpo, Mi equipo). Se activa con ?v=2 (queda guardado en este navegador) y se apaga con ?v=1.
+// (Hoy, Mi historia, Mi cuerpo, Mi equipo). Es la versión por defecto; ?v=1 o "Volver a la versión anterior" vuelven a la anterior
+// (queda guardado en este navegador) y ?v=2 la reactiva.
 // Reutiliza las pantallas que ya existen; el registro del día es assets/registro-diario.js.
 // Núcleo puro exportado para Node (tests/hoy.test.mjs). La pantalla usa los globals de rueda_final.html.
 (function (root) {
@@ -121,9 +122,9 @@
     var v = new URLSearchParams(root.location.search).get('v');
     try {
       if (v === '2') localStorage.setItem(KEY, '1');
-      if (v === '1') localStorage.removeItem(KEY);
-      flag = localStorage.getItem(KEY) === '1';
-    } catch (e) { flag = v === '2'; }
+      if (v === '1') localStorage.setItem(KEY, '0');
+      flag = localStorage.getItem(KEY) !== '0';
+    } catch (e) { flag = v !== '1'; }
     return flag;
   }
   function nav() { state.ui.v2 = normalizeNav(state.ui.v2); return state.ui.v2; }
@@ -241,6 +242,6 @@
 
   root.SizigiaHoy = Object.assign({}, core, {
     active: active, render: renderApp, go: go,
-    classic: function () { try { localStorage.removeItem(KEY); } catch (e) {} flag = false; state.ui.tab = 'resumen'; saveState(); render(); }
+    classic: function () { try { localStorage.setItem(KEY, '0'); } catch (e) {} flag = false; state.ui.tab = 'resumen'; saveState(); render(); }
   });
 })(typeof window !== 'undefined' ? window : globalThis);
