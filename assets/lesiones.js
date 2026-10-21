@@ -260,23 +260,41 @@
     if (status === 'alta') { var d = document.getElementById('la_' + id); ch.discharge_date = (d && d.value) || todayISO(); }
     if (await apply(i, ch, id) === true) done();
   }
-  async function savePain(id) {
-    var el = document.getElementById('lp_' + id), t = todayISO();
-    if (!el || el.value === '') { ui.painMsg[id] = 'Elige un valor de 0 a 10.'; return render(); }
-    var row = { log_date: t, eva: Number(el.value) };
+  // Guarda el dolor de hoy de una lesión sin tocar la pantalla (lo usa también el registro diario). Devuelve un error o null.
+  async function savePainValue(id, eva) {
+    var t = todayISO(), row = { log_date: t, eva: Number(eva) };
+    if (!(row.eva >= 0 && row.eva <= 10 && Math.round(row.eva) === row.eva)) return 'El dolor va de 0 a 10.';
     if (!isDemoMode && currentPatientId) {
       var r = await supabaseClient.from('injury_pain_logs').upsert({ injury_id: id, patient_id: currentPatientId, log_date: t, eva: row.eva }, { onConflict: 'injury_id,log_date' });
-      if (r.error) { ui.painMsg[id] = 'No se pudo guardar. Reintenta.'; return render(); }
+      if (r.error) return 'No se pudo guardar el dolor. Reintenta.';
     }
     var logs = (state.injuryPain[id] = (state.injuryPain[id] || []).filter(function (x) { return x.log_date !== t; }));
     logs.push(row);
+    return null;
+  }
+  async function savePain(id) {
+    var el = document.getElementById('lp_' + id);
+    if (!el || el.value === '') { ui.painMsg[id] = 'Elige un valor de 0 a 10.'; return render(); }
+    var err = await savePainValue(id, el.value);
+    if (err) { ui.painMsg[id] = 'No se pudo guardar. Reintenta.'; return render(); }
     ui.painMsg[id] = 'Guardado.'; done();
+  }
+  // Lesiones abiertas con el dolor de hoy (para la pantalla Hoy y el registro diario).
+  function openToday() {
+    ensure();
+    var t = todayISO();
+    return sortInjuries(state.injuries).filter(isOpen).map(function (i) {
+      var logs = (state.injuryPain[i.id] || []).slice().sort(function (a, b) { return a.log_date < b.log_date ? -1 : 1; });
+      var ex = logs.filter(function (x) { return x.log_date === t; })[0], last = logs[logs.length - 1];
+      return { id: i.id, name: injuryName(i), eva: ex ? Number(ex.eva) : null, last: last ? Number(last.eva) : (i.eva_initial != null ? Number(i.eva_initial) : null) };
+    });
   }
 
   root.SizigiaLesiones = Object.assign({}, core, {
     tab: tab, afterRender: afterRender,
     openForm: function (on) { ui.formOpen = on; ui.msg = ''; ui.msgFor = null; render(); },
     edit: function (id) { ui.editing = id; ui.msg = ''; ui.msgFor = null; render(); },
-    create: create, saveEdit: saveEdit, setStatus: setStatus, savePain: savePain
+    create: create, saveEdit: saveEdit, setStatus: setStatus, savePain: savePain,
+    savePainValue: savePainValue, openToday: openToday
   });
 })(typeof window !== 'undefined' ? window : globalThis);

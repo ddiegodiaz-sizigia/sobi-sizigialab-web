@@ -48,10 +48,13 @@
   }
 
   // ---------- Semáforo explicado ----------
+  function semaforoResult() {
+    return comun() ? root.SizigiaRegistro.semaforo() : computeSemaforo(Object.keys(athleteLogs()).map(function (k) { return athleteLogs()[k]; }));
+  }
   function semaforoCard() {
     ensure();
     if (typeof computeSemaforo !== 'function') return '';
-    var r = comun() ? root.SizigiaRegistro.semaforo() : computeSemaforo(Object.keys(athleteLogs()).map(function (k) { return athleteLogs()[k]; }));
+    var r = semaforoResult();
     var col = { verde: '#55704F', amarillo: '#B8862B', rojo: '#A13D2D', gris: '#8a8578' }[r.level];
     var nm = { verde: 'Verde', amarillo: 'Amarillo', rojo: 'Rojo', gris: 'Gris' }[r.level];
     var h = '<div class="card" style="margin-bottom:16px;"><div class="p-sem"><span class="p-dot" style="background:' + col + '"></span><div style="flex:1">';
@@ -165,18 +168,26 @@
     if (!isDemoMode && currentPatientId) { var r = await supabaseClient.rpc('set_my_profile', { p_sex: state.profile.sex, p_tracks_cycle: true }); if (r.error) return; }
     state.profile.tracksCycle = true; done();
   }
-  async function saveCycle() {
-    var t = todayISO(), bleeding = document.getElementById('cy_bleeding').checked, flow = document.getElementById('cy_flow').value;
-    var syms = Array.prototype.map.call(document.querySelectorAll('.cy_sym:checked'), function (c) { return c.value; });
+  // Guarda el ciclo de hoy sin tocar la pantalla (lo usa también el registro diario). Devuelve un error o null.
+  async function saveCycleRow(input) {
+    ensure();
+    var t = todayISO(), bleeding = !!input.bleeding, flow = input.flow;
     var st = periodStarts(), prevBleed = state.cycleLogs[addDaysISO(t, -1)] && state.cycleLogs[addDaysISO(t, -1)].bleeding;
     var lastStart = st.filter(function (d) { return d < t; }).pop(), day = bleeding && !prevBleed ? 1 : (lastStart ? daysBetween(lastStart, t) + 1 : null);
-    var row = { log_date: t, bleeding: bleeding, flow: bleeding && flow ? Number(flow) : null, cycle_day: day && day <= 90 ? day : null, symptoms: syms };
-    ui.cycleMsg = '';
+    var row = { log_date: t, bleeding: bleeding, flow: bleeding && flow ? Number(flow) : null, cycle_day: day && day <= 90 ? day : null, symptoms: input.symptoms || [] };
     if (!isDemoMode && currentPatientId) {
       var r = await supabaseClient.from('cycle_logs').upsert(Object.assign({ patient_id: currentPatientId }, row), { onConflict: 'patient_id,log_date' });
-      if (r.error) { ui.cycleMsg = 'No se pudo guardar. Reintenta.'; return render(); }
+      if (r.error) return 'No se pudo guardar el ciclo. Reintenta.';
     }
-    state.cycleLogs[t] = row; ui.cycleMsg = 'Guardado.'; done();
+    state.cycleLogs[t] = row;
+    return null;
+  }
+  async function saveCycle() {
+    var syms = Array.prototype.map.call(document.querySelectorAll('.cy_sym:checked'), function (c) { return c.value; });
+    ui.cycleMsg = '';
+    var err = await saveCycleRow({ bleeding: document.getElementById('cy_bleeding').checked, flow: document.getElementById('cy_flow').value, symptoms: syms });
+    if (err) { ui.cycleMsg = 'No se pudo guardar. Reintenta.'; return render(); }
+    ui.cycleMsg = 'Guardado.'; done();
   }
   async function saveJournal() {
     var title = document.getElementById('jr_title').value.trim(), kind = document.getElementById('jr_kind').value, date = document.getElementById('jr_date').value || todayISO(), body = document.getElementById('jr_body').value.trim();
@@ -198,6 +209,16 @@
     afterRender: function () { if (state && state.ui && state.ui.tab === 'resumen') mountTrend(); if (state && state.ui && state.ui.tab === 'lesiones' && root.SizigiaLesiones) root.SizigiaLesiones.afterRender(); },
     setMetric: function (m) { ui.metric = m; render(); },
     setFilter: function (f) { ui.filter = f; render(); },
-    saveProfile: saveProfile, enableCycle: enableCycle, saveCycle: saveCycle, saveJournal: saveJournal
+    saveProfile: saveProfile, enableCycle: enableCycle, saveCycle: saveCycle, saveJournal: saveJournal,
+    // Para la pantalla Hoy y el registro diario (assets/hoy.js, assets/registro-diario.js).
+    tracksCycle: function () { ensure(); return state.profile.sex === 'femenino' || !!state.profile.tracksCycle; },
+    cycleToday: function () { ensure(); return state.cycleLogs[todayISO()] || null; },
+    cycleDay: function () { ensure(); return cycleInfo().day || null; },
+    symptoms: SYMPTOMS, saveCycleRow: saveCycleRow,
+    semaforo: function () { ensure(); return semaforoResult(); },
+    trendPoints: trendPoints, mountTrend: mountTrend,
+    trendsCard: function () { ensure(); return trendsCard(); },
+    profileCard: function () { ensure(); return profileCard(); },
+    cycleCard: function () { ensure(); return cycleCard(); }
   };
 })(window);

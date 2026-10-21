@@ -292,22 +292,37 @@
     var wk = document.getElementById('rc_week');
     var row = { period: periodOf(s.frequency), log_date: weekly ? mondayOf(wk ? wk.value : t) : t, energy: num('rc_energy'), sleep_hours: num('rc_sleep_hours'),
       sleep_quality: num('rc_sleep_quality'), stress: num('rc_stress'), habits: habits, notes: ((document.getElementById('rc_notes') || {}).value || '').trim() || null };
+    ui.saving = true;
+    var err = await saveRow(row);
+    ui.saving = false;
+    ui.msg = err || '';
+    if (err) return render();
+    saveState(); render();
+  }
+  // Valida y guarda un registro sin tocar la pantalla (lo usa también el registro diario). Devuelve un error o null.
+  async function saveRow(row) {
+    var s = settings();
     var err = validateLog(row, s.frequency, s.habits);
-    if (err) { ui.msg = err; return render(); }
-    ui.msg = '';
+    if (err) return err;
     if (!isDemoMode && currentPatientId) {
-      ui.saving = true;
       var r = await supabaseClient.from('wellness_logs').upsert(Object.assign({ patient_id: currentPatientId, updated_at: new Date().toISOString() }, row), { onConflict: 'patient_id,period,log_date' });
-      ui.saving = false;
-      if (r.error) { console.warn('wellness_logs', r.error); ui.msg = 'No se pudo guardar el registro. Reintenta en un momento; si persiste, avisa a tu equipo.'; return render(); }
+      if (r.error) { console.warn('wellness_logs', r.error); return 'No se pudo guardar el registro. Reintenta en un momento; si persiste, avisa a tu equipo.'; }
     }
     state.wellnessLogs[keyOf(row.period, row.log_date)] = row;
-    saveState(); render();
+    return null;
+  }
+  // Registro de hoy (diario) o de la semana que toca (semanal), o null.
+  function current() {
+    var s = settings(), t = todayISO(), weekly = s.frequency === 'semanal';
+    var date = weekly ? defaultWeek(t, logsList()) : t;
+    return { date: date, period: periodOf(s.frequency), row: state.wellnessLogs[keyOf(periodOf(s.frequency), date)] || null };
   }
 
   root.SizigiaRegistro = Object.assign({}, core, {
     card: card, isComun: isComun, semaforo: semaforo, trendPoints: trendPoints, settings: settings,
     openConfig: openConfig, setCfg: setCfg, addHabit: addHabit, saveConfig: saveConfig, save: save,
+    saveRow: saveRow, current: current, logsList: logsList,
+    configCard: function () { var s = settings(); return '<div class="card" style="margin-bottom:16px;"><h3>Tu registro</h3>' + configHTML(s) + '</div>'; },
     setWeek: function (w) { ui.week = w; ui.msg = ''; render(); }
   });
 })(typeof window !== 'undefined' ? window : globalThis);
