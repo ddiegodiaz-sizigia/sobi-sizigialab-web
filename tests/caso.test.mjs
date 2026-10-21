@@ -85,4 +85,36 @@ for (const f of ['post_case_message', 'edit_case_message', 'retract_case_message
   assert.match(sql, new RegExp('revoke all on function [^;]*public\\.' + f + '\\([^;]*from public, anon;'), f + ' sin acceso anónimo');
 assert.match(sql, /public\.case_to_journal\(uuid, text\) from public, anon, authenticated/, 'auxiliares no se exponen');
 assert.match(sql, /public\.case_own_message\(uuid\) from public, anon, authenticated/);
+
+// Adjuntos (20261031_adjuntos.sql): mismos tipos, tamaño y máximo que el bucket y la función
+const adj = readFileSync(new URL('../supabase/migrations/20261031_adjuntos.sql', import.meta.url), 'utf8');
+const bucket = adj.match(/values \('caso', 'caso', false, (\d+), array\[([^\]]+)\]/);
+assert.equal(Number(bucket[1]), C.MAX_FILE_BYTES);
+assert.deepEqual(bucket[2].split(',').map(s => s.trim().replace(/'/g, '')), Object.keys(C.FILE_TYPES));
+assert.match(adj, new RegExp('jsonb_array_length\\(coalesce\\(p_files, \'\\[\\]\'::jsonb\\)\\) > ' + C.MAX_FILES));
+const F = (name, type, size) => ({ name, type, size });
+assert.equal(C.validateFiles([]), null);
+assert.equal(C.validateFiles([F('a.pdf', 'application/pdf', 2000), F('b.jpg', 'image/jpeg', C.MAX_FILE_BYTES)]), null);
+assert.match(C.validateFiles([F('a.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 10)]), /"a\.docx" no es PDF ni imagen/);
+assert.match(C.validateFiles([F('a.pdf', 'application/pdf', C.MAX_FILE_BYTES + 1)]), /más de 10 MB/);
+assert.match(C.validateFiles([F('a.pdf', 'application/pdf', 0)]), /vacío/);
+assert.match(C.validateFiles(Array(C.MAX_FILES + 1).fill(F('a.pdf', 'application/pdf', 10))), /Máximo 5 archivos/);
+assert.equal(C.filePath('pat', 'uid', 'image/jpeg', 'r4nd'), 'pat/uid/r4nd.jpg', 'sin el nombre original');
+assert.equal(C.sizeText(2048), '2 KB'); assert.equal(C.sizeText(100), '1 KB'); assert.equal(C.sizeText(2.5 * 1048576), '2,5 MB');
+assert.equal(C.demoFeed('pro', NOW).messages.find(m => m.id === 'm1').files.length, 1, 'el demo trae un adjunto');
+assert.equal(C.demoFeed('persona', NOW).messages.find(m => m.id === 'm2').files, undefined, 'lo oculto a la persona no trae adjuntos');
+// Reglas del servidor
+assert.match(adj, /create policy caso_insert[^;]*\(storage\.foldername\(name\)\)\[2\] = auth\.uid\(\)::text and public\.case_can_upload/, 'cada uno sube a su carpeta dentro del caso');
+assert.match(adj, /create policy caso_granted_select[^;]*public\.file_granted\('caso', name\)/, 'nadie lee el bucket sin permiso vigente');
+assert.doesNotMatch(adj, /bucket_id = 'caso' and public\.is_admin/, 'el admin no lee los adjuntos del caso');
+assert.match(adj, /now\(\) \+ interval '2 minutes'/);
+assert.match(adj, /'files', case when m\.retracted_at is null/, 'retirado: sin adjuntos');
+assert.match(adj, /if not \(m\.patient_can_read or m\.author_kind = 'paciente'\) then raise exception/, 'la persona no abre lo que es solo entre profesionales');
+assert.match(adj, /case_can_read_topic\(v_prof, m\.patient_id, v_topic\)\s+or not \(m\.author_professional_id = v_prof or exists \(select 1 from public\.case_recipients/, 'el profesional abre solo lo dirigido a él con permiso del tema');
+assert.match(adj, /values \(v_prof, m\.patient_id, 'equipo'\);\s+end if;\s+perform public\.grant_file\('caso'/, 'abrir un adjunto registra el acceso');
+assert.match(adj, /'examenes' = any \(l\.scopes\)\) then\s+raise exception 'sin permiso examenes'[\s\S]*values \(v_prof, d\.patient_id, 'examenes'\);\s+perform public\.grant_file\('documentos'/, 'abrir un examen pide permiso y registra');
+assert.match(adj, /insert into public\.case_attachments \(message_id[^;]*select v_id[^;]*where message_id = m\.id/, 'editar conserva los adjuntos');
+assert.match(adj, /public\.grant_file\(text, text\) from public, anon, authenticated/, 'grant_file no se expone');
+for (const f of ['post_case_message_files', 'open_case_file', 'open_document_file'])
+  assert.match(adj, new RegExp('revoke all on function public\\.' + f + '\\([^;]*from public, anon;'), f + ' sin acceso anónimo');
 console.log('caso: OK');

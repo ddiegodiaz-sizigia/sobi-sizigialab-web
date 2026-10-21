@@ -7,6 +7,9 @@
 //   la persona lee lo dirigido a ella y de lo demás solo ve que existe (fecha, quién, tema).
 // Pantallas: profesional en la ficha de equipo.html (pestaña "Caso", vía ficha-profesional.js) y bandeja en el panel
 // (hook en panel-coach.js); persona en la pestaña "Mi equipo" de rueda_final.html (hook en mi-equipo.js).
+// Adjuntos (migración 20261031_adjuntos.sql): bucket privado 'caso', ruta <persona>/<quien sube>/<aleatorio>.<ext>.
+// Se envían con post_case_message_files; se abren con open_case_file (mismas reglas que el mensaje, registra el
+// acceso del profesional y habilita el archivo 2 minutos) y una URL firmada de 5 minutos.
 // Núcleo puro exportado para Node (tests/caso.test.mjs).
 (function (root) {
   'use strict';
@@ -24,6 +27,9 @@
   var REF_TOPIC = { lesion: 'lesiones', examen: 'examenes' };
   var MAX_BODY = 4000, MAX_TITLE = 120;
   var LINK_EQUIPO = 'https://sizigialab.cl/equipo.html';
+  // Igual al bucket 'caso' (allowed_mime_types y file_size_limit) y al máximo de post_case_message_files.
+  var FILE_TYPES = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic' };
+  var MAX_FILES = 5, MAX_FILE_BYTES = 10485760;
 
   // ---------- Núcleo puro ----------
   // Igual a case_journal_scope() en SQL.
@@ -73,6 +79,21 @@
     if (d.journal && ['nota', 'consulta'].indexOf(d.journal) < 0) return 'Tipo de registro inválido.';
     return null;
   }
+
+  // files: [{ name, type, size }] (File del navegador). Devuelve el error para mostrar o null.
+  function validateFiles(files) {
+    var f = files || [];
+    if (f.length > MAX_FILES) return 'Máximo ' + MAX_FILES + ' archivos por mensaje.';
+    for (var k = 0; k < f.length; k++) {
+      if (!FILE_TYPES[f[k].type]) return '"' + f[k].name + '" no es PDF ni imagen (JPG, PNG, WEBP o HEIC).';
+      if (f[k].size > MAX_FILE_BYTES) return '"' + f[k].name + '" pesa más de 10 MB.';
+      if (!f[k].size) return '"' + f[k].name + '" está vacío.';
+    }
+    return null;
+  }
+  // Sin el nombre original en la ruta (puede traer datos de salud); el nombre va en case_attachments.
+  function filePath(patientId, uid, type, rand) { return patientId + '/' + uid + '/' + rand + '.' + (FILE_TYPES[type] || 'bin'); }
+  function sizeText(b) { b = Number(b) || 0; return b < 1048576 ? Math.max(1, Math.round(b / 1024)) + ' KB' : String(Math.round(b / 104857.6) / 10).replace('.', ',') + ' MB'; }
 
   // Feed (case_feed / my_case_feed) → hilos con sus mensajes (última versión de cada uno), ordenados por actividad.
   function buildThreads(feed) {
@@ -126,6 +147,10 @@
     });
   }
 
+  var DEMO_IMG = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="360" height="150"><rect width="360" height="150" fill="#f4f1ea"/>' +
+    '<text x="20" y="38" font-family="sans-serif" font-size="18" fill="#2b2b2b">Pauta de excéntricos (ejemplo)</text>' +
+    '<text x="20" y="72" font-family="sans-serif" font-size="14" fill="#555">Sentadilla búlgara 3x8, bajada en 4 s</text>' +
+    '<text x="20" y="96" font-family="sans-serif" font-size="14" fill="#555">Nórdicos asistidos 3x6</text><text x="20" y="120" font-family="sans-serif" font-size="14" fill="#555">Sin saltos por 2 semanas</text></svg>');
   // Datos de ejemplo (sin red). mode 'pro': lo que ve Tomás Fuentes (entrenador: general, semáforo, lesiones);
   // mode 'persona': lo que ve la persona. Se arma un solo caso y se filtra con las mismas reglas del servidor.
   function demoFeed(mode, nowMs) {
@@ -158,7 +183,8 @@
         body: r[7], retracted: false, audience: r[4], patient_can_read: r[6], in_journal: r[9], created_at: iso(r[3]),
         to: r[5].map(function (id) { return { id: id, name: N[id].name }; }), mentions: r[8],
         reads: r[5].filter(function (id) { return id !== me && !(r[0] === 'm2'); }).map(function (id) { return { professional_id: id, name: N[id].name, patient: false }; }).concat(r[6] && a && r[0] !== 'm6' ? [{ patient: true }] : []),
-        unread: mode === 'pro' ? r[0] === 'm2' || r[0] === 'm3' : r[0] === 'm6' };
+        unread: mode === 'pro' ? r[0] === 'm2' || r[0] === 'm3' : r[0] === 'm6',
+        files: r[0] === 'm1' ? [{ id: 'f1', file_name: 'Pauta de excéntricos.png', mime_type: 'image/png', size_bytes: 184320, local_url: DEMO_IMG }] : [] };
     });
     var topicOf = {}; threads.forEach(function (t) { topicOf[t.id] = t.topic; });
     if (mode === 'pro') {
@@ -177,7 +203,7 @@
     }) };
   }
 
-  var core = { TOPICS: TOPICS, ROLES: ROLES, journalScope: journalScope, canRead: canRead, readersFor: readersFor, topicsFor: topicsFor, recipients: recipients, validate: validate,
+  var core = { TOPICS: TOPICS, ROLES: ROLES, FILE_TYPES: FILE_TYPES, MAX_FILES: MAX_FILES, MAX_FILE_BYTES: MAX_FILE_BYTES, validateFiles: validateFiles, filePath: filePath, sizeText: sizeText, journalScope: journalScope, canRead: canRead, readersFor: readersFor, topicsFor: topicsFor, recipients: recipients, validate: validate,
     buildThreads: buildThreads, audienceText: audienceText, readText: readText, waNotify: waNotify, inboxSort: inboxSort, demoFeed: demoFeed };
   if (typeof module !== 'undefined' && module.exports) { module.exports = core; return; }
 
@@ -198,6 +224,7 @@
     '.cs-comp input[type=text],.cs-comp select,.cs-comp textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-family:inherit;font-size:15.5px;margin:3px 0 0;box-sizing:border-box}' +
     '.cs-comp textarea{min-height:90px;resize:vertical}.cs-opt{display:flex;gap:7px;align-items:flex-start;font-size:15px;padding:3px 0}.cs-opt input{margin-top:3px;width:auto}' +
     '.cs-opt small{display:block;color:var(--muted);font-size:13px}.cs-who{margin:4px 0 0 22px}.cs-err{font-size:14.5px;color:#b91c1c;margin-top:6px}.cs-ok{font-size:14.5px;color:#065f46;margin-top:6px}' +
+    '.cs-files{margin:4px 0}.cs-file{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14.5px;padding:3px 0}.cs-file .btn{padding:3px 9px;font-size:13.5px}.cs-file img{display:block;max-width:100%;max-height:320px;border:1px solid var(--line);border-radius:8px;margin-top:4px;flex-basis:100%}' +
     '.cs-inbox{background:var(--paper,#fff);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px}.cs-inbox-row{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}.cs-inbox-row:first-of-type{border-top:0}';
 
   function ensureCss() { if (!document.getElementById('caso-css')) { var s = document.createElement('style'); s.id = 'caso-css'; s.textContent = css; document.head.appendChild(s); } }
@@ -214,7 +241,7 @@
   }
 
   function newComp(thread) {
-    var c = { thread: thread ? thread.thread.id : null, title: '', topic: thread ? thread.thread.topic : '', ref: null, body: '', audience: 'equipo_persona', to: [], withPatient: false, mentions: [], journal: '', err: '' };
+    var c = { thread: thread ? thread.thread.id : null, title: '', topic: thread ? thread.thread.topic : '', ref: null, body: '', audience: 'equipo_persona', to: [], withPatient: false, mentions: [], journal: '', files: [], err: '' };
     if (thread) {
       // La respuesta parte con la misma audiencia del último mensaje legible del hilo.
       var last = thread.items.filter(function (i) { return !i.msg.hidden; }).slice(-1)[0];
@@ -246,6 +273,9 @@
       h += '<div class="cs-meta" style="margin-top:4px">Solo lo leen quienes tienen permiso para ' + E(TOPIC_BY[c.topic] ? TOPIC_BY[c.topic].label.toLowerCase() : 'este tema') + (readers.length ? ': ' + E(joinNames(readers.map(function (p) { return p.name; }))) : ': nadie más del equipo por ahora') + '.</div>';
     }
     h += '<label class="f">Mensaje<textarea maxlength="' + MAX_BODY + '" oninput="SizigiaCaso.set(\'body\',this.value)" placeholder="' + (x.mode === 'persona' ? 'Escribe a tu equipo…' : 'Escribe al equipo…') + '">' + E(c.body) + '</textarea></label>';
+    h += '<label class="f">Adjuntar (opcional): PDF o imagen, hasta ' + MAX_FILES + ' de 10 MB<input type="file" multiple accept="' + Object.keys(FILE_TYPES).join(',') + '" onchange="SizigiaCaso.addFiles(this)"></label>';
+    if (c.files.length) h += '<div class="cs-files">' + c.files.map(function (f, k) { return '<div class="cs-file"><span>' + E(f.name) + ' <span class="cs-meta">· ' + sizeText(f.size) + '</span></span><button class="btn small" onclick="SizigiaCaso.removeFile(' + k + ')">Quitar</button></div>'; }).join('') +
+      '<div class="cs-meta">Los archivos los ven las mismas personas que el mensaje. Si un profesional abre uno, queda registrado.</div></div>';
     h += '<div class="f cs-meta" style="margin-top:8px">¿Quién lo lee?</div>';
     var opts = x.mode === 'persona'
       ? [['equipo_persona', 'Todo mi equipo', 'Quienes tienen permiso para este tema.'], ['directo', 'Solo a quienes elija', '']]
@@ -283,11 +313,24 @@
         '<div class="cs-meta">La versión anterior queda guardada y visible para quienes leen este mensaje.</div><div class="cs-acts"><button class="btn primary small" onclick="SizigiaCaso.saveEdit()">Guardar</button><button class="btn small" onclick="SizigiaCaso.cancelEdit()">Cancelar</button></div>' +
         (ctl.editing.err ? '<div class="cs-err">' + E(ctl.editing.err) + '</div>' : '') + '</div></div>';
     }
-    h += '<div class="cs-body">' + E(m.body) + '</div>';
+    h += '<div class="cs-body">' + E(m.body) + '</div>' + filesHTML(m.files);
     if (it.edited) h += '<details class="cs-meta"><summary style="cursor:pointer">Editado · ' + it.history.length + (it.history.length === 1 ? ' versión anterior' : ' versiones anteriores') + '</summary>' + it.history.map(function (v) { return '<div style="margin:4px 0;white-space:pre-wrap"><b>' + when(v.created_at) + ':</b> ' + E(v.body || '') + '</div>'; }).join('') + '</details>';
     h += '<div class="cs-meta">' + E(readText(m, x.mode)) + '</div>';
     if (mine && !m.in_journal) h += '<div class="cs-acts"><button class="btn small" onclick="SizigiaCaso.edit(\'' + E(m.id) + '\')">Editar</button><button class="btn small" onclick="SizigiaCaso.promote(\'' + E(m.id) + '\')">Pasar a la hoja de vida</button><button class="btn small" onclick="SizigiaCaso.retract(\'' + E(m.id) + '\')">Retirar</button></div>';
     return h + '</div>';
+  }
+
+  function filesHTML(files) {
+    if (!files || !files.length) return '';
+    return '<div class="cs-files">' + files.map(function (f) {
+      var u = ctl.urls[f.id], img = /^image\//.test(f.mime_type);
+      var h = '<div class="cs-file"><span>Adjunto: ' + E(f.file_name) + ' <span class="cs-meta">· ' + sizeText(f.size_bytes) + '</span></span>';
+      if (!u) h += '<button class="btn small" onclick="SizigiaCaso.openFile(\'' + E(f.id) + '\')">Ver</button>';
+      else if (u === 'cargando') h += '<span class="cs-meta">Abriendo…</span>';
+      else if (u === 'error') h += '<span class="cs-err" style="margin:0">No se pudo abrir.</span> <button class="btn small" onclick="SizigiaCaso.openFile(\'' + E(f.id) + '\')">Reintentar</button>';
+      else h += '<a class="btn small" target="_blank" rel="noopener" href="' + E(u) + '">Abrir</a><button class="btn small" onclick="SizigiaCaso.hideFile(\'' + E(f.id) + '\')">Ocultar</button>' + (img ? '<img src="' + E(u) + '" alt="' + E(f.file_name) + '">' : '');
+      return h + '</div>';
+    }).join('') + '</div>';
   }
 
   function threadHTML(t) {
@@ -339,7 +382,7 @@
   function open(opts) {
     var same = ctl && ctl.mode === opts.mode && ctl.patientId === opts.patientId;
     var keep = same ? { data: ctl.data, demoData: ctl.demoData, openThread: ctl.openThread } : {};
-    ctl = Object.assign({ comp: null, editing: null, busy: false, flash: '', err: '', data: null, openThread: null }, keep, opts);
+    ctl = Object.assign({ comp: null, editing: null, busy: false, flash: '', err: '', data: null, openThread: null, urls: {} }, keep, opts);
     if (opts.demo && opts.mode === 'pro') inbox.seen[opts.patientId] = true;
     if (!ctl.data) load(); else changed();
   }
@@ -351,25 +394,35 @@
     var me = x.me ? team.filter(function (p) { return p.id === x.me; })[0] : null;
     d.messages.push({ id: id, thread_id: thread, root_id: id, version: 1, author_kind: x.mode === 'pro' ? 'profesional' : 'paciente', author_id: x.me, author_name: me ? me.name : null, author_role: me ? me.role : null,
       body: c.body.trim(), retracted: false, audience: c.audience, patient_can_read: r.patient, in_journal: !!c.journal, created_at: now,
-      to: r.pros.map(function (pid) { return { id: pid, name: nameOf(team, pid) }; }), mentions: c.mentions.slice(), reads: [], unread: false });
+      to: r.pros.map(function (pid) { return { id: pid, name: nameOf(team, pid) }; }), mentions: c.mentions.slice(), reads: [], unread: false,
+      files: c.files.map(function (f, k) { return { id: id + 'f' + k, file_name: f.name, mime_type: f.type, size_bytes: f.size, local_url: URL.createObjectURL(f) }; }) });
     return thread;
   }
 
   async function send() {
     var c = ctl.comp, x = ctx();
     if (!c || ctl.busy) return;
-    c.err = validate(c, x) || '';
+    c.err = validate(c, x) || validateFiles(c.files) || '';
     if (c.err) return changed();
     var mentioned = c.mentions.map(function (id) { return nameOf(x.team, id); });
     ctl.busy = true; changed();
     var thread;
     if (ctl.demo) thread = demoPost(c);
     else {
-      var r = recipients(c, x);
-      var res = await ctl.sb.rpc('post_case_message', { p_patient: ctl.patientId, p_thread: c.thread, p_title: c.thread ? null : c.title.trim(), p_topic: c.thread ? null : c.topic,
+      var r = recipients(c, x), up = [];
+      if (c.files.length) {
+        up = await uploadFiles(c.files);
+        if (up.error) { ctl.busy = false; c.err = up.error; return changed(); }
+      }
+      var args = { p_patient: ctl.patientId, p_thread: c.thread, p_title: c.thread ? null : c.title.trim(), p_topic: c.thread ? null : c.topic,
         p_ref_kind: c.ref ? c.ref.kind : null, p_ref_id: c.ref ? c.ref.id : null, p_body: c.body.trim(), p_audience: c.audience, p_to: c.audience === 'directo' ? r.pros : null,
-        p_with_patient: !!c.withPatient, p_mentions: c.mentions, p_journal_kind: c.journal || null });
-      if (res.error) { ctl.busy = false; c.err = errText(res.error, 'No se pudo enviar. Reintenta.'); return changed(); }
+        p_with_patient: !!c.withPatient, p_mentions: c.mentions, p_journal_kind: c.journal || null };
+      if (up.length) args.p_files = up;
+      var res = await ctl.sb.rpc(up.length ? 'post_case_message_files' : 'post_case_message', args);
+      if (res.error) {
+        if (up.length) await ctl.sb.storage.from('caso').remove(up.map(function (f) { return f.path; }));
+        ctl.busy = false; c.err = errText(res.error, 'No se pudo enviar. Reintenta.'); return changed();
+      }
       thread = c.thread;
     }
     ctl.busy = false; ctl.comp = null;
@@ -377,6 +430,38 @@
       (mentioned.length && x.mode === 'pro' ? ' <a target="_blank" rel="noopener" href="' + E(waNotify(mentioned, ctl.patientName || 'la persona')) + '">Avisar por WhatsApp a ' + E(joinNames(mentioned)) + '</a> (sin el contenido del mensaje).' : '');
     if (ctl.demo) { ctl.openThread = thread; return changed(); }
     var keepOpen = thread; await load(); if (keepOpen) ctl.openThread = keepOpen; else { var t = buildThreads(ctl.data); ctl.openThread = t.length ? t[0].thread.id : null; } changed();
+  }
+
+  // Sube los archivos a la carpeta de la persona. Si uno falla, borra los ya subidos.
+  async function uploadFiles(files) {
+    var s = await ctl.sb.auth.getSession(), uid = s.data && s.data.session && s.data.session.user.id, out = [], bucket = ctl.sb.storage.from('caso');
+    if (!uid) return { error: 'Tu sesión expiró. Vuelve a entrar.' };
+    for (var k = 0; k < files.length; k++) {
+      var f = files[k], path = filePath(ctl.patientId, uid, f.type, Math.random().toString(36).slice(2, 12) + Date.now().toString(36));
+      var u = await bucket.upload(path, f, { contentType: f.type, upsert: false });
+      if (u.error) {
+        if (out.length) await bucket.remove(out.map(function (x) { return x.path; }));
+        return { error: 'No se pudo subir "' + f.name + '". Reintenta.' };
+      }
+      out.push({ path: path, file_name: f.name, mime_type: f.type, size_bytes: f.size });
+    }
+    return out;
+  }
+  function findFile(id) {
+    var hit = null;
+    (ctl.data.messages || []).forEach(function (m) { (m.files || []).forEach(function (f) { if (f.id === id) hit = f; }); });
+    return hit;
+  }
+  // Abrir un adjunto: open_case_file valida, registra y habilita; después se firma una URL de 5 minutos.
+  async function openFile(id) {
+    var f = findFile(id);
+    if (!f) return;
+    if (f.local_url) { ctl.urls[id] = f.local_url; return changed(); }
+    ctl.urls[id] = 'cargando'; changed();
+    var r = await ctl.sb.rpc('open_case_file', { p_id: id });
+    var s = r.error ? r : await ctl.sb.storage.from('caso').createSignedUrl(r.data, 300);
+    ctl.urls[id] = s.error ? 'error' : s.data.signedUrl;
+    changed();
   }
 
   function findMsg(id) { return (ctl.data.messages || []).filter(function (m) { return m.id === id; })[0]; }
@@ -401,6 +486,16 @@
     toggleTo: function (id, on) { var c = ctl.comp; c.to = on ? uniq(c.to.concat([id])) : c.to.filter(function (x) { return x !== id; }); if (!on) c.mentions = c.mentions.filter(function (x) { return x !== id; }); changed(); },
     toggleMention: function (id, on) { var c = ctl.comp; c.mentions = on ? uniq(c.mentions.concat([id])) : c.mentions.filter(function (x) { return x !== id; }); },
     send: send,
+    addFiles: function (input) {
+      var c = ctl.comp, add = Array.prototype.slice.call(input.files || []);
+      input.value = '';
+      var err = validateFiles(c.files.concat(add));
+      if (err) { c.err = err; return changed(); }
+      c.files = c.files.concat(add); c.err = ''; changed();
+    },
+    removeFile: function (k) { ctl.comp.files.splice(k, 1); ctl.comp.err = ''; changed(); },
+    openFile: openFile,
+    hideFile: function (id) { delete ctl.urls[id]; changed(); },
     edit: function (id) { var m = findMsg(id); ctl.editing = { id: id, body: m.body, err: '' }; changed(); },
     setEdit: function (v) { ctl.editing.body = v; },
     cancelEdit: function () { ctl.editing = null; changed(); },
