@@ -2,6 +2,7 @@
 // persona le dio. Lista: my_linked_patients() (solo nombre y permisos; migración 20261028). Cada sección se carga recién
 // al abrirla con patient_lesiones / patient_examenes / patient_nutricion, que validan el permiso y registran el acceso.
 // Un profesional con permiso 'nutricion' puede editar el plan (set_nutrition_plan con p_patient; queda a su nombre).
+// El archivo de un examen se abre con open_document_file (migración 20261031): registra el acceso y firma 5 minutos.
 // Pestaña 'Caso' (permiso 'equipo'): conversación del equipo, la dibuja assets/caso.js (case_feed registra el acceso).
 // Reutiliza los núcleos puros de lesiones.js, examenes.js y nutricion.js: mismas reglas que ve la persona.
 // Núcleo puro exportado para Node (tests/ficha-profesional.test.mjs).
@@ -135,7 +136,7 @@
   if (node) { module.exports = core; return; }
 
   // ---------- Pantalla ----------
-  var ui = { el: null, sb: null, demo: false, linked: [], panelIds: [], open: null, tab: null, data: {}, loading: false, err: '', draft: null, msg: '', busy: false, lt: { topic: 'todos', author: 'todos' } };
+  var ui = { el: null, sb: null, demo: false, linked: [], panelIds: [], open: null, tab: null, data: {}, loading: false, err: '', draft: null, msg: '', busy: false, lt: { topic: 'todos', author: 'todos' }, files: {} };
   var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var css = '.fp-back{position:fixed;inset:0;background:rgba(19,26,23,.35);z-index:50;display:flex;justify-content:flex-end}' +
     '.fp-sheet{background:var(--canvas);width:min(720px,100%);height:100%;overflow-y:auto;padding:18px 18px 40px;box-shadow:-8px 0 24px rgba(0,0,0,.12)}' +
@@ -185,6 +186,23 @@
         (x.open ? chart(x.pain.map(function (p) { return { iso: p.log_date, value: p.eva }; }), { metric: 'pain', days: 14, today: today(), label: 'Dolor (EVA)' }) : '') + '</div>';
     }).join('');
   }
+  // Archivo del examen: open_document_file valida el permiso, registra el acceso y habilita el archivo; URL de 5 minutos.
+  function fileHTML(id) {
+    var u = ui.files[id];
+    if (!u) return '<button class="btn" onclick="SizigiaFicha.openDoc(\'' + E(id) + '\')">Ver archivo</button>';
+    if (u === 'cargando') return '<span class="fp-meta">Abriendo…</span>';
+    if (u === 'demo') return '<span class="fp-meta">En la demo no hay archivo real.</span>';
+    if (u === 'error') return '<button class="btn" onclick="SizigiaFicha.openDoc(\'' + E(id) + '\')">Reintentar</button>';
+    return '<a class="btn" target="_blank" rel="noopener" href="' + E(u) + '">Abrir archivo</a>';
+  }
+  async function openDoc(id) {
+    if (ui.demo) { ui.files[id] = 'demo'; return render(); }
+    ui.files[id] = 'cargando'; render();
+    var r = await ui.sb.rpc('open_document_file', { p_doc: id });
+    var s = r.error ? r : await ui.sb.storage.from('documentos').createSignedUrl(r.data, 300);
+    ui.files[id] = s.error ? 'error' : s.data.signedUrl;
+    render();
+  }
   function stPill(s) { return s ? '<span class="fp-pill ' + s + '">' + (s === 'en_rango' ? 'En rango' : s === 'alto' ? 'Sobre el rango' : 'Bajo el rango') + '</span>' : '<span class="fp-pill">Sin rango</span>'; }
   function examenesHTML(v) {
     if (!v.docs.length) return '<div class="fp-card fp-meta">No tiene documentos.</div>';
@@ -195,7 +213,7 @@
       }).join('') + '</table></div>';
     return h + v.docs.map(function (x) {
       var d = x.doc;
-      return '<div class="fp-card"><div class="fp-row"><div><h4>' + E(d.title) + '</h4><div class="fp-meta">' + dmy(d.doc_date) + (d.issuer ? ' · ' + E(d.issuer) : '') + ' · ' + E(x.category) + (d.has_file ? ' · con archivo adjunto (por ahora solo lo abre la persona)' : '') + '</div></div></div>' +
+      return '<div class="fp-card"><div class="fp-row"><div><h4>' + E(d.title) + '</h4><div class="fp-meta">' + dmy(d.doc_date) + (d.issuer ? ' · ' + E(d.issuer) : '') + ' · ' + E(x.category) + '</div></div>' + (d.has_file ? fileHTML(d.id) : '') + '</div>' +
         (d.notes ? '<div style="font-size:13px;margin-top:4px">' + E(d.notes) + '</div>' : '') +
         (x.results.length ? '<table class="fp-tbl">' + x.results.map(function (r) { return '<tr><td>' + E(r.marker_name) + '</td><td><b>' + dec(r.value) + '</b> ' + E(r.unit || '') + '</td><td>' + E(X.refText(r)) + '</td><td>' + stPill(X.status(r)) + '</td></tr>'; }).join('') + '</table>' : '') + '</div>';
     }).join('');
@@ -353,7 +371,7 @@
   }
 
   root.SizigiaFicha = Object.assign({}, core, {
-    mount: mount, button: button, open: open,
+    mount: mount, button: button, open: open, openDoc: openDoc,
     close: function () {
       ui.open = null; ui.draft = null; ui.msg = ''; ui.err = ''; render();
       if (root.SizigiaCaso) { root.SizigiaCaso.close(); root.SizigiaCaso.refreshInbox(); }
