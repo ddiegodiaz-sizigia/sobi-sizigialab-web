@@ -320,6 +320,8 @@
 <script src="assets/mi-equipo.js"></script>
 <script src="assets/caso.js"></script>
 <script src="assets/registro-comun.js"></script>
+<script src="assets/registro-diario.js"></script>
+<script src="assets/hoy.js"></script>
 <script>
 /* ============================= CONFIG / STORAGE ============================= */
 const STORAGE_KEY = 'sobiPatientPortalV2';
@@ -1094,6 +1096,7 @@ function setTab(id) { state.ui.tab = id; saveState(); render(); }
 
 function render() {
   const app = document.getElementById('app');
+  if (window.SizigiaHoy && SizigiaHoy.active()) return SizigiaHoy.render(app); /* versión nueva, ?v=2 (assets/hoy.js) */
   if (!TABS.some(t => t.id === state.ui.tab)) state.ui.tab = 'resumen';
   const daysIn = daysBetween(state.patient.startDate, todayISO());
   const dayLabel = daysIn >= 0 ? ('Día ' + (daysIn+1) + ' en tu bitácora') : 'Tu bitácora aún no inicia';
