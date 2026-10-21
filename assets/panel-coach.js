@@ -316,6 +316,7 @@
 
   root.SizigiaCoach = Object.assign({}, core, {
     mount: mount, markContacted: markContacted, send: send, saveCfg: saveCfg,
+    rowFor: function (id) { return (ui.rows || []).filter(function (r) { return r.id === id; })[0] || null; }, // portada de la ficha
     toggle: function (id) { ui.open = ui.open === id ? null : id; ui.cfg = null; ui.cfgMsg = ''; ui.flash = ''; renderList(); },
     setLevel: function (lv) { ui.f.level = ui.f.level === lv ? 'todos' : lv; render(); },
     togglePending: function () { ui.f.pending = !ui.f.pending; render(); },

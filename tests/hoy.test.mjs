@@ -47,4 +47,14 @@ assert.equal(H.thirdMetric({ mode: 'comun', habits: true }), 'habitos');
 assert.equal(H.thirdMetric({ mode: 'comun', habits: false }), 'estres');
 assert.equal(H.thirdMetric({ mode: 'deportivo' }), 'animo');
 
+// Lo que viene
+assert.deepEqual(H.upcoming({}), []);
+const u = H.upcoming({ unread: 2, meals: { meals: 4, logged: 1 }, profileMissing: true });
+assert.deepEqual(u.map(x => x.key), ['mensajes', 'comidas', 'perfil']);
+assert.equal(u[0].text, 'Tienes 2 mensajes nuevos de tu equipo'); assert.deepEqual([u[0].space, u[0].sub], ['equipo', 'equipo']);
+assert.equal(u[1].text, 'Registraste 1 de 4 comidas de tu plan de hoy'); assert.deepEqual([u[1].space, u[1].sub], ['cuerpo', 'nutricion']);
+assert.equal(H.upcoming({ unread: 1 })[0].text, 'Tienes un mensaje nuevo de tu equipo');
+assert.equal(H.upcoming({ meals: { meals: 3, logged: 0 } })[0].text, 'Tu plan de hoy tiene 3 comidas por registrar');
+assert.deepEqual(H.upcoming({ meals: { meals: 3, logged: 3 } }), [], 'plan completo: nada pendiente');
+
 console.log('hoy OK');

@@ -18,11 +18,19 @@
     { key: 'examenes', label: 'Exámenes', rpc: 'patient_examenes' },
     { key: 'nutricion', label: 'Nutrición', rpc: 'patient_nutricion' }
   ];
-  var BY_KEY = {}; SECTIONS.forEach(function (s) { BY_KEY[s.key] = s; });
+  // Portada (fase 3): resumen de 10 segundos y línea de tiempo única (assets/linea-tiempo.js, patient_timeline).
+  // Aparece primero si el profesional tiene al menos un tema de la hoja de vida.
+  var LT = node ? require('./linea-tiempo.js') : root.SizigiaLinea;
+  var TIMELINE_SCOPES = ['bitacora', 'lesiones', 'nutricion', 'examenes', 'salud_mental', 'ciclo'];
+  var PORTADA = { key: 'portada', label: 'Portada', rpc: 'patient_timeline' };
+  var BY_KEY = { portada: PORTADA }; SECTIONS.forEach(function (s) { BY_KEY[s.key] = s; });
 
   // ---------- Núcleo puro ----------
   function addDays(iso, n) { return new Date(Date.parse(iso + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10); }
-  function sections(scopes) { return SECTIONS.filter(function (s) { return (scopes || []).indexOf(s.key) >= 0; }); }
+  function sections(scopes) {
+    var sc = scopes || [], list = SECTIONS.filter(function (s) { return sc.indexOf(s.key) >= 0; });
+    return sc.some(function (s) { return TIMELINE_SCOPES.indexOf(s) >= 0; }) ? [PORTADA].concat(list) : list;
+  }
   // Personas con alguna sección de ficha que no están en el panel del semáforo (no dieron ese permiso).
   function extraPeople(linked, panelIds) {
     var inPanel = {}; (panelIds || []).forEach(function (id) { inPanel[id] = true; });
@@ -45,6 +53,17 @@
       docs: X.sortDocs(data.documents || []).map(function (d) { return { doc: d, category: X.CATEGORIES[d.category] || d.category, results: byDoc[d.id] || [] }; }),
       series: X.series(res),
       outOfRange: X.series(res).filter(function (s) { return s.last.status === 'alto' || s.last.status === 'bajo'; }).map(function (s) { return s.name; })
+    };
+  }
+  // Portada: in = { timeline (patient_timeline), lesiones, examenes (sus RPC, o null sin permiso), row (fila del panel o null) }.
+  function portadaView(input, today) {
+    var row = input.row, ex = input.examenes ? examenesView(input.examenes) : null;
+    return {
+      sem: row ? { level: row.level, reasons: (row.sem.reasons || []).map(function (r) { return r.text; }), adherence: row.adherence ? row.adherence.done + '/' + row.adherence.expected : null, weekly: row.frequency === 'semanal' } : null,
+      injuries: input.lesiones ? lesionesView(input.lesiones, today).filter(function (x) { return x.open; }).map(function (x) { return { name: x.name, status: x.status, text: x.summary.text }; }) : null,
+      exams: ex ? { outOfRange: ex.outOfRange, last: ex.docs[0] ? { title: ex.docs[0].doc.title, date: ex.docs[0].doc.doc_date } : null } : null,
+      scopes: (input.timeline && input.timeline.scopes) || [],
+      items: LT.build((input.timeline && input.timeline.entries) || [], [])
     };
   }
   // patient_nutricion → plan vigente, adherencia 7 y 28 días, peso y composición.
@@ -79,6 +98,17 @@
         { id: 'i2', onset_date: d(150), zone: 'Tobillo / pie', side: 'izquierda', title: 'Esguince grado I', eva_initial: 6, treating: null, status: 'alta', discharge_date: d(122), notes: null }],
       pain: (pid === 'demo-1' ? [5, 5, 4, 4, 3, 3, 7] : [5, 5, 4, 4, 3, 3, 2]).map(function (v, k) { return { injury_id: 'i1', log_date: d(6 - k), eva: v }; })
     };
+    if (scope === 'portada') return {
+      scopes: ['bitacora', 'examenes', 'lesiones', 'nutricion'],
+      entries: [
+        { id: 'j1', entry_date: d(1), kind: 'plan', title: 'Plan de alimentación actualizado', body: 'Colación de la tarde: yogur con avena.', scope: 'nutricion', author_kind: 'profesional', author_name: 'Camila Soto', author_role: 'nutricionista', created_at: d(1) + 'T15:00:00Z' },
+        { id: 'j2', entry_date: d(3), kind: 'plan', title: 'Registro: deportivo diario', body: 'Sueño, fatiga, ánimo, dolor y carga de cada sesión. Definido por su coach.', scope: 'bitacora', author_kind: 'profesional', author_name: 'Coach Ejemplo', author_role: 'entrenador', created_at: d(3) + 'T10:00:00Z' },
+        { id: 'j3', entry_date: d(9), kind: 'examen', title: 'Examen: Perfil bioquímico y hemograma', body: 'Ferritina bajo el rango del laboratorio.', scope: 'examenes', author_kind: 'paciente', created_at: d(9) + 'T12:00:00Z' },
+        { id: 'j4', entry_date: d(12), kind: 'lesion', title: 'Nueva lesión: Rodilla (lado derecho)', body: 'Molestia al aterrizar saltos. EVA inicial 5/10. Tratante: Kinesióloga del club.', scope: 'lesiones', author_kind: 'paciente', created_at: d(12) + 'T09:00:00Z' },
+        { id: 'j5', entry_date: d(40), kind: 'objetivo', title: 'Llegar al torneo regional en forma', body: 'Foco: sueño y recuperación entre sesiones.', scope: 'bitacora', author_kind: 'paciente', created_at: d(40) + 'T09:00:00Z' },
+        { id: 'j6', entry_date: d(122), kind: 'lesion', title: 'Alta: Tobillo / pie (lado izquierdo)', body: 'Esguince grado I.', scope: 'lesiones', author_kind: 'paciente', created_at: d(122) + 'T09:00:00Z' }
+      ]
+    };
     if (scope === 'examenes') {
       var r = function (doc, k, code, name, v, unit, lo, hi) { return { document_id: doc, result_date: d(k), marker: code, marker_name: name, value: v, unit: unit, ref_low: lo, ref_high: hi }; };
       return {
@@ -101,11 +131,11 @@
     };
   }
 
-  var core = { SECTIONS: SECTIONS, sections: sections, extraPeople: extraPeople, lesionesView: lesionesView, examenesView: examenesView, nutricionView: nutricionView, demoLinked: demoLinked, demoData: demoData };
+  var core = { SECTIONS: SECTIONS, PORTADA: PORTADA, TIMELINE_SCOPES: TIMELINE_SCOPES, sections: sections, extraPeople: extraPeople, lesionesView: lesionesView, examenesView: examenesView, nutricionView: nutricionView, portadaView: portadaView, demoLinked: demoLinked, demoData: demoData };
   if (node) { module.exports = core; return; }
 
   // ---------- Pantalla ----------
-  var ui = { el: null, sb: null, demo: false, linked: [], panelIds: [], open: null, tab: null, data: {}, loading: false, err: '', draft: null, msg: '', busy: false };
+  var ui = { el: null, sb: null, demo: false, linked: [], panelIds: [], open: null, tab: null, data: {}, loading: false, err: '', draft: null, msg: '', busy: false, lt: { topic: 'todos', author: 'todos' } };
   var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var css = '.fp-back{position:fixed;inset:0;background:rgba(19,26,23,.35);z-index:50;display:flex;justify-content:flex-end}' +
     '.fp-sheet{background:var(--canvas);width:min(720px,100%);height:100%;overflow-y:auto;padding:18px 18px 40px;box-shadow:-8px 0 24px rgba(0,0,0,.12)}' +
@@ -119,6 +149,7 @@
     '.fp-ed{display:grid;grid-template-columns:minmax(110px,1fr) 88px minmax(150px,2fr) auto;gap:6px;align-items:end;margin-top:6px}.fp-ed input{margin:0}.fp-ed label{font-size:11.5px;color:var(--muted)}' +
     '@media(max-width:560px){.fp-ed{grid-template-columns:1fr 88px auto}.fp-ed .w{grid-column:1/-1;order:3}}' +
     '.fp-list{background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}.fp-item{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:11px 14px;border-top:1px solid var(--line)}.fp-item:first-child{border-top:0}' +
+    '.fp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}.fp-grid .fp-card{margin-bottom:0}.fp-h3{font-size:14px;margin:18px 0 8px}' +
     '.fp-err{font-size:12.5px;color:#b91c1c;margin-top:6px}.fp-ok{font-size:12.5px;color:#065f46;margin-top:6px}' +
     '.fp-sheet .tc{display:block;margin-top:8px}.fp-sheet .tc-note,.fp-sheet .tc-empty{font-size:11.5px;color:var(--muted);line-height:1.4}';
 
@@ -216,6 +247,7 @@
     if (ui.tab === 'equipo') h += root.SizigiaCaso ? root.SizigiaCaso.html() : '';
     else if (ui.err) h += '<div class="fp-card fp-err">' + E(ui.err) + '</div>';
     else if (!data) h += '<div class="fp-card fp-meta">Cargando…</div>';
+    else if (ui.tab === 'portada') h += portadaHTML(p, data);
     else if (ui.tab === 'lesiones') h += lesionesHTML(lesionesView(data, today()));
     else if (ui.tab === 'examenes') h += examenesHTML(examenesView(data));
     else h += nutricionHTML(nutricionView(data, today()));
@@ -234,9 +266,49 @@
     if (s.firstChild && s.firstChild.firstChild) s.firstChild.firstChild.scrollTop = top;
   }
 
+  // Portada: resumen arriba (semáforo del panel, lesiones abiertas, exámenes fuera de rango) y la línea de tiempo con filtros.
+  var SEM = { rojo: ['#A13D2D', 'Rojo'], amarillo: ['#B8862B', 'Amarillo'], verde: ['#55704F', 'Verde'], gris: ['#8a8578', 'Sin datos'] };
+  function portadaHTML(p, data) {
+    var has = function (s) { return (p.scopes || []).indexOf(s) >= 0; };
+    var row = root.SizigiaCoach && root.SizigiaCoach.rowFor ? root.SizigiaCoach.rowFor(ui.open) : null;
+    var v = portadaView({ timeline: data, lesiones: has('lesiones') ? ui.data[ui.open + ':lesiones'] || null : null, examenes: has('examenes') ? ui.data[ui.open + ':examenes'] || null : null, row: row }, today());
+    var h = '<div class="fp-grid">';
+    if (v.sem) {
+      var c = SEM[v.sem.level] || SEM.gris;
+      h += '<div class="fp-card"><h4>Semáforo</h4><div style="display:flex;align-items:center;gap:8px;font-weight:700"><span style="width:12px;height:12px;border-radius:50%;background:' + c[0] + '"></span>' + c[1] + '</div>' +
+        (v.sem.reasons.length ? '<div class="fp-meta" style="margin-top:4px">' + v.sem.reasons.map(E).join('<br>') + '</div>' : '') +
+        (v.sem.adherence ? '<div class="fp-meta" style="margin-top:4px">Constancia: ' + E(v.sem.adherence) + (v.sem.weekly ? ' semanas' : ' días') + '</div>' : '') + '</div>';
+    }
+    if (has('lesiones')) h += '<div class="fp-card"><h4>Lesiones abiertas</h4>' + (!v.injuries ? '<div class="fp-meta">Cargando…</div>' : !v.injuries.length ? '<div class="fp-meta">Ninguna.</div>' :
+      v.injuries.map(function (i) { return '<div style="margin-top:4px"><b>' + E(i.name) + '</b> <span class="fp-pill">' + E(i.status) + '</span><div class="fp-meta">' + E(i.text) + '</div></div>'; }).join('')) + '</div>';
+    if (has('examenes')) h += '<div class="fp-card"><h4>Exámenes</h4>' + (!v.exams ? '<div class="fp-meta">Cargando…</div>' :
+      (v.exams.outOfRange.length ? '<div><b>Fuera de rango:</b> ' + E(v.exams.outOfRange.join(', ')) + '</div>' : '<div class="fp-meta">Sin valores fuera de rango en el último resultado.</div>') +
+      (v.exams.last ? '<div class="fp-meta" style="margin-top:4px">Último: ' + E(v.exams.last.title) + ' (' + dmy(v.exams.last.date) + ')</div>' : '')) + '</div>';
+    h += '</div><h3 class="fp-h3">Línea de tiempo</h3>';
+    h += LT.html(v.items, { E: E, viewer: 'pro', filters: ui.lt, onTopic: 'SizigiaFicha.ltTopic', onAuthor: 'SizigiaFicha.ltAuthor', limit: 60 });
+    h += '<div class="fp-meta" style="margin-top:8px">Muestra solo los temas que te autorizó (' + E(v.scopes.map(function (s) { return LT.TOPICS[s] || s; }).join(', ')) + '). Abrir la portada queda registrado en cada uno.</div>';
+    return h;
+  }
+  // Pide una sección y la guarda en ui.data (la misma que usan las pestañas: no se pide dos veces).
+  async function fetchSection(k) {
+    var key = ui.open + ':' + k;
+    if (ui.data[key]) return null;
+    if (ui.demo) { ui.data[key] = demoData(k, today(), ui.open); return null; }
+    var r = await ui.sb.rpc(BY_KEY[k].rpc, { p_patient: ui.open });
+    if (r.error) return /sin permiso/.test(r.error.message) ? 'La persona retiró este permiso.' : 'No se pudo cargar. Reintenta.';
+    ui.data[key] = r.data || {};
+    return null;
+  }
   async function load() {
     var key = ui.open + ':' + ui.tab;
     if (ui.tab === 'equipo') return root.SizigiaCaso.open({ mode: 'pro', sb: ui.sb, demo: ui.demo, patientId: ui.open, patientName: person(ui.open).patient_name, onChange: render });
+    if (ui.tab === 'portada') {
+      LT.ensureCss(); ui.err = ''; render();
+      var sc = person(ui.open).scopes || [], extra = ['lesiones', 'examenes'].filter(function (s) { return sc.indexOf(s) >= 0; });
+      var errs = await Promise.all(['portada'].concat(extra).map(fetchSection));
+      if (errs[0]) ui.err = errs[0];
+      return render();
+    }
     if (ui.data[key]) return render();
     ui.err = ''; render();
     if (ui.demo) { ui.data[key] = demoData(ui.tab, today(), ui.open); return render(); }
@@ -249,7 +321,7 @@
   function open(id, tab) {
     var p = person(id), secs = p ? sections(p.scopes) : [];
     if (!secs.length) return;
-    ui.open = id; ui.tab = secs.some(function (s) { return s.key === tab; }) ? tab : secs[0].key; ui.draft = null; ui.msg = ''; load();
+    ui.open = id; ui.tab = secs.some(function (s) { return s.key === tab; }) ? tab : secs[0].key; ui.draft = null; ui.msg = ''; ui.lt = { topic: 'todos', author: 'todos' }; load();
   }
   function syncDraft() {
     var d = ui.draft; if (!d || !document.getElementById('fpm_notes')) return;
@@ -287,6 +359,8 @@
       if (root.SizigiaCaso) { root.SizigiaCaso.close(); root.SizigiaCaso.refreshInbox(); }
     },
     setTab: function (k) { ui.tab = k; ui.draft = null; ui.msg = ''; load(); },
+    ltTopic: function (k) { ui.lt.topic = k; render(); },
+    ltAuthor: function (k) { ui.lt.author = k; render(); },
     editPlan: function () {
       var v = nutricionView(ui.data[ui.open + ':nutricion'], today()), p = v.plan;
       ui.draft = { meals: (p ? p.meals : N.TEMPLATE).map(function (m) { return Object.assign({ time: '', guide: '' }, m); }), notes: p && p.notes || '' }; ui.msg = ''; render();
