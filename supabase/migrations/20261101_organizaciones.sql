@@ -12,6 +12,7 @@
 --     vínculos fuera de su organización.
 --   * Plantillas: por organización. Las 8 de hoy quedan en Medicina Humana.
 --   * Correo de persona único en toda la plataforma: el ingreso por magic link reclama una sola fila.
+--   * save_document, delete_document y case_own_message: quien no es paciente ya no pasa la revisión (punto 8).
 -- Fuera de esta migración: registro de accesos del admin (lee por RLS directo, sin access_log).
 
 -- 1) Tablas
@@ -218,7 +219,7 @@ revoke all on function public.create_organization(text, text, text) from public,
 grant execute on function public.create_organization(text, text, text) to authenticated;
 
 -- 7) Funciones que aceptaban a cualquier admin: ahora solo al admin de la organización de esa persona.
---    Mismo cuerpo que en su migración de origen; solo cambia la línea de is_admin().
+--    Mismo cuerpo que en su migración de origen; cambia la línea de is_admin() (y en documentos, la del punto 8).
 create or replace function public.injuries_to_journal() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
@@ -300,7 +301,7 @@ declare
   v_path text := nullif(p_doc->>'storage_path', '');
   v_date date := (p_doc->>'doc_date')::date;
 begin
-  if p_patient is null or not (v_admin or p_patient = public.current_patient_id()) then raise exception 'sin permiso'; end if;
+  if p_patient is null or not (v_admin or coalesce(p_patient = public.current_patient_id(), false)) then raise exception 'sin permiso'; end if;
   if v_date is null or v_date > current_date then raise exception 'fecha inválida'; end if;
   if v_id is not null then
     select * into v_prev from public.documents where id = v_id and patient_id = p_patient;
@@ -341,7 +342,7 @@ declare v_doc public.documents; v_admin boolean;
 begin
   select * into v_doc from public.documents where id = p_id;
   v_admin := found and public.is_patient_admin(v_doc.patient_id);
-  if not found or not (v_admin or v_doc.patient_id = public.current_patient_id()) then raise exception 'sin permiso'; end if;
+  if not found or not (v_admin or coalesce(v_doc.patient_id = public.current_patient_id(), false)) then raise exception 'sin permiso'; end if;
   insert into public.journal_entries (patient_id, entry_date, kind, title, body, author_kind, scope)
   values (v_doc.patient_id, current_date, 'examen', 'Documento eliminado: ' || v_doc.title,
           'Del ' || to_char(v_doc.doc_date, 'DD-MM-YYYY') || '.', case when v_admin then 'admin' else 'paciente' end, 'examenes');
@@ -394,4 +395,25 @@ begin
       || case when cardinality(v_changes) > 0 then ' Cambió: ' || array_to_string(v_changes, ', ') || '.' else '' end,
     v_kind, v_prof, 'nutricion');
   return v_id;
+end $$;
+
+-- 8) Comparaciones con current_patient_id() que daban null para quien no es paciente (un profesional o un admin de
+--    otra organización): "not (false or null)" no lanzaba el error. Ahora null cuenta como "no es la persona".
+--    save_document y delete_document ya quedaron corregidas arriba; case_own_message (editar, retirar, pasar a la
+--    hoja de vida) dejaba a un profesional modificar un mensaje de la persona.
+create or replace function public.case_own_message(p_id uuid) returns public.case_messages
+language plpgsql stable security definer set search_path = public as $$
+declare m public.case_messages; v_prof uuid := public.current_professional_id();
+begin
+  select * into m from public.case_messages where id = p_id;
+  if not found then raise exception 'mensaje inexistente'; end if;
+  if not coalesce((m.author_kind = 'paciente' and m.patient_id = public.current_patient_id())
+       or (m.author_kind = 'profesional' and m.author_professional_id = v_prof
+           and public.case_can_read_topic(v_prof, m.patient_id, (select topic from public.case_threads where id = m.thread_id))), false) then
+    raise exception 'sin permiso';
+  end if;
+  if exists (select 1 from public.case_messages n where n.root_id = m.root_id and n.version > m.version) then raise exception 'hay una version mas nueva'; end if;
+  if m.retracted_at is not null then raise exception 'mensaje retirado'; end if;
+  if m.journal_entry_id is not null then raise exception 'ya esta en la hoja de vida'; end if;
+  return m;
 end $$;

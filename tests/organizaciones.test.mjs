@@ -44,11 +44,17 @@ for (const f of adminFns) {
   assert.match(body, /is_patient_admin\((p_patient|v_patient|new\.patient_id|v_doc\.patient_id)\)/, f + ' revisa a la persona');
 }
 // El resto del cuerpo no cambia: misma función de origen salvo la línea del admin
-for (const [f, file] of [['set_nutrition_plan', '20261027_nutricion.sql'], ['save_document', '20261026_examenes.sql'], ['set_log_settings', '20261024_registro_comun.sql']]) {
+for (const [f, file, n] of [['set_nutrition_plan', '20261027_nutricion.sql', 1], ['save_document', '20261026_examenes.sql', 2],
+  ['set_log_settings', '20261024_registro_comun.sql', 1], ['case_own_message', '20261029_caso_equipo.sql', 2]]) {
   const a = fnBody(read(file), f).split(/\r?\n/), b = fnBody(sql, f).split(/\r?\n/);
   assert.equal(a.length, b.length, f + ': mismo largo');
-  assert.equal(a.filter((l, i) => l !== b[i]).length, 1, f + ': cambia una sola línea');
+  assert.equal(a.filter((l, i) => l !== b[i]).length, n, f + ': cambian ' + n + ' líneas');
 }
+
+// 3b) Quien no es paciente: current_patient_id() es null y "not (false or null)" no lanzaba el error
+assert.match(fnBody(sql, 'save_document'), /not \(v_admin or coalesce\(p_patient = public\.current_patient_id\(\), false\)\)/);
+assert.match(fnBody(sql, 'delete_document'), /not \(v_admin or coalesce\(v_doc\.patient_id = public\.current_patient_id\(\), false\)\)/);
+assert.match(fnBody(sql, 'case_own_message'), /if not coalesce\(\(m\.author_kind = 'paciente'[\s\S]*\), false\) then/);
 
 // 4) Salud mental y ciclo: el admin no los lee (regla 4)
 assert.match(sql, /create policy journal_admin_select on public\.journal_entries for select\s+using \(public\.is_patient_admin\(patient_id\) and scope not in \('salud_mental', 'ciclo'\)\)/);
