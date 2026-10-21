@@ -96,6 +96,17 @@ Rediseño de experiencia (doc "Sizigia Lab — Diagnóstico de experiencia y pro
   - `patient_timeline(p_patient)`: única puerta del profesional a `journal_entries` (sigue sin política RLS para profesionales). Solo vínculo activo y solo los temas autorizados (salud mental y ciclo solo con su permiso); nombre y rol del autor; una fila en `access_log` por tema expuesto. Probada en transacción: sin vínculo, solo semáforo y revocado se rechazan; con General + Lesiones no ve salud mental ni ciclo y deja 2 accesos.
   - Falta: guía de Recursos según la lectura, consultas futuras reales en "Lo que viene" (no hay agenda en la base) y, cuando la versión anterior ya no se use, retirar sus pestañas de `rueda_final.html`.
 
+Organizaciones (rama `feat/organizaciones`; migración `20261101_organizaciones.sql` aplicada y probada):
+- Tablas `organizations` y `org_members` (correo, como `admins`). `patients.org_id` y `templates.org_id` son obligatorios; `professionals.created_by_org` indica qué organización lo registró. Lo que había quedó en "Medicina Humana" (slug `medicina-humana`).
+- Permisos: `is_org_admin(org)`, `is_patient_admin(patient)` y `is_patient_admin_path(carpeta)` (storage). Todas las políticas de admin las usan; ninguna usa ya `is_admin()`, que solo significa "admin de alguna organización" (puerta de `admin.html`). `admins` pasa a admin de plataforma (`is_platform_admin()`): crea organizaciones (`create_organization(nombre, slug, correo)`, también desde SQL Editor) y edita el consentimiento, pero no lee personas.
+- Al insertar persona, plantilla o profesional, un trigger pone la organización del admin (si es admin de varias, hay que indicarla). Nadie cambia de organización desde la app; desde SQL Editor sí. `admin.html` no cambió.
+- Profesionales globales: el admin ve los que registró su organización o los que tienen vínculo con personas suyas, y edita o borra solo los suyos que no tengan vínculos fuera.
+- El correo de una persona es único en toda la plataforma (`patients_email_unique`): una persona en dos organizaciones no se puede representar hoy.
+- Regla 4: el admin ya no lee `journal_entries` de salud mental ni ciclo, ni escribe directo en la bitácora.
+- Corregido de paso: `save_document`, `delete_document` y `case_own_message` dejaban pasar a quien no es paciente (`current_patient_id()` null hacía que `not (false or null)` no lanzara el error). Un profesional podía crear o borrar documentos de cualquier persona y editar o retirar sus mensajes.
+- Probado en transacción con un admin de otra organización y un profesional temporales: el admin de la otra organización ve 0 personas, registros, bitácora, documentos, archivos y plantillas de Medicina Humana; no da de alta, no edita, no borra ni mueve personas; las funciones con `p_patient` lo rechazan; no crea organizaciones ni se suma a otra. Medicina Humana no ve a la persona de la otra organización.
+- Las organizaciones nuevas parten sin plantillas.
+
 Pruebas: este PC no tiene Node. Se corren en Edge headless con un perfil aparte (`--user-data-dir`), cargando el módulo con `module={exports:{}}`, un shim de `assert` y uno de `require` (panel-coach usa semaforo y registro-comun). Edge solo entrega `--dump-dom` con `Start-Process -RedirectStandardOutput`. Para ver páginas en el navegador integrado hace falta un servidor local (sin Node: un `HttpListener` de PowerShell). Si se instala Node, basta `node tests/*.test.mjs`. Más rápido: con el servidor local abierto en el navegador integrado, correr todas las pruebas desde la herramienta de JavaScript (XHR síncrono para `require` y `readFileSync`, `new Function` con `module`, quitar las líneas `import` y reemplazar `import.meta.url` por la URL del test).
 
 ## Módulos por construir (en este orden)
@@ -113,7 +124,7 @@ Cada uno: `assets/<modulo>.js` + migración con RLS + `tests/<modulo>.test.mjs` 
 - Probar en navegador: la demo es `rueda_final.html?demo=1` (sin red, usa semilla). Para probar sin Supabase, stub de `window.supabase.createClient`.
 
 ## Bloqueantes antes de vender a terceros
-1. Organizaciones + RLS multi-tenant (hoy el admin lee a todos los pacientes sin registro de acceso).
+1. ~~Organizaciones + RLS multi-tenant~~ (hecho, ver "Organizaciones"). Falta el registro de accesos del admin: sigue leyendo por RLS directo, sin `access_log`.
 2. Revisión legal del texto de consentimiento (borrador).
 3. Manuel debe validar los umbrales de `SEM_RULES`.
 4. Apple Health requiere app nativa o agregador; WHOOP API exige aprobación sobre 10 usuarios.
