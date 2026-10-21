@@ -1074,19 +1074,19 @@ function getMonthList() {
 }
 
 /* ============================= RENDER: SHELL ============================= */
+/* La Rueda (Mi Rueda, Progreso, Historial y "Hoy te toca") está apagada: venía de los programas
+   de 3 y 6 meses. Sus funciones y los check-ins guardados siguen intactos; para volver, agregar
+   sus pestañas acá y en render(). */
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
-  { id: 'rueda', label: 'Mi Rueda' },
-  { id: 'progreso', label: 'Progreso' },
-  { id: 'medidas', label: 'Medidas' },
-  { id: 'historial', label: 'Historial' },
-  { id: 'recursos', label: 'Recursos' },
   { id: 'bitacora', label: 'Mi hoja de vida' },
-  { id: 'lesiones', label: 'Lesiones' },
+  { id: 'medidas', label: 'Medidas' },
   { id: 'examenes', label: 'Exámenes' },
+  { id: 'lesiones', label: 'Lesiones' },
   { id: 'nutricion', label: 'Nutrición' },
   { id: 'equipo', label: 'Mi equipo' },
   { id: 'sesiones', label: 'Sesiones' },
+  { id: 'recursos', label: 'Recursos' },
   { id: 'data', label: 'Mi Data' }
 ];
 
@@ -1094,6 +1094,7 @@ function setTab(id) { state.ui.tab = id; saveState(); render(); }
 
 function render() {
   const app = document.getElementById('app');
+  if (!TABS.some(t => t.id === state.ui.tab)) state.ui.tab = 'resumen';
   const daysIn = daysBetween(state.patient.startDate, todayISO());
   const dayLabel = daysIn >= 0 ? ('Día ' + (daysIn+1) + ' en tu bitácora') : 'Tu bitácora aún no inicia';
 
@@ -1123,10 +1124,7 @@ function render() {
 
   const content = document.getElementById('tabContent');
   if (state.ui.tab === 'resumen') content.innerHTML = renderResumen();
-  else if (state.ui.tab === 'rueda') content.innerHTML = renderRueda();
-  else if (state.ui.tab === 'progreso') content.innerHTML = renderProgreso();
   else if (state.ui.tab === 'medidas') content.innerHTML = renderMedidas();
-  else if (state.ui.tab === 'historial') content.innerHTML = renderHistorial();
   else if (state.ui.tab === 'recursos') content.innerHTML = renderRecursos();
   else if (state.ui.tab === 'bitacora') content.innerHTML = SizigiaPersona.bitacoraTab();
   else if (state.ui.tab === 'lesiones') content.innerHTML = SizigiaLesiones.tab();
@@ -1143,9 +1141,7 @@ function escapeHtml(s) {
 }
 
 /* ============================= TAB: RESUMEN =============================
-   Pantalla de hoy: saludo, la pregunta del día, semáforo, registro, tendencias
-   y ciclo. Sin cifras repetidas: constancia vive en Progreso, el ritmo del mes
-   en Mi Rueda. */
+   Pantalla de hoy: saludo, semáforo, registro, tendencias y ciclo. */
 function renderResumen() {
   const todayIso = todayISO();
   const startIso = state.patient.startDate;
@@ -1163,12 +1159,6 @@ function renderResumen() {
   html += '</div>';
 
   html += SizigiaPersona.semaforoCard();
-
-  html += '<div class="card" style="margin-bottom:16px;">';
-  html += '<h3>Hoy te toca</h3>';
-  html += buildDayCard(todayIso, 'summary');
-  html += '</div>';
-
   html += SizigiaRegistro.card(renderAthleteLogCard);
   html += SizigiaPersona.restCards();
 
@@ -2085,6 +2075,7 @@ function renderMedidas() {
     html += '<div class="stat-chip"><div class="num">' + val + (has ? ' <span style="font-size:14px;font-weight:600;color:var(--muted);">' + f.unit + '</span>' : '') + '</div><div class="lbl">' + f.label + '</div>' + deltaHtml + '</div>';
   });
   html += '</div>';
+  if (isos.length >= 2) html += renderAthleteDeltasCard(isos);
 
   const selDate = state.ui.selectedMeasureDate || todayISO();
   const existing = state.measurements[selDate] || {};
@@ -2489,7 +2480,7 @@ function renderData() {
   html += '<div class="data-actions">';
   html += '<div class="data-row">';
   html += '<button class="btn primary" onclick="downloadAllJSON()">Descargar todo (JSON)</button>';
-  html += '<button class="btn" onclick="downloadAllCSV()">Descargar check-ins (CSV)</button>';
+  html += '<button class="btn" onclick="downloadAllCSV()">Descargar historial de la Rueda (CSV)</button>';
   html += '<button class="btn" onclick="downloadMeasurementsCSV()">Descargar mediciones (CSV)</button>';
   html += '<button class="btn" onclick="downloadSessionsCSV()">Descargar sesiones (CSV)</button>';
   html += '</div>';
