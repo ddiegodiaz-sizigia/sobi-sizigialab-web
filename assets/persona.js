@@ -17,15 +17,15 @@
   var ui = { metric: 'sleep', filter: 'todos', msg: '', cycleMsg: '', profMsg: '' };
   var E = function (s) { return escapeHtml(s == null ? '' : String(s)); };
 
-  var css = '.tc-tabs{display:flex;gap:6px;margin:8px 0}.tc-tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;font-size:12px;cursor:pointer;font-family:inherit}.tc-tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}' +
-    'svg.tc{display:block;max-width:560px}.tc-note{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.45}.tc-empty{font-size:13px;color:var(--muted);padding:14px 0}' +
-    '.sem-why{margin-top:10px;font-size:12.5px}.sem-why summary{cursor:pointer;color:var(--muted)}.sem-why-text{margin:6px 0;line-height:1.5}.sem-check{margin:3px 0}.sem-check.warn,.sem-check.alert{font-weight:600}.sem-check.nodata{color:var(--muted)}' +
+  var css = '.tc-tabs{display:flex;gap:6px;margin:8px 0}.tc-tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;font-size:14px;cursor:pointer;font-family:inherit}.tc-tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}' +
+    'svg.tc{display:block;max-width:560px}.tc-note{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.45}.tc-empty{font-size:15px;color:var(--muted);padding:14px 0}' +
+    '.sem-why{margin-top:10px;font-size:14.5px}.sem-why summary{cursor:pointer;color:var(--muted)}.sem-why-text{margin:6px 0;line-height:1.5}.sem-check{margin:3px 0}.sem-check.warn,.sem-check.alert{font-weight:600}.sem-check.nodata{color:var(--muted)}' +
     '.p-sem{display:flex;gap:14px;align-items:flex-start}.p-dot{width:30px;height:30px;border-radius:50%;flex:none;margin-top:2px}' +
-    '.p-pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--gray-bg);color:var(--ink)}' +
-    '.p-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.p-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;font-size:12px;cursor:pointer;font-family:inherit}.p-chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}' +
+    '.p-pill{display:inline-block;font-size:12.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--gray-bg);color:var(--ink)}' +
+    '.p-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.p-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;font-size:14px;cursor:pointer;font-family:inherit}.p-chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}' +
     '.p-tl{border-left:2px solid var(--line);margin:8px 0 0 6px;padding-left:16px}.p-item{position:relative;margin:0 0 16px}.p-item:before{content:"";position:absolute;left:-23px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--ink)}' +
-    '.p-item .meta{font-size:11.5px;color:var(--muted);margin-bottom:2px}.p-item .ttl{font-weight:600;font-size:14px}.p-item .bd{font-size:13px;margin-top:3px;white-space:pre-wrap;line-height:1.5}' +
-    '.p-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}.p-row input[type=text],.p-row input[type=date],.p-row select,.p-row textarea{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:13px}.p-row textarea{width:100%;min-height:60px}';
+    '.p-item .meta{font-size:13px;color:var(--muted);margin-bottom:2px}.p-item .ttl{font-weight:600;font-size:16px}.p-item .bd{font-size:15px;margin-top:3px;white-space:pre-wrap;line-height:1.5}' +
+    '.p-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}.p-row input[type=text],.p-row input[type=date],.p-row select,.p-row textarea{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:15px}.p-row textarea{width:100%;min-height:60px}';
   function ensure() {
     if (document.getElementById('persona-css') == null) { var s = document.createElement('style'); s.id = 'persona-css'; s.textContent = css; document.head.appendChild(s); }
     if (!state.profile) state.profile = { sex: isDemoMode ? 'femenino' : null, tracksCycle: !!isDemoMode };
@@ -52,11 +52,11 @@
     ensure();
     if (typeof computeSemaforo !== 'function') return '';
     var r = comun() ? root.SizigiaRegistro.semaforo() : computeSemaforo(Object.keys(athleteLogs()).map(function (k) { return athleteLogs()[k]; }));
-    var col = { verde: '#2f7d4f', amarillo: '#c9921b', rojo: '#b3382c', gris: '#8a8578' }[r.level];
+    var col = { verde: '#55704F', amarillo: '#B8862B', rojo: '#A13D2D', gris: '#8a8578' }[r.level];
     var nm = { verde: 'Verde', amarillo: 'Amarillo', rojo: 'Rojo', gris: 'Gris' }[r.level];
     var h = '<div class="card" style="margin-bottom:16px;"><div class="p-sem"><span class="p-dot" style="background:' + col + '"></span><div style="flex:1">';
     h += '<h3 style="margin:0">Tu semáforo de hoy: ' + nm + '</h3><div class="card-sub" style="margin:2px 0 0">' + E({rojo:'Conviene revisar tu carga con tu médico antes de entrenar fuerte',amarillo:'Precaución: conversa con tu equipo si se mantiene',verde:'Sin alertas en lo que registraste',gris:'Sin datos recientes: completa tu registro para actualizarlo'}[r.level]) + '</div>';
-    r.reasons.forEach(function (x) { h += '<div style="font-size:13px;margin:4px 0">' + E(x.text) + '</div>'; });
+    r.reasons.forEach(function (x) { h += '<div style="font-size:15px;margin:4px 0">' + E(x.text) + '</div>'; });
     h += semChecksHTML(r.checks || [], r.why || '', escapeHtml);
     h += '<div class="tc-note">Señal informativa calculada con lo que registras. No es un diagnóstico ni una recomendación médica automática.</div></div></div></div>';
     return h;
@@ -91,12 +91,12 @@
   function profileCard() {
     var p = state.profile;
     if (p.sex) {
-      if (p.sex !== 'femenino' && !p.tracksCycle) return '<div style="font-size:12px;margin:0 0 16px"><button type="button" class="btn small" onclick="SizigiaPersona.enableCycle()">Activar seguimiento de ciclo</button></div>';
+      if (p.sex !== 'femenino' && !p.tracksCycle) return '<div style="font-size:14px;margin:0 0 16px"><button type="button" class="btn small" onclick="SizigiaPersona.enableCycle()">Activar seguimiento de ciclo</button></div>';
       return '';
     }
     var h = '<div class="card" style="margin-bottom:16px;border-left:3px solid var(--gold);"><h3>Completa tu perfil</h3><div class="card-sub">Tu sexo ajusta las referencias clínicas y activa el seguimiento de ciclo cuando corresponde. Solo lo ve tu equipo autorizado.</div>';
     h += '<div class="p-row"><select id="pf_sex"><option value="">Selecciona…</option><option value="femenino">Femenino</option><option value="masculino">Masculino</option><option value="no_indica">Prefiero no indicar</option></select>';
-    h += '<label style="font-size:12.5px"><input type="checkbox" id="pf_cycle"> Quiero llevar seguimiento de ciclo</label><button class="btn small primary" onclick="SizigiaPersona.saveProfile()">Guardar</button></div>';
+    h += '<label style="font-size:14.5px"><input type="checkbox" id="pf_cycle"> Quiero llevar seguimiento de ciclo</label><button class="btn small primary" onclick="SizigiaPersona.saveProfile()">Guardar</button></div>';
     if (ui.profMsg) h += '<div class="daycard-msg" style="color:#b91c1c">' + E(ui.profMsg) + '</div>';
     return h + '</div>';
   }
@@ -118,12 +118,12 @@
     if (!(p.sex === 'femenino' || p.tracksCycle)) return '';
     var t = todayISO(), ex = state.cycleLogs[t] || null, info = cycleInfo();
     var h = '<div class="card" style="margin-bottom:16px;"><h3>Ciclo menstrual</h3><div class="card-sub">Solo tú ves esto. Tu equipo lo ve únicamente si tú lo autorizas.</div>';
-    h += '<div style="font-size:13px;margin:4px 0 8px">' + (info.day ? 'Día <b>' + info.day + '</b> del ciclo según tus registros' + (info.avg ? ' · ciclo habitual ~' + info.avg + ' días (' + info.n + ' ' + (info.n === 1 ? 'ciclo' : 'ciclos') + ')' : '') : 'Aún no hay registros de sangrado: cuando marques el primer día, calculamos tu ciclo.') + '</div>';
+    h += '<div style="font-size:15px;margin:4px 0 8px">' + (info.day ? 'Día <b>' + info.day + '</b> del ciclo según tus registros' + (info.avg ? ' · ciclo habitual ~' + info.avg + ' días (' + info.n + ' ' + (info.n === 1 ? 'ciclo' : 'ciclos') + ')' : '') : 'Aún no hay registros de sangrado: cuando marques el primer día, calculamos tu ciclo.') + '</div>';
     h += '<div class="p-row"><label><input type="checkbox" id="cy_bleeding"' + (ex && ex.bleeding ? ' checked' : '') + '> Sangrado hoy</label>';
     h += '<select id="cy_flow"><option value="">Flujo…</option>' + ['Escaso', 'Moderado', 'Abundante'].map(function (n, i) { return '<option value="' + (i + 1) + '"' + (ex && ex.flow === i + 1 ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select></div>';
     h += '<div class="p-chips">' + SYMPTOMS.map(function (s) { var on = ex && (ex.symptoms || []).indexOf(s) >= 0; return '<label class="p-chip' + (on ? ' on' : '') + '"><input type="checkbox" class="cy_sym" value="' + E(s) + '"' + (on ? ' checked' : '') + ' style="display:none" onchange="this.parentNode.classList.toggle(\'on\',this.checked)">' + E(s) + '</label>'; }).join('') + '</div>';
     h += '<button class="btn small primary" onclick="SizigiaPersona.saveCycle()">' + (ex ? 'Guardar cambios' : 'Guardar registro') + '</button>';
-    if (ui.cycleMsg) h += ' <span style="font-size:12px;color:var(--muted)">' + E(ui.cycleMsg) + '</span>';
+    if (ui.cycleMsg) h += ' <span style="font-size:14px;color:var(--muted)">' + E(ui.cycleMsg) + '</span>';
     return h + '</div>';
   }
 
@@ -139,7 +139,7 @@
     var all = timeline(), items = all.filter(function (i) { return ui.filter === 'todos' || i.kind === ui.filter; });
     var h = '<div class="card" style="margin-bottom:16px;"><h3>Mi hoja de vida</h3><div class="card-sub">Todo lo que pasa con tu salud, en orden, desde el ' + fmtDate(state.patient.startDate) + '. Sin plazo: sigue mientras uses tu cuenta. ' + all.length + (all.length === 1 ? ' entrada.' : ' entradas.') + '</div></div>';
     h += '<div class="card" style="margin-bottom:16px;"><h3>Agregar a mi bitácora</h3><div class="p-row"><select id="jr_kind">' + ADD_KINDS.map(function (k) { return '<option value="' + k + '">' + KINDS[k] + '</option>'; }).join('') + '</select><input type="date" id="jr_date" value="' + todayISO() + '"><input type="text" id="jr_title" placeholder="Título" style="flex:1;min-width:160px"></div>';
-    h += '<div class="p-row"><textarea id="jr_body" placeholder="Detalle (opcional)"></textarea></div><button class="btn small primary" onclick="SizigiaPersona.saveJournal()">Guardar</button>' + (ui.msg ? ' <span style="font-size:12px;color:#b91c1c">' + E(ui.msg) + '</span>' : '') + '</div>';
+    h += '<div class="p-row"><textarea id="jr_body" placeholder="Detalle (opcional)"></textarea></div><button class="btn small primary" onclick="SizigiaPersona.saveJournal()">Guardar</button>' + (ui.msg ? ' <span style="font-size:14px;color:#b91c1c">' + E(ui.msg) + '</span>' : '') + '</div>';
     h += '<div class="card"><div class="p-chips">' + ['todos'].concat(Object.keys(KINDS)).map(function (k) { return '<button type="button" class="p-chip' + (ui.filter === k ? ' on' : '') + '" onclick="SizigiaPersona.setFilter(\'' + k + '\')">' + (k === 'todos' ? 'Todo' : KINDS[k]) + '</button>'; }).join('') + '</div>';
     if (!items.length) return h + '<div class="tc-empty">Aún no hay entradas de este tipo.</div></div>';
     h += '<div class="p-tl">' + items.map(function (i) {

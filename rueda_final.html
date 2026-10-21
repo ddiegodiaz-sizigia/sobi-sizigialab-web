@@ -18,10 +18,10 @@
     --gold-bg: rgba(52,73,87,0.08);
     --green: #68705B;         /* salvia — antes verde genérico #16a34a, estado positivo/logrado */
     --green-bg: rgba(104,112,91,0.10);
-    --amber: #d97706;         /* sin cambio — alerta funcional (pendiente hoy) */
-    --amber-bg: #fffbeb;
-    --red: #dc2626;           /* sin cambio — alerta funcional (atrasado) */
-    --red-bg: #fef2f2;
+    --amber: #B8862B;         /* ocre — alerta funcional (pendiente hoy) */
+    --amber-bg: #FBF3E2;
+    --red: #A13D2D;           /* ladrillo — alerta funcional (atrasado) */
+    --red-bg: #F8E9E4;
     --gray-bg: #F1EAD9;
     --paper: #FFFDF7;
     --canvas: #F7F5EF;
@@ -34,30 +34,32 @@
     background: var(--canvas);
     color: var(--ink);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    font-size: 14px;
+    font-size: 16px;
     -webkit-font-smoothing: antialiased;
   }
   .wrap { padding: 24px 20px 50px; max-width: 1100px; margin: 0 auto; }
+  .resumen-col { max-width: 760px; margin: 0 auto; }
 
   /* ---- Header ---- */
   .head-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
   .brand-row { display: flex; align-items: center; gap: 12px; }
   .brand-mark { width: 40px; height: 40px; border-radius: 10px; background: var(--ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .brand-mark span { color: #F7F5EF; font-size: 11px; font-weight: 800; letter-spacing: 0.04em; }
-  .brand-title h1 { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 21px; margin: 0 0 2px 0; letter-spacing: -0.01em; }
-  .brand-title .sub { font-size: 12px; color: var(--muted); }
-  .patient-chip { background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 12px; color: var(--ink); box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: 8px; }
+  .brand-mark span { color: #F7F5EF; font-size: 12.5px; font-weight: 800; letter-spacing: 0.04em; }
+  .brand-title h1 { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 24px; margin: 0 0 2px 0; letter-spacing: -0.01em; }
+  .brand-title .sub { font-size: 14px; color: var(--muted); }
+  .patient-chip { background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 14px; color: var(--ink); box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: 8px; }
   .patient-chip b { font-weight: 700; }
   .patient-chip .dim { color: var(--muted); }
 
   .tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--line); margin-bottom: 22px; flex-wrap: wrap; }
-  .tab-btn { background: none; border: none; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--muted); padding: 10px 2px 12px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.12s, border-color 0.12s; }
+  @media (max-width: 720px) { .tabs { flex-wrap: nowrap; overflow-x: auto; gap: 18px; scrollbar-width: none; } .tabs::-webkit-scrollbar { display: none; } .tab-btn { white-space: nowrap; flex-shrink: 0; } }
+  .tab-btn { background: none; border: none; font-family: inherit; font-size: 15px; font-weight: 600; color: var(--muted); padding: 10px 2px 12px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.12s, border-color 0.12s; }
   .tab-btn:hover { color: var(--ink); }
   .tab-btn.active { color: var(--accent-dark); border-color: var(--accent); }
 
   .btn {
     border: 1px solid var(--line); background: #fff; border-radius: 9px; padding: 8px 14px;
-    font-size: 13px; font-weight: 500; color: var(--ink); cursor: pointer; font-family: inherit;
+    font-size: 15px; font-weight: 500; color: var(--ink); cursor: pointer; font-family: inherit;
     transition: background 0.12s, box-shadow 0.12s, transform 0.12s; box-shadow: var(--shadow-sm);
   }
   .btn:hover { background: #f6f5f3; box-shadow: var(--shadow-md); }
@@ -66,48 +68,48 @@
   .btn.primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
   .btn.danger { color: var(--red); border-color: #fecaca; }
   .btn.danger:hover { background: var(--red-bg); }
-  .btn.small { padding: 5px 10px; font-size: 12px; }
+  .btn.small { padding: 5px 10px; font-size: 14px; }
   .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
   .card { border: 1px solid var(--line); border-radius: 14px; padding: 18px; background: var(--paper); box-shadow: var(--shadow-sm); }
-  .card h3 { font-size: 14.5px; margin: 0 0 4px 0; }
-  .card .card-sub { font-size: 11.5px; color: var(--muted); margin-bottom: 14px; }
+  .card h3 { font-size: 16.5px; margin: 0 0 4px 0; }
+  .card .card-sub { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
   .grid-2 { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; align-items: start; }
   @media (max-width: 880px) { .grid-2 { grid-template-columns: 1fr; } }
 
-  .section-title { font-weight: 700; font-size: 12px; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  .section-title { font-weight: 700; font-size: 14px; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
 
   /* ---- Check-in de hoy ---- */
   .pillar-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
   .pillar-row:first-child { border-top: none; }
-  .pillar-name { flex: 1.2; min-width: 120px; font-size: 13px; font-weight: 600; }
-  .pillar-name .w { font-weight: 400; color: var(--muted); font-size: 11px; display: block; }
+  .pillar-name { flex: 1.2; min-width: 120px; font-size: 15px; font-weight: 600; }
+  .pillar-name .w { font-weight: 400; color: var(--muted); font-size: 12.5px; display: block; }
   .pillar-slider-wrap { flex: 2; min-width: 140px; display: flex; align-items: center; gap: 10px; }
   .pillar-slider-wrap input[type=range] { flex: 1; accent-color: var(--accent); }
-  .pillar-val { width: 26px; text-align: center; font-weight: 700; font-size: 13px; color: var(--accent-dark); flex-shrink: 0; }
-  .checkin-note { width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; font-size: 13px; font-family: inherit; resize: vertical; min-height: 54px; margin-top: 10px; background: var(--gray-bg); }
+  .pillar-val { width: 26px; text-align: center; font-weight: 700; font-size: 15px; color: var(--accent-dark); flex-shrink: 0; }
+  .checkin-note { width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; font-size: 15px; font-family: inherit; resize: vertical; min-height: 54px; margin-top: 10px; background: var(--gray-bg); }
   .checkin-note:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); background: #fff; }
-  .checkin-done-banner { background: var(--green-bg); color: var(--green); border-radius: 10px; padding: 10px 14px; font-size: 12.5px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .checkin-done-banner { background: var(--green-bg); color: var(--green); border-radius: 10px; padding: 10px 14px; font-size: 14.5px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 
   /* ---- Prioridades ---- */
   .priority-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); }
   .priority-row:first-child { border-top: none; }
-  .priority-row .pname { flex: 1; font-size: 12.5px; font-weight: 600; }
-  .priority-row input[type=number] { width: 58px; border: 1px solid var(--line); border-radius: 7px; padding: 5px 6px; font-size: 12.5px; font-family: inherit; text-align: right; }
-  .priority-row .pct { font-size: 11.5px; color: var(--muted); }
-  .priority-total { font-size: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); display: flex; justify-content: space-between; font-weight: 700; }
+  .priority-row .pname { flex: 1; font-size: 14.5px; font-weight: 600; }
+  .priority-row input[type=number] { width: 58px; border: 1px solid var(--line); border-radius: 7px; padding: 5px 6px; font-size: 14.5px; font-family: inherit; text-align: right; }
+  .priority-row .pct { font-size: 13px; color: var(--muted); }
+  .priority-total { font-size: 14px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); display: flex; justify-content: space-between; font-weight: 700; }
   .priority-total.ok { color: var(--green); }
   .priority-total.warn { color: var(--amber); }
 
   /* ---- Ritmo mensual ---- */
   .month-nav { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 10px; }
-  .month-nav .mnav-btn { border: 1px solid var(--line); background: #fff; border-radius: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; }
+  .month-nav .mnav-btn { border: 1px solid var(--line); background: #fff; border-radius: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 17.5px; }
   .month-nav .mnav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-  .month-nav .mnav-label { font-weight: 700; font-size: 13.5px; min-width: 150px; text-align: center; text-transform: capitalize; }
+  .month-nav .mnav-label { font-weight: 700; font-size: 15.5px; min-width: 150px; text-align: center; text-transform: capitalize; }
   .rueda-flex { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
   .rueda-svg-wrap svg { display: block; }
   .ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .ring-caption { font-size: 11.5px; color: var(--muted); text-align: center; max-width: 190px; }
+  .ring-caption { font-size: 13px; color: var(--muted); text-align: center; max-width: 190px; }
   .ring-day { cursor: pointer; }
   .ring-day:hover { opacity: 0.8; }
   .rueda-actions { display: flex; gap: 8px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
@@ -115,30 +117,30 @@
   /* ---- Panel de día (click en el anillo) ---- */
   .ring-detail-card { border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; background: var(--gray-bg); width: 100%; margin-top: 14px; }
   .ring-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-  .ring-detail-head h4 { font-size: 13px; margin: 0; }
-  .rd-badge { font-size: 10.5px; padding: 2px 9px; border-radius: 999px; font-weight: 700; }
+  .ring-detail-head h4 { font-size: 15px; margin: 0; }
+  .rd-badge { font-size: 12px; padding: 2px 9px; border-radius: 999px; font-weight: 700; }
   .rd-badge.ok { background: var(--green-bg); color: var(--green); }
   .rd-badge.warn { background: var(--amber-bg); color: var(--amber); }
   .rd-badge.muted { background: #eceae7; color: var(--muted); }
   .ring-detail-card .pillar-row { padding: 7px 0; }
-  .ring-detail-card .pillar-name { font-size: 12px; }
-  .ring-detail-note { width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font-size: 12.5px; font-family: inherit; resize: vertical; min-height: 44px; margin-top: 8px; background: #fff; }
+  .ring-detail-card .pillar-name { font-size: 14px; }
+  .ring-detail-note { width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font-size: 14.5px; font-family: inherit; resize: vertical; min-height: 44px; margin-top: 8px; background: #fff; }
   .ring-detail-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-  .ring-detail-empty { font-size: 12px; color: var(--muted); font-style: italic; padding: 6px 0; }
+  .ring-detail-empty { font-size: 14px; color: var(--muted); font-style: italic; padding: 6px 0; }
 
   /* ---- Tarjeta de día guiado (tipo predefinido) ---- */
   .daycard-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 2px; }
-  .daycard-type { font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
-  .dt-icon { font-size: 15px; }
-  .daycard-sub { font-size: 11.5px; color: var(--muted); margin-bottom: 12px; }
-  .daycard-msg { background: var(--accent-bg); border-left: 3px solid var(--accent); padding: 10px 12px; border-radius: 6px; font-size: 12.5px; color: var(--ink); line-height: 1.5; margin-bottom: 12px; }
-  .daycard-question { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
-  .daycard-quote { font-size: 14px; font-style: italic; color: var(--ink); border-left: 3px solid var(--gold); padding: 10px 14px; background: var(--gold-bg); border-radius: 6px; margin-bottom: 10px; line-height: 1.5; }
-  .daycard-quote span { display: block; font-style: normal; font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .daycard-type { font-size: 15.5px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+  .dt-icon { font-size: 17.5px; }
+  .daycard-sub { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+  .daycard-msg { background: var(--accent-bg); border-left: 3px solid var(--accent); padding: 10px 12px; border-radius: 6px; font-size: 14.5px; color: var(--ink); line-height: 1.5; margin-bottom: 12px; }
+  .daycard-question { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .daycard-quote { font-size: 16px; font-style: italic; color: var(--ink); border-left: 3px solid var(--gold); padding: 10px 14px; background: var(--gold-bg); border-radius: 6px; margin-bottom: 10px; line-height: 1.5; }
+  .daycard-quote span { display: block; font-style: normal; font-size: 12.5px; color: var(--muted); margin-top: 6px; }
   .daycard-tip { display: flex; gap: 10px; background: var(--accent-bg); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
-  .daycard-tip .dt-num { font-size: 10px; font-weight: 700; color: var(--accent-dark); letter-spacing: 0.05em; flex-shrink: 0; white-space: nowrap; }
-  .daycard-tip .dt-lead { font-size: 12.5px; color: var(--ink); line-height: 1.5; }
-  .daycard-reinforcement { font-size: 13.5px; color: var(--ink); background: var(--gold-bg); border-left: 3px solid var(--gold); padding: 12px 14px; border-radius: 6px; line-height: 1.55; margin-bottom: 10px; }
+  .daycard-tip .dt-num { font-size: 12px; font-weight: 700; color: var(--accent-dark); letter-spacing: 0.05em; flex-shrink: 0; white-space: nowrap; }
+  .daycard-tip .dt-lead { font-size: 14.5px; color: var(--ink); line-height: 1.5; }
+  .daycard-reinforcement { font-size: 15.5px; color: var(--ink); background: var(--gold-bg); border-left: 3px solid var(--gold); padding: 12px 14px; border-radius: 6px; line-height: 1.55; margin-bottom: 10px; }
 
   .week-preview { display: flex; gap: 6px; margin-bottom: 4px; }
   .wp-item { flex: 1; text-align: center; border: 1px solid var(--line); border-radius: 9px; padding: 8px 3px; background: #fff; }
@@ -146,9 +148,9 @@
   .wp-item.wp-done { border-style: solid; }
   .wp-item.wp-done:not(.wp-today) { background: var(--gray-bg); }
   .wp-item.wp-rest { opacity: 0.55; border-style: dashed; }
-  .wp-icon { font-size: 15px; margin-bottom: 3px; }
-  .wp-day { font-size: 9.5px; color: var(--muted); font-weight: 600; text-transform: capitalize; }
-  .no-data-msg { font-size: 12.5px; color: var(--muted); font-style: italic; text-align: center; padding: 20px; }
+  .wp-icon { font-size: 17.5px; margin-bottom: 3px; }
+  .wp-day { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: capitalize; }
+  .no-data-msg { font-size: 14.5px; color: var(--muted); font-style: italic; text-align: center; padding: 20px; }
   .radar-point { cursor: pointer; }
   .radar-point.hl { r: 7; }
 
@@ -156,55 +158,55 @@
   .rueda-detail-row { display: flex; align-items: center; gap: 10px; padding: 7px 4px; border-radius: 8px; cursor: pointer; }
   .rueda-detail-row:hover { background: var(--gray-bg); }
   .rueda-detail-row.active { background: var(--accent-bg); }
-  .rueda-detail-row .rname { flex: 1.1; min-width: 110px; font-size: 12px; font-weight: 600; }
+  .rueda-detail-row .rname { flex: 1.1; min-width: 110px; font-size: 14px; font-weight: 600; }
   .rueda-bar-track { flex: 1.4; min-width: 70px; height: 6px; background: var(--gray-bg); border-radius: 4px; overflow: hidden; }
   .rueda-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; }
-  .rueda-detail-row .rval { width: 36px; text-align: right; font-size: 12px; font-weight: 700; color: var(--accent-dark); flex-shrink: 0; }
-  .rueda-detail-row .rtrend { width: 42px; text-align: right; font-size: 11px; flex-shrink: 0; }
+  .rueda-detail-row .rval { width: 36px; text-align: right; font-size: 14px; font-weight: 700; color: var(--accent-dark); flex-shrink: 0; }
+  .rueda-detail-row .rtrend { width: 42px; text-align: right; font-size: 12.5px; flex-shrink: 0; }
   .rtrend.up { color: var(--green); } .rtrend.down { color: var(--red); } .rtrend.flat { color: var(--muted); }
 
   /* ---- Historial ---- */
   .stat-chips { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
   .stat-chip { position: relative; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px; text-align: left; min-width: 120px; box-shadow: var(--shadow-sm); flex: 1; }
-  .stat-chip .num { font-size: 21px; font-weight: 700; line-height: 1.1; color: var(--accent-dark); }
-  .stat-chip .lbl { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
-  .stat-info-btn { position: absolute; top: 7px; right: 7px; width: 16px; height: 16px; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: #fff; color: var(--muted); font-size: 10px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; line-height: 14px; text-align: center; cursor: pointer; }
+  .stat-chip .num { font-size: 24px; font-weight: 700; line-height: 1.1; color: var(--accent-dark); }
+  .stat-chip .lbl { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+  .stat-info-btn { position: absolute; top: 7px; right: 7px; width: 16px; height: 16px; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: #fff; color: var(--muted); font-size: 12px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; line-height: 14px; text-align: center; cursor: pointer; }
   .stat-info-btn:hover { background: var(--line); color: var(--ink); }
-  .stat-info-pop { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 30; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 11.5px; line-height: 1.5; color: var(--ink); box-shadow: 0 4px 14px rgba(29,29,26,0.12); text-transform: none; letter-spacing: normal; }
+  .stat-info-pop { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 30; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.5; color: var(--ink); box-shadow: 0 4px 14px rgba(29,29,26,0.12); text-transform: none; letter-spacing: normal; }
   .range-toggle { display: inline-flex; gap: 4px; border: 1px solid var(--line); border-radius: 9px; padding: 2px; background: #fff; }
-  .range-toggle button { border: none; background: none; border-radius: 7px; padding: 5px 11px; font-size: 11.5px; cursor: pointer; font-family: inherit; color: var(--muted); font-weight: 600; }
+  .range-toggle button { border: none; background: none; border-radius: 7px; padding: 5px 11px; font-size: 13px; cursor: pointer; font-family: inherit; color: var(--muted); font-weight: 600; }
   .range-toggle button.active { background: var(--ink); color: #fff; }
   .checkin-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
   .checkin-item { border: 1px solid var(--line); border-radius: 12px; padding: 11px 14px; background: var(--paper); box-shadow: var(--shadow-sm); }
-  .checkin-item .ci-date { font-size: 11.5px; color: var(--muted); font-weight: 700; margin-bottom: 6px; }
+  .checkin-item .ci-date { font-size: 13px; color: var(--muted); font-weight: 700; margin-bottom: 6px; }
   .ci-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
-  .ci-chip { font-size: 10.5px; background: var(--accent-bg); color: var(--accent-dark); padding: 2px 9px; border-radius: 999px; font-weight: 600; }
-  .ci-note { font-size: 12.5px; color: var(--ink); font-style: italic; }
+  .ci-chip { font-size: 12px; background: var(--accent-bg); color: var(--accent-dark); padding: 2px 9px; border-radius: 999px; font-weight: 600; }
+  .ci-note { font-size: 14.5px; color: var(--ink); font-style: italic; }
   .chart-svg-wrap { width: 100%; overflow-x: auto; }
 
   /* ---- Medidas ---- */
   .measure-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 14px; }
-  .measure-field label { display: block; font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
-  .measure-field input { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: inherit; background: var(--gray-bg); box-sizing: border-box; }
+  .measure-field label { display: block; font-size: 12.5px; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+  .measure-field input { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 15px; font-family: inherit; background: var(--gray-bg); box-sizing: border-box; }
   .measure-field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); background: #fff; }
 
   /* ---- Recursos ---- */
   .resource-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
   .resource-card { border: 1px solid var(--line); border-radius: 14px; padding: 18px; background: var(--paper); box-shadow: var(--shadow-sm); position: relative; }
-  .resource-card .rnum { font-size: 10.5px; color: var(--accent-dark); font-weight: 700; letter-spacing: 0.06em; margin-bottom: 6px; }
-  .resource-card h4 { font-size: 14.5px; margin: 0 0 8px 0; }
-  .resource-card p { font-size: 12.5px; color: var(--muted); line-height: 1.55; margin: 0 0 10px 0; }
+  .resource-card .rnum { font-size: 12px; color: var(--accent-dark); font-weight: 700; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .resource-card h4 { font-size: 16.5px; margin: 0 0 8px 0; }
+  .resource-card p { font-size: 14.5px; color: var(--muted); line-height: 1.55; margin: 0 0 10px 0; }
   .resource-min { background: var(--accent-bg); border-left: 3px solid var(--accent); padding: 10px 12px; border-radius: 6px; margin-bottom: 10px; }
-  .resource-min .lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--accent-dark); margin-bottom: 6px; }
+  .resource-min .lbl { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; color: var(--accent-dark); margin-bottom: 6px; }
   .resource-min ul { margin: 0; padding-left: 16px; }
-  .resource-min li { font-size: 12px; color: var(--ink); margin-bottom: 4px; line-height: 1.5; }
-  .resource-error { font-size: 11.5px; color: var(--muted); font-style: italic; border-top: 1px solid var(--line); padding-top: 8px; margin-bottom: 10px; }
+  .resource-min li { font-size: 14px; color: var(--ink); margin-bottom: 4px; line-height: 1.5; }
+  .resource-error { font-size: 13px; color: var(--muted); font-style: italic; border-top: 1px solid var(--line); padding-top: 8px; margin-bottom: 10px; }
   .resource-error strong { font-style: normal; color: var(--ink); }
   .resource-card.locked { background: var(--gray-bg); }
   .resource-card.locked h4 { color: var(--muted); }
-  .resource-lock-badge { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 10px; }
+  .resource-lock-badge { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 10px; }
   .resource-blur { filter: blur(3px); opacity: 0.5; user-select: none; pointer-events: none; }
-  .resource-unlock-note { font-size: 11.5px; color: var(--muted); }
+  .resource-unlock-note { font-size: 13px; color: var(--muted); }
 
   /* --- Biblioteca Zona Azul: tarjetas con portada + enlaces --- */
   .lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 18px; }
@@ -214,18 +216,18 @@
   .lib-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .lib-cover.book::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: linear-gradient(90deg, rgba(0,0,0,.25), rgba(255,255,255,.12) 60%, transparent); pointer-events: none; }
   .lib-gen { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 12px 10px; color: #fff; box-sizing: border-box; }
-  .lib-gen .gi { font-size: 22px; line-height: 1; opacity: .9; }
-  .lib-gen .gt { font-size: 12.5px; font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; }
-  .lib-gen .ga { font-size: 9.5px; opacity: .8; letter-spacing: .04em; text-transform: uppercase; margin-top: 4px; }
+  .lib-gen .gi { font-size: 12.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1; opacity: .8; }
+  .lib-gen .gt { font-size: 14.5px; font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; }
+  .lib-gen .ga { font-size: 12px; opacity: .8; letter-spacing: .04em; text-transform: uppercase; margin-top: 4px; }
   .lib-gen.t-libro { background: linear-gradient(155deg, #B86B4B, #5a2f1f); }
   .lib-gen.t-documental { background: linear-gradient(155deg, #3f5a6b, #17252e); }
   .lib-gen.t-podcast { background: linear-gradient(155deg, #7b836b, #353b2c); }
   .lib-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-  .lib-body h4 { font-size: 15px; margin: 0 0 3px 0; line-height: 1.3; }
+  .lib-body h4 { font-size: 17.5px; margin: 0 0 3px 0; line-height: 1.3; }
   .lib-body .card-sub { margin-bottom: 8px; }
-  .lib-body p { font-size: 12.5px; color: var(--muted); line-height: 1.55; margin: 0 0 12px 0; }
+  .lib-body p { font-size: 14.5px; color: var(--muted); line-height: 1.55; margin: 0 0 12px 0; }
   .lib-actions { margin-top: auto; display: flex; gap: 8px; flex-wrap: wrap; }
-  .lib-btn { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 999px; text-decoration: none; border: 1px solid var(--accent); background: var(--accent); color: #fff; transition: background .12s; }
+  .lib-btn { display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 600; padding: 7px 12px; border-radius: 999px; text-decoration: none; border: 1px solid var(--accent); background: var(--accent); color: #fff; transition: background .12s; }
   .lib-btn:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
   .lib-btn.ghost { background: transparent; color: var(--accent-dark); }
   .lib-btn.ghost:hover { background: var(--accent-bg); }
@@ -235,54 +237,54 @@
   .sessions-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
   @media (max-width: 880px) { .sessions-columns { grid-template-columns: 1fr; } }
   .roadmap-mini { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; background: var(--paper); box-shadow: var(--shadow-sm); border-left: 3px solid var(--gold); }
-  .roadmap-mini .rm-tag { font-size: 10.5px; color: var(--gold); font-weight: 700; letter-spacing: 0.05em; }
-  .roadmap-mini h4 { font-size: 13px; margin: 3px 0; }
-  .roadmap-mini p { font-size: 11.5px; color: var(--muted); margin: 0 0 4px 0; }
-  .roadmap-mini .rm-date { font-size: 11px; color: var(--muted); font-style: italic; }
+  .roadmap-mini .rm-tag { font-size: 12px; color: var(--gold); font-weight: 700; letter-spacing: 0.05em; }
+  .roadmap-mini h4 { font-size: 15px; margin: 3px 0; }
+  .roadmap-mini p { font-size: 13px; color: var(--muted); margin: 0 0 4px 0; }
+  .roadmap-mini .rm-date { font-size: 12.5px; color: var(--muted); font-style: italic; }
   .roadmap-mini.pending { border-left-color: var(--amber); }
   .roadmap-mini.pending .rm-tag { color: var(--amber); }
 
   .session-item { border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; margin-bottom: 10px; background: var(--paper); box-shadow: var(--shadow-sm); }
   .session-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; flex-wrap: wrap; cursor: pointer; }
-  .session-head .sdate { font-size: 11px; color: var(--muted); font-weight: 700; }
-  .session-head h4 { font-size: 13.5px; margin: 3px 0 4px 0; }
+  .session-head .sdate { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+  .session-head h4 { font-size: 15.5px; margin: 3px 0 4px 0; }
   .session-badges { display: flex; gap: 6px; flex-wrap: wrap; }
-  .session-badge { font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 700; background: var(--gray-bg); color: var(--muted); }
+  .session-badge { font-size: 12px; padding: 2px 8px; border-radius: 999px; font-weight: 700; background: var(--gray-bg); color: var(--muted); }
   .session-badge.has { background: var(--accent-bg); color: var(--accent-dark); }
   .session-body { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); display: none; }
   .session-body.open { display: block; }
-  .session-body h5 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 12px 0 6px 0; }
+  .session-body h5 { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 12px 0 6px 0; }
   .session-body h5:first-child { margin-top: 0; }
   .session-body ul { margin: 0; padding-left: 18px; }
-  .session-body li { font-size: 12.5px; margin-bottom: 4px; }
-  .session-body .transcript-box { background: var(--gray-bg); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--ink); white-space: pre-wrap; max-height: 220px; overflow-y: auto; line-height: 1.55; }
-  .session-body .feedback-box { background: var(--gold-bg); border-left: 3px solid var(--gold); border-radius: 8px; padding: 10px 12px; font-size: 12.5px; color: var(--ink); line-height: 1.55; }
-  .session-body .feedback-tag { font-size: 10px; color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 4px; }
-  .video-link { font-size: 12.5px; color: var(--accent-dark); font-weight: 600; text-decoration: none; }
+  .session-body li { font-size: 14.5px; margin-bottom: 4px; }
+  .session-body .transcript-box { background: var(--gray-bg); border-radius: 8px; padding: 10px 12px; font-size: 14px; color: var(--ink); white-space: pre-wrap; max-height: 220px; overflow-y: auto; line-height: 1.55; }
+  .session-body .feedback-box { background: var(--gold-bg); border-left: 3px solid var(--gold); border-radius: 8px; padding: 10px 12px; font-size: 14.5px; color: var(--ink); line-height: 1.55; }
+  .session-body .feedback-tag { font-size: 12px; color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 4px; }
+  .video-link { font-size: 14.5px; color: var(--accent-dark); font-weight: 600; text-decoration: none; }
   .video-link:hover { text-decoration: underline; }
-  .auto-note { font-size: 11px; color: var(--muted); font-style: italic; margin-top: 10px; }
+  .auto-note { font-size: 12.5px; color: var(--muted); font-style: italic; margin-top: 10px; }
 
   /* ---- Mi Data ---- */
   .data-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
-  .data-actions label { font-size: 11.5px; color: var(--muted); font-weight: 600; display: block; margin-bottom: 4px; }
-  .data-actions input[type=date] { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font-size: 12.5px; font-family: inherit; }
+  .data-actions label { font-size: 13px; color: var(--muted); font-weight: 600; display: block; margin-bottom: 4px; }
+  .data-actions input[type=date] { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font-size: 14.5px; font-family: inherit; }
   .data-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
-  .empty-state { text-align: center; padding: 34px 20px; color: var(--muted); font-size: 13px; border: 1.5px dashed var(--line); border-radius: 14px; background: var(--paper); }
+  .empty-state { text-align: center; padding: 34px 20px; color: var(--muted); font-size: 15px; border: 1.5px dashed var(--line); border-radius: 14px; background: var(--paper); }
 
   /* ---- Modal ---- */
   .modal-overlay { position: fixed; inset: 0; background: rgba(19,26,23,0.4); backdrop-filter: blur(1px); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
   .modal-overlay.hidden { display: none; }
   .modal { background: #fff; border-radius: 16px; padding: 22px; max-width: 460px; width: 100%; border: 1px solid var(--line); max-height: 85vh; overflow-y: auto; box-shadow: var(--shadow-md); }
-  .modal h3 { margin: 0 0 14px 0; font-size: 16px; }
-  .modal label { font-size: 12px; color: var(--muted); display: block; margin: 10px 0 4px 0; font-weight: 600; }
+  .modal h3 { margin: 0 0 14px 0; font-size: 18.5px; }
+  .modal label { font-size: 14px; color: var(--muted); display: block; margin: 10px 0 4px 0; font-weight: 600; }
   .modal input[type=text] {
-    width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: inherit; background: var(--gray-bg);
+    width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 15px; font-family: inherit; background: var(--gray-bg);
   }
   .modal input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); background: #fff; }
   .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 
-  .site-footer { text-align: center; font-size: 11px; color: var(--muted); padding: 26px 0 6px; letter-spacing: 0.02em; }
+  .site-footer { text-align: center; font-size: 12.5px; color: var(--muted); padding: 26px 0 6px; letter-spacing: 0.02em; }
   .site-footer b { color: var(--ink); }
 </style>
 </head>
@@ -333,17 +335,17 @@ let pendingAuthEmail = '';
 function renderAuthScreen(message, isError) {
   document.getElementById('app').innerHTML = `
     <div style="max-width:380px;margin:80px auto;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:center;">
-      <div style="font-weight:800;letter-spacing:2px;color:#96543a;font-size:13px;margin-bottom:6px;">MEDICINA HUMANA</div>
-      <h2 style="margin:0 0 4px;font-size:23px;font-family:Georgia,'Times New Roman',serif;font-weight:400;">Mi Bitácora</h2>
-      <p style="color:#6b6558;font-size:14px;margin:0 0 28px;">Medicina Humana · Dr. Manuel Acuña</p>
+      <div style="font-weight:800;letter-spacing:2px;color:#96543a;font-size:15px;margin-bottom:6px;">MEDICINA HUMANA</div>
+      <h2 style="margin:0 0 4px;font-size:26.5px;font-family:Georgia,'Times New Roman',serif;font-weight:400;">Mi Bitácora</h2>
+      <p style="color:#6b6558;font-size:16px;margin:0 0 28px;">Medicina Humana · Dr. Manuel Acuña</p>
       <input id="authEmail" type="email" placeholder="tu@email.com" autocomplete="email"
-        style="width:100%;padding:12px 14px;border:1px solid #e5ded0;border-radius:8px;margin-bottom:12px;font-size:14px;box-sizing:border-box;"
+        style="width:100%;padding:12px 14px;border:1px solid #e5ded0;border-radius:8px;margin-bottom:12px;font-size:16px;box-sizing:border-box;"
         onkeydown="if(event.key==='Enter'){ event.preventDefault(); handleMagicLink(); }" />
       <button onclick="handleMagicLink()"
-        style="width:100%;padding:12px;background:#B86B4B;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">
+        style="width:100%;padding:12px;background:#B86B4B;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;">
         Enviar link de acceso
       </button>
-      ${message ? `<p style="margin-top:16px;font-size:13px;color:${isError ? '#dc2626' : '#B86B4B'};">${message}</p>` : ''}
+      ${message ? `<p style="margin-top:16px;font-size:15px;color:${isError ? '#dc2626' : '#B86B4B'};">${message}</p>` : ''}
     </div>`;
   const emailInput = document.getElementById('authEmail');
   if (emailInput) emailInput.focus();
@@ -353,22 +355,22 @@ function renderCodeScreen(email, message, isError) {
   pendingAuthEmail = email;
   document.getElementById('app').innerHTML = `
     <div style="max-width:380px;margin:80px auto;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:center;">
-      <div style="font-weight:800;letter-spacing:2px;color:#96543a;font-size:13px;margin-bottom:6px;">MEDICINA HUMANA</div>
-      <h2 style="margin:0 0 4px;font-size:22px;font-family:Georgia,'Times New Roman',serif;font-weight:400;">Revisa tu correo</h2>
-      <p style="color:#6b6558;font-size:14px;margin:0 0 8px;">Te enviamos un link y un código de 8 dígitos a<br><b>${escapeHtml(email)}</b></p>
-      <p style="color:#6b6558;font-size:13px;margin:0 0 20px;">Si el link del correo no abre o da error, escribe el código acá:</p>
+      <div style="font-weight:800;letter-spacing:2px;color:#96543a;font-size:15px;margin-bottom:6px;">MEDICINA HUMANA</div>
+      <h2 style="margin:0 0 4px;font-size:25.5px;font-family:Georgia,'Times New Roman',serif;font-weight:400;">Revisa tu correo</h2>
+      <p style="color:#6b6558;font-size:16px;margin:0 0 8px;">Te enviamos un link y un código de 8 dígitos a<br><b>${escapeHtml(email)}</b></p>
+      <p style="color:#6b6558;font-size:15px;margin:0 0 20px;">Si el link del correo no abre o da error, escribe el código acá:</p>
       <input id="authCode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="12345678" maxlength="8" autocomplete="one-time-code"
-        style="width:100%;padding:12px 14px;border:1px solid #e5ded0;border-radius:8px;margin-bottom:12px;font-size:18px;letter-spacing:4px;text-align:center;box-sizing:border-box;"
+        style="width:100%;padding:12px 14px;border:1px solid #e5ded0;border-radius:8px;margin-bottom:12px;font-size:20.5px;letter-spacing:4px;text-align:center;box-sizing:border-box;"
         onkeydown="if(event.key==='Enter'){ event.preventDefault(); handleVerifyCode(); }" />
       <button onclick="handleVerifyCode()"
-        style="width:100%;padding:12px;background:#B86B4B;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px;">
+        style="width:100%;padding:12px;background:#B86B4B;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:10px;">
         Verificar código
       </button>
       <button onclick="renderAuthScreen()"
-        style="width:100%;padding:10px;background:none;color:#6b6558;border:none;font-size:13px;cursor:pointer;text-decoration:underline;">
+        style="width:100%;padding:10px;background:none;color:#6b6558;border:none;font-size:15px;cursor:pointer;text-decoration:underline;">
         Volver / usar otro correo
       </button>
-      ${message ? `<p style="margin-top:16px;font-size:13px;color:${isError ? '#dc2626' : '#B86B4B'};">${message}</p>` : ''}
+      ${message ? `<p style="margin-top:16px;font-size:15px;color:${isError ? '#dc2626' : '#B86B4B'};">${message}</p>` : ''}
     </div>`;
   const codeInput = document.getElementById('authCode');
   if (codeInput) codeInput.focus();
@@ -411,10 +413,10 @@ async function handleLogout() {
 function renderNotActivated(email) {
   document.getElementById('app').innerHTML = `
     <div style="max-width:400px;margin:80px auto;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:center;">
-      <div style="font-weight:800;letter-spacing:2px;color:#96543a;font-size:13px;margin-bottom:6px;">MEDICINA HUMANA</div>
-      <h2 style="margin:0 0 4px;font-size:20px;font-family:Georgia,'Times New Roman',serif;font-weight:400;">Tu cuenta aun no esta activada</h2>
-      <p style="color:#6b6558;font-size:14px;margin:0 0 20px;">No encontramos un programa asociado a <b>${escapeHtml(email)}</b>. Esto se activa cuando Manuel confirma tu inscripcion.</p>
-      <p style="color:#6b6558;font-size:13px;margin:0 0 24px;">Si acabas de inscribirte, escribele para que active tu acceso.</p>
+      <div style="font-weight:800;letter-spacing:2px;color:#96543a;font-size:15px;margin-bottom:6px;">MEDICINA HUMANA</div>
+      <h2 style="margin:0 0 4px;font-size:23px;font-family:Georgia,'Times New Roman',serif;font-weight:400;">Tu cuenta aun no esta activada</h2>
+      <p style="color:#6b6558;font-size:16px;margin:0 0 20px;">No encontramos un programa asociado a <b>${escapeHtml(email)}</b>. Esto se activa cuando Manuel confirma tu inscripcion.</p>
+      <p style="color:#6b6558;font-size:15px;margin:0 0 24px;">Si acabas de inscribirte, escribele para que active tu acceso.</p>
       <button class="btn small" onclick="handleLogout()" style="padding:10px 18px;">Salir</button>
     </div>`;
 }
@@ -526,19 +528,10 @@ const MEASURE_FIELDS = [
   { key: 'hrv_ms', label: 'HRV', unit: 'ms', decimals: 0, advanced: true, headline: true, color: '#1D1D1A' },
   { key: 'training_load', label: 'Carga de entrenamiento', unit: '/10', decimals: 0, advanced: true }
 ];
-/* Campos visibles según el plan del paciente — los "advanced" (HRV, carga) son de los planes
-   Elite/Deportivo y Vitalidad & Longevidad Elite (ver TIERS más abajo). */
+/* Todos los campos de medición quedan disponibles para todas las personas (ya no hay planes). */
 function visibleMeasureFields() {
-  const tier = currentTier();
-  return MEASURE_FIELDS.filter(f => !f.advanced || tier.advancedMetrics);
+  return MEASURE_FIELDS;
 }
-
-const ROADMAP = [
-  { tag: 'SEMANA 1', title: 'Diagnóstico inicial (2–3 hrs)', desc: 'Historial de demanda, perfil biológico, laboratorio base, objetivos.', offsetDays: 0 },
-  { tag: 'MES 1', title: 'Control quincenal', desc: 'Ajuste de mínimos reales según primeras 2 semanas de check-ins.', offsetDays: 30 },
-  { tag: 'MES 3', title: 'Reporte de avance', desc: 'Comparativa de biomarcadores y composición corporal vs. línea base.', offsetDays: 90 },
-  { tag: 'MES 6', title: 'Cierre de ciclo biológico', desc: 'Reporte final, siguientes pasos, exportación de toda tu data.', offsetDays: 180 }
-];
 
 const RESOURCES = [
   { num: '01 · MOVIMIENTO', title: 'El movimiento construye capacidad', pillarId: 'movimiento', unlockDay: 0, level: 1,
@@ -573,13 +566,13 @@ const RESOURCES = [
    Sábado y domingo quedan sin ninguna obligación ("Fricción Cero de Fin de Semana"). El único
    día que se sale de esta regla es el primer día del programa (bienvenida, evaluación base). */
 const DAY_TYPES = {
-  bienvenida:    { label: 'Bienvenida', icon: '👋', kind: 'full' },
-  vitalidad:     { label: 'Vitalidad y Claridad Mental', icon: '🌅', kind: 'vitalidad', pillarId: 'estres' },
-  habito_ancla:  { label: 'Hábito Ancla y Movimiento', icon: '🏃', kind: 'habito3', pillarId: 'movimiento' },
-  psicoed_zb:    { label: 'Psicoeducación Zona Azul', icon: '💡', kind: 'ack' },
-  ikigai:        { label: 'Mente, Stoicismo & Ikigai', icon: '🧭', kind: 'text' },
-  cierre_semana: { label: 'Cierre de Semana', icon: '📅', kind: 'weekly_close' },
-  zona_sagrada:  { label: 'Espacio Sagrado Zona Azul', icon: '🌿', kind: 'weekend' }
+  bienvenida:    { label: 'Bienvenida', kind: 'full' },
+  vitalidad:     { label: 'Vitalidad y Claridad Mental', kind: 'vitalidad', pillarId: 'estres' },
+  habito_ancla:  { label: 'Hábito Ancla y Movimiento', kind: 'habito3', pillarId: 'movimiento' },
+  psicoed_zb:    { label: 'Psicoeducación Zona Azul', kind: 'ack' },
+  ikigai:        { label: 'Mente, Stoicismo & Ikigai', kind: 'text' },
+  cierre_semana: { label: 'Cierre de Semana', kind: 'weekly_close' },
+  zona_sagrada:  { label: 'Espacio Sagrado Zona Azul', kind: 'weekend' }
 };
 /* JS Date.getDay(): 0=domingo, 1=lunes ... 6=sábado */
 const WEEKDAY_TYPES = { 0: 'zona_sagrada', 1: 'vitalidad', 2: 'habito_ancla', 3: 'psicoed_zb', 4: 'ikigai', 5: 'cierre_semana', 6: 'zona_sagrada' };
@@ -626,7 +619,7 @@ function getZoneBlueTipForDay(iso) {
   return ZONE_BLUE_MICRODOSIS[Math.floor(offset / 7) % ZONE_BLUE_MICRODOSIS.length];
 }
 
-/* --- Biblioteca curada Zona Azul (libros, documentales, podcasts) — acceso por plan, ver TIERS --- */
+/* --- Biblioteca curada Zona Azul (libros, documentales, podcasts) --- */
 const ZONE_BLUE_LIBRARY = [
   { type: 'Libro', title: 'Outlive: The Science and Art of Longevity', isbn: '9780593236598', url: 'https://www.amazon.com/dp/0593236599', urlLabel: 'Comprar en Amazon', url2: 'https://www.buscalibre.cl/libros/search?q=Outlive+Peter+Attia', url2Label: 'Buscalibre Chile', author: 'Dr. Peter Attia', tag: 'Medicina 3.0',
     blurb: 'Medicina 3.0, prevención proactiva, zona 2 de entrenamiento, estabilidad física y masa muscular como seguro de vida.' },
@@ -652,18 +645,6 @@ const ZONE_BLUE_LIBRARY = [
     blurb: 'Longevidad, nutrición basada en alimentos integrales y transformación personal.' }
 ];
 
-/* ============================= TIERS / PLANES (spec sección 2) ============================= */
-/* resourceLevel: hasta qué "Nivel" de Recursos se desbloquea (1-4, ver RESOURCES[].level).
-   library: false | 'full' | 'unlimited' — acceso a Biblioteca Zona Azul.
-   advancedMetrics: true habilita HRV / carga de entrenamiento en Medidas.
-   sessionSummaryLimit: null = sin límite; número = tope de resúmenes de sesión visibles.
-   upsell: { day, message } — banner que aparece desde ese día del programa (null = sin upsell, es tier tope). */
-const TIERS = {
-  '3m': { label: '3M · Programa Base', months: 3, resourceLevel: 4, library: 'full', advancedMetrics: true, sessionSummaryLimit: null, upsell: null },
-  '6m': { label: '6M · Flagship / Longevidad', months: 6, resourceLevel: 4, library: 'unlimited', advancedMetrics: true, sessionSummaryLimit: null, upsell: null }
-};
-function currentTier() { return TIERS[state.patient.tierPlan] || TIERS['3m']; }
-
 /* Tipo de día: fijo por día de la SEMANA (no por offset del programa) — única excepción es el
    día 0, que siempre es la bienvenida con evaluación base completa. Versión "pura" (sin leer el
    estado global) para poder usarla también generando datos semilla antes de que `state` exista. */
@@ -679,14 +660,6 @@ function getDayType(iso) {
 function getQuoteForDay(iso) {
   const offset = Math.max(0, daysBetween(state.patient.startDate, iso));
   return QUOTES[offset % QUOTES.length];
-}
-/* Recordatorio de control próximo — se muestra como banner SECUNDARIO sobre el tipo de día fijo
-   de la semana (no lo reemplaza, para no romper la promesa de "un tipo de día fijo por semana"). */
-function getMilestoneReminder(iso) {
-  const offset = Math.max(0, daysBetween(state.patient.startDate, iso));
-  let hit = null;
-  ROADMAP.forEach(m => { if (m.offsetDays > 0) { const diff = m.offsetDays - offset; if (diff >= 1 && diff <= 4) hit = m; } });
-  return hit;
 }
 
 /* ============================= ADHERENCIA — cálculo único, compartido ============================
@@ -1118,24 +1091,15 @@ const TABS = [
 ];
 
 function setTab(id) { state.ui.tab = id; saveState(); render(); }
-function dismissUpsell() { state.ui.upsellDismissed = true; saveState(); render(); }
 
 function render() {
   const app = document.getElementById('app');
   const daysIn = daysBetween(state.patient.startDate, todayISO());
-  const totalProgramDays = state.patient.programMonths * 30;
   const dayLabel = daysIn >= 0 ? ('Día ' + (daysIn+1) + ' en tu bitácora') : 'Tu bitácora aún no inicia';
 
-  const tier = currentTier();
   let html = '';
   if (isDemoMode) {
-    html += '<div style="background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:12px;font-weight:600;padding:8px 14px;border-radius:10px;margin-bottom:10px;text-align:center;">MODO DEMO — datos de prueba, no se guardan ni afectan pacientes reales</div>';
-  }
-  if (!isDemoMode && tier.upsell && daysIn >= tier.upsell.day && !state.ui.upsellDismissed) {
-    html += '<div class="card" style="border-left:3px solid var(--gold);background:var(--gold-bg);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">';
-    html += '<div style="font-size:12.5px;color:var(--ink);line-height:1.5;">💡 ' + escapeHtml(tier.upsell.message) + '</div>';
-    html += '<button class="btn small" onclick="dismissUpsell()">Entendido</button>';
-    html += '</div>';
+    html += '<div style="background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:14px;font-weight:600;padding:8px 14px;border-radius:10px;margin-bottom:10px;text-align:center;">MODO DEMO — datos de prueba, no se guardan ni afectan pacientes reales</div>';
   }
   html += '<div class="head-top">';
   html += '  <div class="brand-row">';
@@ -1153,6 +1117,9 @@ function render() {
 
   html += '<div id="tabContent"></div>';
   app.innerHTML = html;
+  /* En el celular las pestañas son una fila deslizable: dejar visible la activa. */
+  const tabsEl = app.querySelector('.tabs'), activeTab = app.querySelector('.tab-btn.active');
+  if (tabsEl && activeTab) tabsEl.scrollLeft = activeTab.offsetLeft - tabsEl.offsetLeft - 16;
 
   const content = document.getElementById('tabContent');
   if (state.ui.tab === 'resumen') content.innerHTML = renderResumen();
@@ -1176,105 +1143,36 @@ function escapeHtml(s) {
 }
 
 /* ============================= TAB: RESUMEN =============================
-   Foto general del estado del paciente — pestaña por defecto al entrar.
-   Todo lo que muestra reusa cálculos que ya existen en otras pestañas
-   (Mi Data, Sesiones, Mi Bitácora), para no duplicar lógica ni introducir
-   una segunda fuente de verdad. "Próximo control" usa el mismo ROADMAP
-   clínico que ya usa Sesiones, con la misma etiqueta honesta ("Estimada")
-   hasta que exista la integración real de Calendar. */
+   Pantalla de hoy: saludo, la pregunta del día, semáforo, registro, tendencias
+   y ciclo. Sin cifras repetidas: constancia vive en Progreso, el ritmo del mes
+   en Mi Rueda. */
 function renderResumen() {
   const todayIso = todayISO();
   const startIso = state.patient.startDate;
   const daysIn = daysBetween(startIso, todayIso);
-  const totalProgramDays = state.patient.programMonths * 30;
-  const tier = currentTier();
   const firstName = (state.patient.name || '').trim().split(' ')[0] || '';
-
   const dayLabel = daysIn >= 0
     ? ('Día ' + (daysIn + 1) + ' en tu bitácora')
     : 'Tu bitácora aún no inicia';
 
-  /* Adherencia global — mismo cálculo que la pestaña Mi Data (computeAdherence, único en todo el archivo) */
-  const adherence = computeAdherence(startIso, todayIso, state.checkins);
-
-  /* Check-ins de los últimos 7 días — sobre los días que realmente pedían uno (lunes a viernes) */
-  const last7 = computeAdherenceInRange(startIso, state.checkins, addDaysISO(todayIso, -6), todayIso);
-
-  /* Próximo hito del cronograma clínico — mismo cálculo que "Próximas Sesiones" */
-  const nextItem = ROADMAP
-    .map(m => ({ m: m, dueDate: addDaysISO(startIso, m.offsetDays) }))
-    .find(x => x.dueDate > todayIso);
-
-  let html = '';
+  let html = '<div class="resumen-col">';
 
   html += '<div class="card" style="margin-bottom:16px;">';
   html += '  <h3 style="margin:0 0 2px 0;">Hola' + (firstName ? ', ' + escapeHtml(firstName) : '') + '</h3>';
   html += '  <div class="card-sub" style="margin:0;">' + dayLabel + ' · desde el ' + fmtDate(startIso) + '</div>';
   html += '</div>';
 
-  html += '<div class="grid-2">';
+  html += SizigiaPersona.semaforoCard();
 
-  /* --- Left: hoy te toca + stats + próximo control --- */
-  html += '<div>';
-
-  /* "Hoy te toca" — reusa buildDayCard tal cual (misma tarjeta de Mi Bitácora), para que Resumen
-     no sea solo foto del pasado sino también la próxima acción concreta. Maneja fin de semana
-     (Zona Sagrada), días futuros/anteriores al inicio y "ya completado" sin lógica nueva. */
   html += '<div class="card" style="margin-bottom:16px;">';
   html += '<h3>Hoy te toca</h3>';
   html += buildDayCard(todayIso, 'summary');
   html += '</div>';
 
-  html += SizigiaPersona.semaforoCard();
   html += SizigiaRegistro.card(renderAthleteLogCard);
   html += SizigiaPersona.restCards();
 
-  const adherenceInfo = 'Mide qué % de los días que pedían un check-in (lunes a viernes; el fin de semana es tu Zona Sagrada, sin tareas por diseño) sí lo hiciste, desde el día 1 del programa. <strong>100% es cumplimiento total de lo pedido</strong> — no hace falta estar siempre en el máximo para que el proceso funcione, pero es el número que Manuel revisa antes de cada control.';
-  const last7Info = 'De los 5 días que piden algo esta semana (lunes a viernes), cuántos ya registraste. Sábado y domingo no cuentan ni suman ni restan: son tu Zona Sagrada.';
-  const sesionesInfo = 'Consultas clínicas con Manuel ya registradas en tu ficha — no tus ingresos a esta plataforma. Entrar a Mi Bitácora no suma acá.';
-
-  html += '<div class="stat-chips" style="margin-bottom:16px;">';
-  html += statChip(adherence !== null ? adherence + '%' : '—', 'Adherencia', adherenceInfo);
-  html += statChip(last7.done + '/' + last7.eligible, 'Check-ins esta semana', last7Info);
-  html += statChip(state.sessions.length, 'Consultas registradas', sesionesInfo);
   html += '</div>';
-
-  html += '<div class="card">';
-  html += '<h3>Próximo control</h3>';
-  if (nextItem) {
-    html += '<div class="roadmap-mini" style="margin:0;">';
-    html += '  <div class="rm-tag">' + nextItem.m.tag + '</div>';
-    html += '  <h4>' + nextItem.m.title + '</h4>';
-    html += '  <p>' + nextItem.m.desc + '</p>';
-    html += '  <div class="rm-date">Estimada: ' + fmtDate(nextItem.dueDate) + '</div>';
-    html += '</div>';
-    html += '<div style="font-size:11px;color:var(--muted);margin-top:8px;">Fecha estimada según el cronograma del programa. Se actualizará automáticamente con la fecha real de Google Calendar apenas esa integración esté conectada.</div>';
-  } else {
-    html += '<div class="empty-state">No hay controles por delante — programa cerrado o completo.</div>';
-  }
-  html += '</div>';
-
-  html += '</div>'; // left col
-
-  /* --- Right: mini ritmo del mes (reusa buildRadarSVG de Mi Bitácora) + pilar más débil --- */
-  html += '<div class="card">';
-  html += '<h3>Ritmo de este mes</h3>';
-  html += '<div class="card-sub">Promedio de cada pilar en ' + monthLabel(monthKey(todayIso)) + '.</div>';
-  const mstats = monthAverages(monthKey(todayIso));
-  if (mstats.daysWithData === 0) {
-    html += '<div class="no-data-msg">Sin check-ins registrados este mes todavía.</div>';
-  } else {
-    html += '<div class="rueda-svg-wrap">' + buildRadarSVG(mstats) + '</div>';
-    const weakestMonth = weakestPillarFromAvgs(mstats.avgs);
-    if (weakestMonth) {
-      html += '<div style="margin-top:8px;padding:8px 10px;background:var(--gray-bg);border-radius:8px;font-size:12px;color:var(--ink);">Pilar con nota más baja este mes: <strong>' + escapeHtml(weakestMonth.name) + '</strong> (' + weakestMonth.avg.toFixed(1) + '/10)</div>';
-    }
-  }
-  html += '<div style="margin-top:10px;"><button class="btn small" onclick="setTab(\'rueda\')">Ver Mi Rueda completa →</button></div>';
-  html += '</div>';
-
-  html += '</div>'; // grid-2
-
   return html;
 }
 
@@ -1290,7 +1188,7 @@ function athleteLogs() { if (!state.athleteLogs) state.athleteLogs = {}; return 
 function sessionLoad(log) { return log && log.trained && log.session_rpe && log.session_minutes ? log.session_rpe * log.session_minutes : 0; }
 
 function athSliderRow(id, label, hint, val, min) {
-  return '<div class="pillar-row"><div class="pillar-name">' + label + '<div style="font-size:11px;color:var(--muted);font-weight:400;">' + hint + '</div></div>' +
+  return '<div class="pillar-row"><div class="pillar-name">' + label + '<div style="font-size:12.5px;color:var(--muted);font-weight:400;">' + hint + '</div></div>' +
     '<div class="pillar-slider-wrap"><input type="range" min="' + min + '" max="10" step="1" value="' + val + '" id="ath_sl_' + id + '" oninput="document.getElementById(\'ath_val_' + id + '\').textContent=this.value">' +
     '<span class="pillar-val" id="ath_val_' + id + '">' + val + '</span></div></div>';
 }
@@ -1324,7 +1222,7 @@ function renderAthleteLogCard() {
   // Resumen de 7 días: solo cifras que el propio atleta cargó.
   let n = 0, load = 0;
   for (let i = 0; i < 7; i++) { const l = logs[addDaysISO(iso, -i)]; if (l) { n++; load += sessionLoad(l); } }
-  html += '<div style="font-size:12px;color:var(--muted);margin-top:10px;">Últimos 7 días: ' + n + '/7 registros · carga de entrenamiento ' + load + ' u.a. (esfuerzo × minutos, autoinformado).</div>';
+  html += '<div style="font-size:14px;color:var(--muted);margin-top:10px;">Últimos 7 días: ' + n + '/7 registros · carga de entrenamiento ' + load + ' u.a. (esfuerzo × minutos, autoinformado).</div>';
   html += '</div>';
   return html;
 }
@@ -1404,7 +1302,7 @@ function renderRueda() {
   if (customCount < 2) {
     html += '<button class="btn small" onclick="openCustomModal()">+ Agregar item personalizado (' + customCount + '/2)</button>';
   } else {
-    html += '<span style="font-size:11.5px;color:var(--muted);">Máximo de 2 items personalizados alcanzado.</span>';
+    html += '<span style="font-size:13px;color:var(--muted);">Máximo de 2 items personalizados alcanzado.</span>';
   }
   html += '</div>';
   html += '</div>';
@@ -1489,7 +1387,7 @@ function renderWeekPreview() {
     const isToday = i === 0;
     const cls = 'wp-item' + (isToday ? ' wp-today' : '') + (has ? ' wp-done' : '') + (isWeekend ? ' wp-rest' : '');
     const dayLbl = isToday ? 'Hoy' : fmtDate(iso).split(' ').slice(0,2).join(' ');
-    html += '<div class="' + cls + '" title="' + escapeHtml(spec.label) + '"><div class="wp-icon">' + spec.icon + '</div><div class="wp-day">' + dayLbl + '</div></div>';
+    html += '<div class="' + cls + '" title="' + escapeHtml(spec.label) + '"><div class="wp-day">' + dayLbl + '</div></div>';
   }
   html += '</div>';
   return html;
@@ -1524,7 +1422,7 @@ function buildDayCard(iso, idPrefix) {
   else if (iso === todayIso) statusBadge = '<span class="rd-badge warn">Hoy · pendiente</span>';
   else if (isFuture) statusBadge = '<span class="rd-badge muted">Próximamente</span>';
 
-  let html = '<div class="daycard-head"><div class="daycard-type"><span class="dt-icon">' + spec.icon + '</span> ' + escapeHtml(spec.label) + '</div>' + statusBadge + '</div>';
+  let html = '<div class="daycard-head"><div class="daycard-type">' + escapeHtml(spec.label) + '</div>' + statusBadge + '</div>';
   html += '<div class="daycard-sub">Día ' + dayNum + ' · ' + fmtDate(iso) + '</div>';
 
   if (isFuture) {
@@ -1536,14 +1434,10 @@ function buildDayCard(iso, idPrefix) {
     return html;
   }
   if (type === 'zona_sagrada') {
-    html += '<div class="daycard-msg" style="text-align:center;">🌿 Sin tareas ni registros pendientes.<br>Disfruta de la naturaleza, el movimiento libre y la compañía de tu tribu.</div>';
+    html += '<div class="daycard-msg" style="text-align:center;">Sin tareas ni registros pendientes.<br>Disfruta de la naturaleza, el movimiento libre y la compañía de tu tribu.</div>';
     return html;
   }
 
-  if (iso === todayIso) {
-    const milestone = getMilestoneReminder(iso);
-    if (milestone) html += '<div class="daycard-msg" style="margin-bottom:12px;">🧪 <strong>' + escapeHtml(milestone.tag) + '</strong> se acerca — ' + escapeHtml(milestone.title) + ' (estimado ' + fmtDate(addDaysISO(state.patient.startDate, milestone.offsetDays)) + ').</div>';
-  }
 
   if (type === 'habito_ancla') {
     const status = habitoAnclaStatus(existing);
@@ -1553,7 +1447,7 @@ function buildDayCard(iso, idPrefix) {
     html += '  <button class="btn small ' + (status==='parcial'?'primary':'') + '" onclick="saveHabitoAncla(\'' + iso + '\',\'parcial\')">Parcial / pausa activa</button>';
     html += '  <button class="btn small ' + (status==='descanso'?'primary':'') + '" onclick="saveHabitoAncla(\'' + iso + '\',\'descanso\')">Hoy fue descanso</button>';
     html += '</div>';
-    if (status === 'completado') html += '<div class="daycard-msg">Sumaste adherencia al pilar Movimiento. 💪</div>';
+    if (status === 'completado') html += '<div class="daycard-msg">Sumaste adherencia al pilar Movimiento.</div>';
     else if (status === 'parcial') html += '<div class="daycard-msg">Progreso medio registrado — cuenta igual.</div>';
     else if (status === 'descanso') html += '<div class="daycard-msg">El descanso activo también regenera.</div>';
     if (existing) html += '<div class="ring-detail-actions"><button class="btn small danger" onclick="deleteDayEntry(\'' + iso + '\')">Eliminar</button></div>';
@@ -1563,7 +1457,7 @@ function buildDayCard(iso, idPrefix) {
   if (type === 'psicoed_zb') {
     const tip = getZoneBlueTipForDay(iso);
     html += '<div class="daycard-tip"><div class="dt-num">' + escapeHtml(tip.read.toUpperCase()) + ' DE LECTURA</div><div class="dt-lead"><strong>' + escapeHtml(tip.title) + '.</strong> ' + escapeHtml(tip.body) + '</div></div>';
-    if (existing && existing.ack) html += '<div class="daycard-msg">Marcado como entendido y aplicado. ✅</div>';
+    if (existing && existing.ack) html += '<div class="daycard-msg">Marcado como entendido y aplicado.</div>';
     else html += '<div class="ring-detail-actions"><button class="btn small primary" onclick="savePsicoedZB(\'' + iso + '\')">Entendido y aplicado</button></div>';
     if (existing) html += '<div class="ring-detail-actions" style="margin-top:4px;"><button class="btn small danger" onclick="deleteDayEntry(\'' + iso + '\')">Eliminar</button></div>';
     return html;
@@ -1847,7 +1741,7 @@ function renderRingDetailPanel(iso) {
 function downloadRadarPNG() {
   const svgEl = document.getElementById('radarSvg');
   if (!svgEl) { alert('No hay datos suficientes este mes para exportar el ritmo.'); return; }
-  svgToPng(svgEl, 'ritmo-sobi-' + state.ui.selectedMonth + '.png');
+  svgToPng(svgEl, 'ritmo-sizigia-' + state.ui.selectedMonth + '.png');
 }
 function svgToPng(svgEl, filename) {
   const xml = new XMLSerializer().serializeToString(svgEl);
@@ -1882,18 +1776,10 @@ function downloadMonthCSV() {
     const wscore = weightedDailyScore(c.ratings);
     return [iso, c.type || '', ...state.pillars.map(p => c.ratings[p.id] !== undefined ? c.ratings[p.id] : ''), wscore !== null ? wscore.toFixed(2) : '', (c.note||'').replace(/\n/g,' ')];
   });
-  downloadCSV('sobi-data-' + state.ui.selectedMonth + '.csv', headers, rows);
+  downloadCSV('sizigia-data-' + state.ui.selectedMonth + '.csv', headers, rows);
 }
 
 /* ============================= TAB: PROGRESO ============================= */
-function computeCurrentStreak() {
-  let streak = 0;
-  let iso = todayISO();
-  if (!state.checkins[iso]) iso = addDaysISO(iso, -1);
-  while (state.checkins[iso]) { streak++; iso = addDaysISO(iso, -1); }
-  return streak;
-}
-
 function weightedAvgFromPillarAverages(avgs) {
   let sumW = 0, sumWR = 0;
   state.pillars.forEach(p => {
@@ -1907,11 +1793,7 @@ function weightedAvgFromPillarAverages(avgs) {
 function renderProgreso() {
   const months = getMonthList();
   const allIsos = Object.keys(state.checkins).sort();
-  const daysSinceStart = Math.max(1, daysBetween(state.patient.startDate, todayISO()) + 1);
   const adherence = computeAdherence(state.patient.startDate, todayISO(), state.checkins);
-  const streak = computeCurrentStreak();
-  const totalProgramDays = state.patient.programMonths * 30;
-  const progPct = Math.max(0, Math.min(100, Math.round(daysSinceStart / totalProgramDays * 100)));
 
   const baselineAvg = months.length ? weightedAvgFromPillarAverages(monthAverages(months[0]).avgs) : null;
   const last30cut = addDaysISO(todayISO(), -30);
@@ -1928,10 +1810,8 @@ function renderProgreso() {
 
   let html = '';
   html += '<div class="stat-chips">';
-  html += statChip((adherence !== null ? adherence : 0) + '%', 'Adherencia global');
-  html += statChip(streak + (streak === 1 ? ' día' : ' días'), 'Racha actual');
+  html += statChip((adherence !== null ? adherence : 0) + '%', 'Constancia', 'De los días que pedían un registro (lunes a viernes; el fin de semana no cuenta), cuántos registraste desde que empezaste.');
   html += '<div class="stat-chip"><div class="num">' + (currentAvg !== null ? currentAvg.toFixed(1) : '—') + '</div><div class="lbl">Bienestar (últ. 30d)</div>' + deltaHtml + '</div>';
-  html += statChip(daysSinceStart, 'Días en tu bitácora');
   html += '</div>';
 
   html += renderWeeklySummaryCard();
@@ -1945,7 +1825,7 @@ function renderProgreso() {
     const monthlyOverall = months.map(mk => ({ mk: mk, avg: weightedAvgFromPillarAverages(monthAverages(mk).avgs) }));
     html += '<div class="chart-svg-wrap">' + buildMonthlyOverallSVG(monthlyOverall) + '</div>';
     html += '<div style="overflow-x:auto;margin-top:14px;">';
-    html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
     html += '<thead><tr><th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);">Pilar</th>';
     months.forEach(mk => { html += '<th style="text-align:right;padding:6px 8px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap;">' + monthLabel(mk).slice(0,3) + '.' + mk.slice(2,4) + '</th>'; });
     html += '</tr></thead><tbody>';
@@ -2014,14 +1894,14 @@ function renderWeeklySummaryCard() {
 
   let html = '<div class="card" style="margin-bottom:18px;border-left:3px solid var(--accent);">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">';
-  html += '<h3 style="margin:0;">Sprint Semanal</h3>';
-  html += '<span style="font-size:10.5px;color:var(--muted);background:var(--gray-bg);padding:3px 9px;border-radius:999px;">Generado automáticamente</span>';
+  html += '<h3 style="margin:0;">Cómo fue tu semana</h3>';
+  html += '<span style="font-size:12px;color:var(--muted);background:var(--gray-bg);padding:3px 9px;border-radius:999px;">Generado automáticamente</span>';
   html += '</div>';
   html += '<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px;">';
-  html += '<div><div style="font-size:20px;font-weight:700;color:var(--accent-dark);">' + thisWeekAdherence + '%</div><div style="font-size:11px;color:var(--muted);">Adherencia esta semana' + (prevWeekIsos.length || thisWeekIsos.length ? ' (' + (adherenceDelta >= 0 ? '+' : '') + adherenceDelta + ' pts vs. anterior)' : '') + '</div></div>';
-  if (weakest) html += '<div><div style="font-size:20px;font-weight:700;color:var(--amber);">' + weakest.avg.toFixed(1) + '/10</div><div style="font-size:11px;color:var(--muted);">Pilar con nota más baja: ' + escapeHtml(weakest.name) + '</div></div>';
+  html += '<div><div style="font-size:23px;font-weight:700;color:var(--accent-dark);">' + thisWeekAdherence + '%</div><div style="font-size:12.5px;color:var(--muted);">Adherencia esta semana' + (prevWeekIsos.length || thisWeekIsos.length ? ' (' + (adherenceDelta >= 0 ? '+' : '') + adherenceDelta + ' pts vs. anterior)' : '') + '</div></div>';
+  if (weakest) html += '<div><div style="font-size:23px;font-weight:700;color:var(--amber);">' + weakest.avg.toFixed(1) + '/10</div><div style="font-size:12.5px;color:var(--muted);">Pilar con nota más baja: ' + escapeHtml(weakest.name) + '</div></div>';
   html += '</div>';
-  html += '<p style="font-size:13px;line-height:1.5;margin:0;">' + insight + '</p>';
+  html += '<p style="font-size:15px;line-height:1.5;margin:0;">' + insight + '</p>';
   html += '</div>';
   return html;
 }
@@ -2044,10 +1924,10 @@ function renderCrossChartCard() {
   html += '<h3 style="margin:0 0 2px;">Cruce de variables</h3>';
   html += '<div class="card-sub">Compara la tendencia de un pilar con una medición física — útil para ver, por ejemplo, si dormir más se refleja en tu pilar de sueño, o si el movimiento se traduce en composición corporal.</div>';
   html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">';
-  html += '<select onchange="setCrossPillar(this.value)" style="border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:12.5px;font-family:inherit;">';
+  html += '<select onchange="setCrossPillar(this.value)" style="border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:14.5px;font-family:inherit;">';
   state.pillars.forEach(p => { html += '<option value="' + p.id + '"' + (p.id === pillarId ? ' selected' : '') + '>' + escapeHtml(p.name) + '</option>'; });
   html += '</select>';
-  html += '<select onchange="setCrossMeasure(this.value)" style="border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:12.5px;font-family:inherit;">';
+  html += '<select onchange="setCrossMeasure(this.value)" style="border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:14.5px;font-family:inherit;">';
   fields.forEach(f => { html += '<option value="' + f.key + '"' + (f.key === measureKey ? ' selected' : '') + '>' + f.label + '</option>'; });
   html += '</select>';
   html += '</div>';
@@ -2084,9 +1964,9 @@ function renderAthleteDeltasCard(mIsos) {
     if (f.key === 'muscle_mass_kg') goodDir = d > 0;
     const color = goodDir === null ? 'var(--ink)' : (goodDir ? 'var(--green)' : 'var(--amber)');
     html += '<div style="border:1px solid var(--line);border-radius:10px;padding:12px;">';
-    html += '<div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;">' + f.label + '</div>';
-    html += '<div style="font-size:18px;font-weight:700;color:' + color + ';">' + sign + d.toFixed(f.decimals) + ' ' + f.unit + '</div>';
-    html += '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + fv.toFixed(f.decimals) + ' → ' + lv.toFixed(f.decimals) + '</div>';
+    html += '<div style="font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:4px;">' + f.label + '</div>';
+    html += '<div style="font-size:20.5px;font-weight:700;color:' + color + ';">' + sign + d.toFixed(f.decimals) + ' ' + f.unit + '</div>';
+    html += '<div style="font-size:12.5px;color:var(--muted);margin-top:2px;">' + fv.toFixed(f.decimals) + ' → ' + lv.toFixed(f.decimals) + '</div>';
     html += '</div>';
   });
   html += '</div></div>';
@@ -2173,7 +2053,7 @@ function buildDualTrendSVG(seriesA, seriesB, opts) {
   svg += '<text x="' + (w-padR) + '" y="' + (h-8) + '" text-anchor="end" font-size="9.5" fill="#6b6558" font-family="-apple-system,sans-serif">' + fmtDate(maxIso) + '</text>';
   svg += '</svg>';
 
-  let legend = '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--muted);">';
+  let legend = '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--muted);">';
   legend += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + (opts.colorA || '#B86B4B') + ';margin-right:5px;"></span>' + escapeHtml(opts.labelA || 'Serie A') + '</span>';
   legend += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + (opts.colorB || '#344957') + ';margin-right:5px;"></span>' + escapeHtml(opts.labelB || 'Serie B') + '</span>';
   legend += '<span style="font-style:italic;">Cada serie normalizada a su propio rango — compara la forma de la tendencia, no la escala.</span>';
@@ -2191,7 +2071,6 @@ function renderMedidas() {
 
   let html = '';
   const fields = visibleMeasureFields();
-  const tier = currentTier();
 
   html += '<div class="stat-chips">';
   fields.filter(f => f.headline).forEach(f => {
@@ -2201,9 +2080,9 @@ function renderMedidas() {
     if (has && prev && prev[f.key] != null) {
       const d = Number(latest[f.key]) - Number(prev[f.key]);
       const sign = d > 0 ? '+' : '';
-      deltaHtml = '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + sign + d.toFixed(f.decimals) + ' ' + f.unit + ' vs. medición anterior</div>';
+      deltaHtml = '<div style="font-size:12.5px;color:var(--muted);margin-top:2px;">' + sign + d.toFixed(f.decimals) + ' ' + f.unit + ' vs. medición anterior</div>';
     }
-    html += '<div class="stat-chip"><div class="num">' + val + (has ? ' <span style="font-size:12px;font-weight:600;color:var(--muted);">' + f.unit + '</span>' : '') + '</div><div class="lbl">' + f.label + '</div>' + deltaHtml + '</div>';
+    html += '<div class="stat-chip"><div class="num">' + val + (has ? ' <span style="font-size:14px;font-weight:600;color:var(--muted);">' + f.unit + '</span>' : '') + '</div><div class="lbl">' + f.label + '</div>' + deltaHtml + '</div>';
   });
   html += '</div>';
 
@@ -2213,7 +2092,7 @@ function renderMedidas() {
   html += '<div class="card" style="margin-bottom:18px;">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:4px;">';
   html += '<h3 style="margin:0;">Registrar medición</h3>';
-  html += '<input type="date" id="measureDate" value="' + selDate + '" onchange="setMeasureDate(this.value)" style="border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;">';
+  html += '<input type="date" id="measureDate" value="' + selDate + '" onchange="setMeasureDate(this.value)" style="border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:15px;font-family:inherit;">';
   html += '</div>';
   html += '<div class="card-sub">' + (isEditing ? 'Ya hay una medición para esta fecha — guardar la va a actualizar.' : 'Una vez a la semana es suficiente. Deja en blanco lo que no midas esta vez.') + '</div>';
   html += '<div class="measure-grid">';
@@ -2227,7 +2106,6 @@ function renderMedidas() {
   html += '<button class="btn primary" onclick="saveMeasurementForm()">Guardar medición</button>';
   if (isEditing) html += '<button class="btn danger" onclick="deleteMeasurement(\'' + selDate + '\')">Eliminar esta medición</button>';
   html += '</div>';
-  if (!tier.advancedMetrics) html += '<div class="resource-unlock-note" style="margin-top:10px;">🔒 HRV y carga de entrenamiento están disponibles en los planes Elite/Deportivo y Vitalidad &amp; Longevidad Elite.</div>';
   html += '</div>';
 
   if (isos.length === 0) {
@@ -2360,7 +2238,7 @@ function downloadMeasurementsCSV() {
     const m = state.measurements[iso];
     return [iso, ...MEASURE_FIELDS.map(f => m[f.key] != null ? m[f.key] : ''), (m.notes || '').replace(/\n/g, ' ')];
   });
-  downloadCSV('sobi-mediciones.csv', headers, rows);
+  downloadCSV('sizigia-mediciones.csv', headers, rows);
 }
 
 /* ============================= TAB: HISTORIAL ============================= */
@@ -2375,18 +2253,10 @@ function renderHistorial() {
   }
   const scores = filtered.map(iso => weightedDailyScore(state.checkins[iso].ratings)).filter(s => s !== null);
   const avg = scores.length ? (scores.reduce((a,b) => a+b, 0) / scores.length) : null;
-  const adherence = computeAdherence(state.patient.startDate, todayISO(), state.checkins);
 
-  let html = '<div class="stat-chips">';
-  html += statChip(avg !== null ? avg.toFixed(1) : '—', 'Bienestar general prom.');
-  html += statChip(allIsos.length, 'Check-ins totales');
-  html += statChip((adherence !== null ? adherence : 0) + '%', 'Adherencia al programa');
-  html += statChip(state.sessions.length, 'Consultas registradas');
-  html += '</div>';
-
-  html += '<div class="card" style="margin-bottom:18px;">';
+  let html = '<div class="card" style="margin-bottom:18px;">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">';
-  html += '<div><h3 style="margin:0;">Bienestar general</h3><div class="card-sub" style="margin-bottom:0;">Promedio ponderado diario (rating × peso de cada pilar)</div></div>';
+  html += '<div><h3 style="margin:0;">Bienestar general</h3><div class="card-sub" style="margin-bottom:0;">Promedio ponderado diario (nota × peso de cada pilar)' + (avg !== null ? ' · promedio en este rango: ' + avg.toFixed(1) : '') + '</div></div>';
   html += '<div class="range-toggle">';
   ['30','90','180','all'].forEach(r => {
     const lbl = r === 'all' ? 'Todo' : 'Últ. ' + r + 'd';
@@ -2415,7 +2285,7 @@ function renderHistorial() {
     const c = state.checkins[iso];
     const typeSpec = c.type && DAY_TYPES[c.type] ? DAY_TYPES[c.type] : null;
     html += '<div class="checkin-item">';
-    html += '<div class="ci-date">' + fmtDate(iso) + (typeSpec ? ' · ' + typeSpec.icon + ' ' + escapeHtml(typeSpec.label) : '') + '</div>';
+    html += '<div class="ci-date">' + fmtDate(iso) + (typeSpec ? ' · ' + escapeHtml(typeSpec.label) : '') + '</div>';
     const ratingKeys = Object.keys(c.ratings || {}).filter(k => k !== '_semanal');
     html += '<div class="ci-chips">';
     ratingKeys.forEach(pid => {
@@ -2515,67 +2385,29 @@ function buildHistorialSVG(isos) {
 
 /* ============================= TAB: RECURSOS ============================= */
 function renderRecursos() {
-  const daysIn = Math.max(0, daysBetween(state.patient.startDate, todayISO()));
-  const tier = currentTier();
-  let html = '<div class="section-title">Guías por pilar — se van desbloqueando a medida que avanzas en el programa y según tu plan</div>';
+  let html = '<div class="section-title">Guías por pilar</div>';
   html += '<div class="resource-grid">';
   RESOURCES.forEach(r => {
-    const lockedByPlan = r.level > tier.resourceLevel;
-    const lockedByTime = !lockedByPlan && daysIn < r.unlockDay;
-    const unlocked = !lockedByPlan && !lockedByTime;
-    html += '<div class="resource-card ' + (unlocked ? '' : 'locked') + '">';
+    html += '<div class="resource-card">';
     html += '<div class="rnum">' + r.num + '</div>';
-    if (lockedByPlan) {
-      html += '<div class="resource-lock-badge">🔒 Nivel ' + r.level + ' — disponible desde tu próximo plan</div>';
-      html += '<h4>' + r.title + '</h4>';
-      html += '<div class="resource-blur">';
-      html += '<p>' + r.lead + '</p>';
-      html += '<div class="resource-min"><div class="lbl">MÍNIMO REAL</div><ul>' + r.minimo.map(m => '<li>' + m + '</li>').join('') + '</ul></div>';
-      html += '</div>';
-      html += '<div class="resource-unlock-note">Este contenido (Nivel ' + r.level + ') está incluido a partir de planes superiores — pregúntale a Manuel por el upgrade.</div>';
-    } else if (lockedByTime) {
-      const unlockDate = addDaysISO(state.patient.startDate, r.unlockDay);
-      const remaining = r.unlockDay - daysIn;
-      html += '<div class="resource-lock-badge">🔒 Se desbloquea en ' + remaining + ' día' + (remaining===1?'':'s') + ' (' + fmtDate(unlockDate) + ')</div>';
-      html += '<h4>' + r.title + '</h4>';
-      html += '<div class="resource-blur">';
-      html += '<p>' + r.lead + '</p>';
-      html += '<div class="resource-min"><div class="lbl">MÍNIMO REAL</div><ul>' + r.minimo.map(m => '<li>' + m + '</li>').join('') + '</ul></div>';
-      html += '</div>';
-      html += '<div class="resource-unlock-note">Este contenido se activa según tu avance en el programa, junto con Manuel.</div>';
-    } else {
-      html += '<h4>' + r.title + '</h4>';
-      html += '<p>' + r.lead + '</p>';
-      html += '<div class="resource-min"><div class="lbl">MÍNIMO REAL</div><ul>' + r.minimo.map(m => '<li>' + m + '</li>').join('') + '</ul></div>';
-      html += '<div class="resource-error"><strong>Error más común:</strong> ' + r.error + '</div>';
-      html += '<button class="btn small" onclick="downloadResourceStub(\'' + r.pillarId + '\')">Descargar información</button>';
-    }
+    html += '<h4>' + r.title + '</h4>';
+    html += '<p>' + r.lead + '</p>';
+    html += '<div class="resource-min"><div class="lbl">MÍNIMO REAL</div><ul>' + r.minimo.map(m => '<li>' + m + '</li>').join('') + '</ul></div>';
+    html += '<div class="resource-error"><strong>Error más común:</strong> ' + r.error + '</div>';
+    html += '<button class="btn small" onclick="downloadResourceStub(\'' + r.pillarId + '\')">Descargar información</button>';
     html += '</div>';
   });
   html += '</div>';
 
-  html += '<div class="section-title" style="margin-top:24px;">Biblioteca Curada Zona Azul — libros, documentales y podcasts</div>';
-  if (!tier.library) {
-    html += '<div class="resource-card locked" style="max-width:520px;">';
-    html += '<div class="resource-lock-badge">🔒 Biblioteca Zona Azul</div>';
-    html += '<h4>Disponible desde 3M Pro</h4>';
-    html += '<p>Resúmenes e insights de los libros, documentales y podcasts de referencia en longevidad y Zonas Azules (Attia, Buettner, Walker, Huberman y más).</p>';
-    html += '<div class="resource-unlock-note">Habla con Manuel sobre subir de plan para desbloquearla.</div>';
-    html += '</div>';
-  } else {
-    const items = tier.library === 'unlimited' ? ZONE_BLUE_LIBRARY : ZONE_BLUE_LIBRARY.slice(0, 8);
-    html += '<div class="lib-grid">';
-    items.forEach(item => { html += renderLibraryCard(item); });
-    html += '</div>';
-    if (tier.library !== 'unlimited' && ZONE_BLUE_LIBRARY.length > items.length) {
-      html += '<div class="resource-unlock-note" style="margin-top:10px;">+' + (ZONE_BLUE_LIBRARY.length - items.length) + ' títulos más con Biblioteca Zona Azul ilimitada (planes 6M).</div>';
-    }
-  }
+  html += '<div class="section-title" style="margin-top:24px;">Biblioteca Zona Azul: libros, documentales y podcasts</div>';
+  html += '<div class="lib-grid">';
+  ZONE_BLUE_LIBRARY.forEach(item => { html += renderLibraryCard(item); });
+  html += '</div>';
   return html;
 }
 /* Portada generada (fallback y para documentales/podcasts) */
 function libGenCover(item) {
-  const icon = item.type === 'Libro' ? '📖' : item.type === 'Documental' ? '🎬' : '🎧';
+  const icon = item.type;
   return '<div class="lib-gen t-' + item.type.toLowerCase() + '"><div class="gi">' + icon + '</div>' +
     '<div><div class="gt">' + escapeHtml(item.title) + '</div><div class="ga">' + escapeHtml(item.author) + '</div></div></div>';
 }
@@ -2596,7 +2428,7 @@ function renderLibraryCard(item) {
   let h = '<div class="lib-card">';
   h += '<a class="lib-cover ' + (isBook ? 'book' : '') + '" data-idx="' + idx + '" href="' + item.url + '" target="_blank" rel="noopener noreferrer" aria-label="' + escapeHtml(item.urlLabel + ': ' + item.title) + '">' + cover + '</a>';
   h += '<div class="lib-body">';
-  h += '<div class="rnum" style="font-size:10.5px;color:var(--accent-dark);font-weight:700;letter-spacing:.06em;margin-bottom:6px;">' + escapeHtml(item.type.toUpperCase()) + ' · ' + escapeHtml(item.tag.toUpperCase()) + '</div>';
+  h += '<div class="rnum" style="font-size:12px;color:var(--accent-dark);font-weight:700;letter-spacing:.06em;margin-bottom:6px;">' + escapeHtml(item.type.toUpperCase()) + ' · ' + escapeHtml(item.tag.toUpperCase()) + '</div>';
   h += '<h4>' + escapeHtml(item.title) + '</h4>';
   h += '<div class="card-sub">' + escapeHtml(item.author) + '</div>';
   h += '<p>' + escapeHtml(item.blurb) + '</p>';
@@ -2612,42 +2444,13 @@ function downloadResourceStub(pillarId) {
 
 /* ============================= TAB: SESIONES ============================= */
 function renderSesiones() {
-  const startIso = state.patient.startDate;
-  const todayIso = todayISO();
-  const tier = currentTier();
-  const allRealSessions = state.sessions.slice().sort((a,b) => b.date.localeCompare(a.date));
-  const cap = tier.sessionSummaryLimit;
-  const realSessions = cap ? allRealSessions.slice(0, cap) : allRealSessions;
-  const hiddenCount = cap ? Math.max(0, allRealSessions.length - cap) : 0;
+  const realSessions = state.sessions.slice().sort((a,b) => b.date.localeCompare(a.date));
 
-  // roadmap items not already represented by a real session close in date (+/-5 días)
-  const roadmapPast = [], roadmapFuture = [];
-  ROADMAP.forEach(m => {
-    const dueDate = addDaysISO(startIso, m.offsetDays);
-    const hasRealSession = state.sessions.some(s => Math.abs(daysBetween(s.date, dueDate)) <= 5);
-    if (dueDate <= todayIso) {
-      if (!hasRealSession) roadmapPast.push({ m: m, dueDate: dueDate, pending: true });
-    } else {
-      roadmapFuture.push({ m: m, dueDate: dueDate });
-    }
-  });
-
-  let html = '<div class="sessions-columns">';
-
-  /* --- Sesiones Pasadas --- */
-  html += '<div>';
-  html += '<div class="section-title">Sesiones Pasadas</div>';
-  if (!realSessions.length && !roadmapPast.length) {
-    html += '<div class="empty-state">Aún no hay sesiones registradas. Se registrarán automáticamente después de cada control con Manuel.</div>';
+  let html = '<div>';
+  html += '<div class="section-title">Consultas</div>';
+  if (!realSessions.length) {
+    html += '<div class="empty-state">Aún no hay consultas registradas.</div>';
   }
-  roadmapPast.forEach(rp => {
-    html += '<div class="roadmap-mini pending">';
-    html += '<div class="rm-tag">' + rp.m.tag + ' · PENDIENTE DE REGISTRO</div>';
-    html += '<h4>' + rp.m.title + '</h4>';
-    html += '<p>' + rp.m.desc + '</p>';
-    html += '<div class="rm-date">Estimada: ' + fmtDate(rp.dueDate) + '</div>';
-    html += '</div>';
-  });
   realSessions.forEach(s => {
     html += '<div class="session-item">';
     html += '<div class="session-head" onclick="toggleSession(\'' + s.id + '\')">';
@@ -2659,40 +2462,15 @@ function renderSesiones() {
     html += '  </div>';
     html += '</div>';
     html += '<div class="session-body" id="sessionBody_' + s.id + '">';
-    if (s.summary) html += '<h5>Resumen</h5><p style="font-size:12.5px;margin:0;">' + escapeHtml(s.summary) + '</p>';
+    if (s.summary) html += '<h5>Resumen</h5><p style="font-size:14.5px;margin:0;">' + escapeHtml(s.summary) + '</p>';
     if (s.keyPoints && s.keyPoints.length) html += '<h5>Puntos clave</h5><ul>' + s.keyPoints.map(k => '<li>' + escapeHtml(k) + '</li>').join('') + '</ul>';
     if (s.videoLink) html += '<h5>Video</h5><a class="video-link" href="' + escapeHtml(s.videoLink) + '" target="_blank" rel="noopener">Ver grabación de la sesión →</a>';
     if (s.transcript) html += '<h5>Transcript / notas</h5><div class="transcript-box">' + escapeHtml(s.transcript) + '</div>';
-    if (s.feedback) html += '<h5>Feedback post-sesión</h5><div class="feedback-box"><span class="feedback-tag">Generado automáticamente</span>' + escapeHtml(s.feedback) + '</div>';
+    if (s.feedback) html += '<h5>Feedback post-sesión</h5><div class="feedback-box">' + escapeHtml(s.feedback) + '</div>';
     html += '</div>';
     html += '</div>';
   });
-  if (hiddenCount > 0) {
-    html += '<div class="resource-card locked" style="margin-top:4px;">';
-    html += '<div class="resource-lock-badge">🔒 ' + hiddenCount + ' resumen' + (hiddenCount===1?'':'es') + ' de sesión más</div>';
-    html += '<div class="resource-unlock-note">Tu plan (' + escapeHtml(tier.label) + ') incluye hasta ' + cap + ' resúmenes de sesión visibles. Con 3M Pro o superior quedan disponibles todos, sin límite.</div>';
-    html += '</div>';
-  }
   html += '</div>';
-
-  /* --- Próximas Sesiones --- */
-  html += '<div>';
-  html += '<div class="section-title">Próximas Sesiones</div>';
-  if (!roadmapFuture.length) {
-    html += '<div class="empty-state">No hay controles agendados por delante — programa cerrado o completo.</div>';
-  }
-  roadmapFuture.forEach(rf => {
-    html += '<div class="roadmap-mini">';
-    html += '<div class="rm-tag">' + rf.m.tag + '</div>';
-    html += '<h4>' + rf.m.title + '</h4>';
-    html += '<p>' + rf.m.desc + '</p>';
-    html += '<div class="rm-date">Estimada: ' + fmtDate(rf.dueDate) + '</div>';
-    html += '</div>';
-  });
-  html += '<div class="auto-note">Las sesiones se registran automáticamente al finalizar cada videollamada — fecha, resumen, transcript y feedback quedan guardados sin que tengas que hacer nada.</div>';
-  html += '</div>';
-
-  html += '</div>'; // sessions-columns
   return html;
 }
 
@@ -2704,19 +2482,7 @@ function toggleSession(id) {
 /* ============================= TAB: MI DATA ============================= */
 /* Mi equipo y permisos: pestaña propia en assets/mi-equipo.js (SizigiaEquipo). */
 function renderData() {
-  const allIsos = Object.keys(state.checkins).sort();
-  const scores = allIsos.map(iso => weightedDailyScore(state.checkins[iso].ratings)).filter(s => s !== null);
-  const avg = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length) : null;
-  const adherence = computeAdherence(state.patient.startDate, todayISO(), state.checkins);
-
-  let html = '<div class="stat-chips">';
-  html += statChip(allIsos.length, 'Check-ins registrados');
-  html += statChip(avg !== null ? avg.toFixed(1) : '—', 'Bienestar general prom.');
-  html += statChip((adherence !== null ? adherence : 0) + '%', 'Adherencia');
-  html += statChip(state.sessions.length, 'Consultas');
-  html += '</div>';
-
-  html += '<div class="card">';
+  let html = '<div class="card">';
   html += '<h3>Exportar mi data</h3>';
   html += '<div class="card-sub">Toda tu información queda en tus manos. Descárgala cuando quieras, completa o hasta una fecha específica.</div>';
 
@@ -2736,7 +2502,6 @@ function renderData() {
   html += '</div>';
   html += '</div>';
   html += '</div>';
-  html += '<div class="card" style="margin-top:16px;"><h3>Mi equipo y permisos</h3><div class="card-sub">Ahora tiene su propia pestaña: invita a tu equipo y elige qué dato ve cada uno.</div><button class="btn small" onclick="setTab(\x27equipo\x27)">Ir a Mi equipo →</button></div>';
   return html;
 }
 
@@ -2754,7 +2519,7 @@ function downloadCSV(filename, headers, rows) {
 }
 
 function downloadAllJSON() {
-  downloadBlob('sobi-data-completa.json', JSON.stringify(state, null, 2), 'application/json');
+  downloadBlob('sizigia-data-completa.json', JSON.stringify(state, null, 2), 'application/json');
 }
 function downloadAllCSV() {
   const allIsos = Object.keys(state.checkins).sort();
@@ -2764,12 +2529,12 @@ function downloadAllCSV() {
     const wscore = weightedDailyScore(c.ratings);
     return [iso, c.type || '', ...state.pillars.map(p => c.ratings[p.id] !== undefined ? c.ratings[p.id] : ''), wscore !== null ? wscore.toFixed(2) : '', (c.note||'').replace(/\n/g,' ')];
   });
-  downloadCSV('sobi-checkins-completo.csv', headers, rows);
+  downloadCSV('sizigia-checkins-completo.csv', headers, rows);
 }
 function downloadSessionsCSV() {
   const headers = ['fecha', 'titulo', 'resumen', 'puntos_clave', 'video', 'feedback'];
   const rows = state.sessions.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(s => [s.date, s.title, s.summary, (s.keyPoints||[]).join(' | '), s.videoLink, s.feedback]);
-  downloadCSV('sobi-sesiones.csv', headers, rows);
+  downloadCSV('sizigia-sesiones.csv', headers, rows);
 }
 function downloadUpTo() {
   const upto = document.getElementById('uptoDate').value || todayISO();
@@ -2779,7 +2544,7 @@ function downloadUpTo() {
   Object.keys(state.measurements || {}).filter(iso => iso <= upto).forEach(iso => filteredMeasurements[iso] = state.measurements[iso]);
   const filteredSessions = state.sessions.filter(s => s.date <= upto);
   const snapshot = { patient: state.patient, pillars: state.pillars, checkins: filteredCheckins, measurements: filteredMeasurements, sessions: filteredSessions, exportadoHasta: upto };
-  downloadBlob('sobi-data-hasta-' + upto + '.json', JSON.stringify(snapshot, null, 2), 'application/json');
+  downloadBlob('sizigia-data-hasta-' + upto + '.json', JSON.stringify(snapshot, null, 2), 'application/json');
 }
 
 /* ============================= INIT ============================= */

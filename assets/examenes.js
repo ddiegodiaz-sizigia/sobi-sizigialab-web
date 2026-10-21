@@ -167,11 +167,11 @@
   // ---------- Pantalla ----------
   var ui = { msg: '', formOpen: false, editing: null, draft: null, saving: false, loading: false, fetched: false, viewing: null, urls: {}, open: {} };
   var E = function (s) { return escapeHtml(s == null ? '' : String(s)); };
-  var css = '.ex-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap}.ex-meta{font-size:12.5px;color:var(--muted);margin:2px 0 6px;line-height:1.5}' +
-    '.ex-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.ex-err{font-size:12px;color:#b91c1c;margin-top:6px}' +
-    '.ex-form label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px}' +
-    '.ex-res{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}.ex-res td,.ex-res th{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.ex-res th{font-size:11.5px;color:var(--muted);font-weight:600}' +
-    '.ex-st{font-size:11px;padding:1px 7px;border-radius:999px;white-space:nowrap}.ex-st.en_rango{background:#dcfce7;color:#166534}.ex-st.alto,.ex-st.bajo{background:#fef3c7;color:#92400e}.ex-st.none{background:var(--gray-bg);color:var(--muted)}' +
+  var css = '.ex-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap}.ex-meta{font-size:14.5px;color:var(--muted);margin:2px 0 6px;line-height:1.5}' +
+    '.ex-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.ex-err{font-size:14px;color:#b91c1c;margin-top:6px}' +
+    '.ex-form label{font-size:14px;color:var(--muted);display:flex;flex-direction:column;gap:3px}' +
+    '.ex-res{width:100%;border-collapse:collapse;font-size:15px;margin-top:6px}.ex-res td,.ex-res th{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.ex-res th{font-size:13px;color:var(--muted);font-weight:600}' +
+    '.ex-st{font-size:12.5px;padding:1px 7px;border-radius:999px;white-space:nowrap}.ex-st.en_rango{background:#dcfce7;color:#166534}.ex-st.alto,.ex-st.bajo{background:#fef3c7;color:#92400e}.ex-st.none{background:var(--gray-bg);color:var(--muted)}' +
     '.ex-row{display:grid;grid-template-columns:minmax(150px,2fr) 80px 80px 70px 70px auto;gap:6px;align-items:end;margin-top:6px}.ex-row input,.ex-row select{width:100%;min-width:0}' +
     '@media(max-width:640px){.ex-row{grid-template-columns:1fr 1fr 1fr}.ex-row .ex-wide{grid-column:1/-1}}' +
     '.ex-view{margin-top:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}.ex-view iframe{width:100%;height:70vh;border:0;display:block}.ex-view img{max-width:100%;display:block;margin:0 auto}' +
@@ -258,7 +258,7 @@
       '<input type="file" id="ex_file" accept="application/pdf,image/jpeg,image/png,image/webp,image/heic" onchange="SizigiaExamenes.pickFile(this)">') + '</label>';
     else h += '<div class="ex-meta" style="align-self:end">El archivo adjunto se mantiene.</div>';
     h += '</div><div class="p-row"><label style="flex:1">Notas<textarea id="ex_notes" placeholder="Contexto o indicaciones (opcional)">' + E(d.notes) + '</textarea></label></div>';
-    h += '<div style="margin-top:8px"><b style="font-size:13px">Resultados</b> <span class="ex-meta">(opcional) Copia el valor y el rango de referencia tal como aparecen en tu examen. Sugerimos un rango general que puedes cambiar.</span></div>';
+    h += '<div style="margin-top:8px"><b style="font-size:15px">Resultados</b> <span class="ex-meta">(opcional) Copia el valor y el rango de referencia tal como aparecen en tu examen. Sugerimos un rango general que puedes cambiar.</span></div>';
     h += d.rows.map(rowHTML).join('');
     h += '<div class="ex-actions"><button type="button" class="btn small" onclick="SizigiaExamenes.addRow()">+ Agregar resultado</button></div>';
     h += '<div class="ex-actions"><button class="btn small primary"' + (ui.saving ? ' disabled' : '') + ' onclick="SizigiaExamenes.save()">' + (ui.saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Guardar documento') + '</button><button class="btn small" onclick="SizigiaExamenes.close()">Cancelar</button></div>';
@@ -286,7 +286,7 @@
     var h = '<div class="card" style="margin-bottom:12px;"><div class="ex-head"><div><h3 style="margin:0">' + E(d.title) + '</h3>';
     h += '<div class="ex-meta">' + fmtDate(d.doc_date) + (d.issuer ? ' · ' + E(d.issuer) : '') + (d.created_by_kind === 'admin' ? ' · subido por el equipo Sizigia' : '') + '</div></div><span class="p-pill">' + E(CATEGORIES[d.category]) + '</span></div>';
     if (ui.editing === d.id) return h + formHTML() + '</div>';
-    if (d.notes) h += '<div style="font-size:13px;white-space:pre-wrap;line-height:1.5">' + E(d.notes) + '</div>';
+    if (d.notes) h += '<div style="font-size:15px;white-space:pre-wrap;line-height:1.5">' + E(d.notes) + '</div>';
     h += resultsTable(rs);
     if (ui.viewing === d.id) h += viewer(d);
     h += '<div class="ex-actions">';

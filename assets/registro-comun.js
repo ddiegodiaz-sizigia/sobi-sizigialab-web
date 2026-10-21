@@ -131,12 +131,12 @@
   // ---------- Pantalla ----------
   var ui = { msg: '', saving: false, week: null, cfg: null, cfgMsg: '', cfgBusy: false, loading: false, fetched: false };
   var E = function (s) { return escapeHtml(s == null ? '' : String(s)); };
-  var css = '.rc-hab{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-top:1px dashed var(--line);font-size:13px}' +
-    '.rc-hab select{border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-family:inherit}.rc-err{font-size:12.5px;color:#b91c1c;margin-top:6px}' +
-    '.rc-stats{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6}.rc-bar{display:inline-block;height:6px;border-radius:3px;background:var(--green);vertical-align:middle;margin-right:6px}' +
-    '.rc-opt{display:flex;gap:8px;align-items:flex-start;padding:7px 0;font-size:13px}.rc-opt small{display:block;color:var(--muted);font-size:11.5px;line-height:1.4}' +
-    '.rc-box{margin-top:10px;padding:14px;border:1px solid var(--line);border-radius:10px;background:#fff}.rc-box textarea{width:100%;min-height:96px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:13px}' +
-    '.rc-line{font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}';
+  var css = '.rc-hab{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-top:1px dashed var(--line);font-size:15px}' +
+    '.rc-hab select{border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-family:inherit}.rc-err{font-size:14.5px;color:#b91c1c;margin-top:6px}' +
+    '.rc-stats{font-size:14px;color:var(--muted);margin-top:10px;line-height:1.6}.rc-bar{display:inline-block;height:6px;border-radius:3px;background:var(--green);vertical-align:middle;margin-right:6px}' +
+    '.rc-opt{display:flex;gap:8px;align-items:flex-start;padding:7px 0;font-size:15px}.rc-opt small{display:block;color:var(--muted);font-size:13px;line-height:1.4}' +
+    '.rc-box{margin-top:10px;padding:14px;border:1px solid var(--line);border-radius:10px;background:#fff}.rc-box textarea{width:100%;min-height:96px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:15px}' +
+    '.rc-line{font-size:14.5px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}';
 
   function ensure() {
     if (document.getElementById('registro-comun-css') == null) { var s = document.createElement('style'); s.id = 'registro-comun-css'; s.textContent = css; document.head.appendChild(s); }
@@ -179,7 +179,7 @@
   }
 
   function slider(id, label, hint, val) {
-    return '<div class="pillar-row"><div class="pillar-name">' + label + '<div style="font-size:11px;color:var(--muted);font-weight:400;">' + hint + '</div></div>' +
+    return '<div class="pillar-row"><div class="pillar-name">' + label + '<div style="font-size:12.5px;color:var(--muted);font-weight:400;">' + hint + '</div></div>' +
       '<div class="pillar-slider-wrap"><input type="range" min="1" max="10" step="1" value="' + val + '" id="rc_' + id + '" oninput="document.getElementById(\'rc_v_' + id + '\').textContent=this.value">' +
       '<span class="pillar-val" id="rc_v_' + id + '">' + val + '</span></div></div>';
   }
@@ -203,11 +203,11 @@
         [[cur, 'Esta semana (desde el lunes ' + fmtDate(cur) + ')'], [prev, 'Semana pasada (desde el lunes ' + fmtDate(prev) + ')']].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === date ? ' selected' : '') + '>' + E(o[1]) + '</option>'; }).join('') + '</select></div></div>';
     }
     h += slider('energy', weekly ? 'Energía de la semana' : 'Energía', '1 = sin energía · 10 = mucha energía', v('energy', 6));
-    h += '<div class="pillar-row"><div class="pillar-name">' + (weekly ? 'Horas de sueño por noche' : 'Horas de sueño anoche') + (weekly ? '<div style="font-size:11px;color:var(--muted);font-weight:400;">promedio aproximado</div>' : '') + '</div><div class="pillar-slider-wrap"><input type="number" id="rc_sleep_hours" min="0" max="16" step="0.5" value="' + v('sleep_hours', 7) + '" style="width:80px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;"></div></div>';
+    h += '<div class="pillar-row"><div class="pillar-name">' + (weekly ? 'Horas de sueño por noche' : 'Horas de sueño anoche') + (weekly ? '<div style="font-size:12.5px;color:var(--muted);font-weight:400;">promedio aproximado</div>' : '') + '</div><div class="pillar-slider-wrap"><input type="number" id="rc_sleep_hours" min="0" max="16" step="0.5" value="' + v('sleep_hours', 7) + '" style="width:80px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;"></div></div>';
     h += slider('sleep_quality', 'Calidad del sueño', '1 = muy mala · 10 = excelente', v('sleep_quality', 6));
     h += slider('stress', weekly ? 'Estrés de la semana' : 'Estrés', '1 = tranquilo · 10 = muy estresado', v('stress', 4));
     if (s.habits.length) {
-      h += '<div style="margin-top:8px;font-size:13px;font-weight:600">' + (weekly ? '¿Cuántos días cumpliste cada hábito?' : 'Hábitos de hoy') + '</div>';
+      h += '<div style="margin-top:8px;font-size:15px;font-weight:600">' + (weekly ? '¿Cuántos días cumpliste cada hábito?' : 'Hábitos de hoy') + '</div>';
       s.habits.forEach(function (hb, i) {
         var cur = ex && ex.habits && ex.habits[hb] != null ? Number(ex.habits[hb]) : 0;
         h += '<label class="rc-hab"><span>' + E(hb) + '</span>' + (weekly
@@ -232,10 +232,10 @@
     h += '<label class="rc-opt"><input type="radio" name="rc_mode" value="deportivo"' + (c.mode === 'deportivo' ? ' checked' : '') + ' onchange="SizigiaRegistro.setCfg(\'mode\',this.value)"><span><b>Deportivo, cada día</b><small>Sueño, fatiga, ánimo, dolor y, si entrenaste, esfuerzo y minutos de la sesión. Para quien entrena con carga.</small></span></label>';
     h += '<label class="rc-opt"><input type="radio" name="rc_mode" value="comun"' + (c.mode === 'comun' ? ' checked' : '') + ' onchange="SizigiaRegistro.setCfg(\'mode\',this.value)"><span><b>General</b><small>Energía, sueño, estrés y tus hábitos. Sin datos de entrenamiento.</small></span></label>';
     if (c.mode === 'comun') {
-      h += '<div style="font-size:13px;font-weight:600;margin-top:6px">¿Cada cuánto?</div><div class="p-row">' + Object.keys(FREQS).map(function (k) {
-        return '<label style="font-size:13px"><input type="radio" name="rc_freq" value="' + k + '"' + (c.frequency === k ? ' checked' : '') + ' onchange="SizigiaRegistro.setCfg(\'frequency\',this.value)"> ' + FREQS[k] + '</label>';
+      h += '<div style="font-size:15px;font-weight:600;margin-top:6px">¿Cada cuánto?</div><div class="p-row">' + Object.keys(FREQS).map(function (k) {
+        return '<label style="font-size:15px"><input type="radio" name="rc_freq" value="' + k + '"' + (c.frequency === k ? ' checked' : '') + ' onchange="SizigiaRegistro.setCfg(\'frequency\',this.value)"> ' + FREQS[k] + '</label>';
       }).join('') + '</div>';
-      h += '<div style="font-size:13px;font-weight:600;margin-top:6px">Hábitos (uno por línea, máximo ' + MAX_HABITS + ')</div><textarea id="rc_habits">' + E(c.habits.join('\n')) + '</textarea>';
+      h += '<div style="font-size:15px;font-weight:600;margin-top:6px">Hábitos (uno por línea, máximo ' + MAX_HABITS + ')</div><textarea id="rc_habits">' + E(c.habits.join('\n')) + '</textarea>';
       var sug = SUGGESTED.filter(function (x) { return c.habits.map(function (y) { return y.toLowerCase(); }).indexOf(x.toLowerCase()) < 0; });
       if (sug.length) h += '<div class="p-chips">' + sug.map(function (x) { return '<button type="button" class="p-chip" onclick="SizigiaRegistro.addHabit(\'' + E(x) + '\')">+ ' + E(x) + '</button>'; }).join('') + '</div>';
     }

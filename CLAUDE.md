@@ -75,7 +75,12 @@ Caso: conversación del equipo (rama `feat/caso-equipo`; migración `20261029_ca
 - Pantallas: pestaña "Caso" en la ficha del profesional (primera), bandeja "Mensajes del equipo" en el panel (hook en `panel-coach.js`), tarjeta "Conversación con mi equipo" en "Mi equipo" (hook en `mi-equipo.js`). Demo: `equipo.html?demo=1` (Matías) y `rueda_final.html?demo=1`.
 - Falta (fases 2 y 3): adjuntar archivos (Edge Function que firme URL y registre acceso), transcripción de audio, correo, y que la persona enlace hilos a sus lesiones o exámenes. El texto de consentimiento no cambió de versión: el permiso se describe en `{{DATOS}}`; va a la revisión legal.
 
-Pruebas: este PC no tiene Node. Se corren en Edge headless con un perfil aparte (`--user-data-dir`), cargando el módulo con `module={exports:{}}`, un shim de `assert` y uno de `require` (panel-coach usa semaforo y registro-comun). Edge solo entrega `--dump-dom` con `Start-Process -RedirectStandardOutput`. Para ver páginas en el navegador integrado hace falta un servidor local (sin Node: un `HttpListener` de PowerShell). Si se instala Node, basta `node tests/*.test.mjs`.
+Rediseño de experiencia (doc "Sizigia Lab — Diagnóstico de experiencia y propuesta de rediseño", https://claude.ai/artifact/LAaYYM1cwQuWPRBsk58ZM2): 13 pestañas pasan a 4 espacios (Hoy, Mi historia, Mi cuerpo, Mi equipo), un solo registro diario, ficha del profesional con portada y línea de tiempo. 4 fases.
+- Fase 1, limpieza (rama `feat/limpieza-ux`, sin migración): Resumen en una columna (saludo, semáforo, "Hoy te toca", registro, tendencias, ciclo); se quitaron la fila de cifras, "Próximo control", el radar repetido (sigue en Mi Rueda), el upsell, la racha, las cifras repetidas de Historial y Mi Data, "Próximas sesiones" estimadas, el recordatorio de hitos, los bloqueos por plan/tiempo de Recursos y Medidas, `ROADMAP`, `TIERS`, `currentTier()` y los emojis. Constancia vive solo en Progreso. Letra ×1,15 (cuerpo 16 px, mínimo 12 px) en `rueda_final.html` y los módulos de la persona; pestañas en una fila deslizable en el celular; semáforo y alertas en tonos de la paleta (salvia `#55704F`, ocre `#B8862B`, ladrillo `#A13D2D`). Descargas `sizigia-*` en vez de `sobi-*`.
+- Pendiente de Manuel: si la pregunta diaria de la Rueda ("Hoy te toca") sigue y si se mantiene el "bienestar general" ponderado.
+- Fase 2: pantalla Hoy, registro único y barra inferior, en una carcasa nueva (`app.html`, `?v=2`) para no seguir creciendo `rueda_final.html`.
+
+Pruebas: este PC no tiene Node. Se corren en Edge headless con un perfil aparte (`--user-data-dir`), cargando el módulo con `module={exports:{}}`, un shim de `assert` y uno de `require` (panel-coach usa semaforo y registro-comun). Edge solo entrega `--dump-dom` con `Start-Process -RedirectStandardOutput`. Para ver páginas en el navegador integrado hace falta un servidor local (sin Node: un `HttpListener` de PowerShell). Si se instala Node, basta `node tests/*.test.mjs`. Más rápido: con el servidor local abierto en el navegador integrado, correr todas las pruebas desde la herramienta de JavaScript (XHR síncrono para `require` y `readFileSync`, `new Function` con `module`, quitar las líneas `import` y reemplazar `import.meta.url` por la URL del test).
 
 ## Módulos por construir (en este orden)
 Cada uno: `assets/<modulo>.js` + migración con RLS + `tests/<modulo>.test.mjs` + pestaña en la app de la persona vía hook mínimo. Sirven a coach con clientes comunes, a Manuel y al deportista.
@@ -88,7 +93,7 @@ Cada uno: `assets/<modulo>.js` + migración con RLS + `tests/<modulo>.test.mjs` 
 6. **Caso, conversación del equipo**: fase 1 hecha (ver "Caso"). Fase 2: adjuntos con Edge Function. Fase 3: transcripción de consultas y correo.
 
 ## Deuda a retirar
-- La app de la persona aún muestra residuos del cronograma de 6 meses: tarjeta "Próximo control · Mes 6", "Hoy te toca · Hábito Ancla", `programMonths`, `tier_plan` (tope de resumen de sesiones). Reemplazar por contenido basado en la bitácora.
+- Residuos del cronograma de 6 meses que quedan: "Hoy te toca" (tipos de día de la Rueda, espera decisión de Manuel) y los campos `programMonths` / `tier_plan` que se siguen leyendo de `patients` (ya no se usan para nada visible).
 - Probar en navegador: la demo es `rueda_final.html?demo=1` (sin red, usa semilla). Para probar sin Supabase, stub de `window.supabase.createClient`.
 
 ## Bloqueantes antes de vender a terceros
