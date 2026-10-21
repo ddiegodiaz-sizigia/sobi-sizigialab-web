@@ -122,14 +122,14 @@
   // ---------- Pantalla ----------
   var ui = { msg: '', editing: false, draft: null, saving: false, loading: false, fetched: false, day: null, win: 7, logMsg: '' };
   var E = function (s) { return escapeHtml(s == null ? '' : String(s)); };
-  var css = '.nu-meal{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.nu-meal:first-child{border-top:0}.nu-time{font-size:12px;color:var(--muted);min-width:42px;padding-top:2px}' +
-    '.nu-meta{font-size:12.5px;color:var(--muted);line-height:1.5}.nu-err{font-size:12px;color:#b91c1c;margin-top:6px}.nu-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}' +
+  var css = '.nu-meal{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.nu-meal:first-child{border-top:0}.nu-time{font-size:14px;color:var(--muted);min-width:42px;padding-top:2px}' +
+    '.nu-meta{font-size:14.5px;color:var(--muted);line-height:1.5}.nu-err{font-size:14px;color:#b91c1c;margin-top:6px}.nu-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}' +
     '.nu-days{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.nu-log{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line);flex-wrap:wrap}' +
-    '.nu-st{display:flex;gap:4px}.nu-st button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit}' +
+    '.nu-st{display:flex;gap:4px}.nu-st button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px;font-size:14px;cursor:pointer;font-family:inherit}' +
     '.nu-st button.on.s2{background:#dcfce7;border-color:#16a34a;color:#166534}.nu-st button.on.s1{background:#fef3c7;border-color:#d97706;color:#92400e}.nu-st button.on.s0{background:#fee2e2;border-color:#dc2626;color:#991b1b}' +
     '.nu-row{display:grid;grid-template-columns:minmax(120px,1fr) 90px minmax(160px,2fr) auto;gap:6px;align-items:end;margin-top:6px}.nu-row input{width:100%;min-width:0}' +
     '@media(max-width:640px){.nu-row{grid-template-columns:1fr 90px auto}.nu-row .nu-wide{grid-column:1/-1;order:3}}' +
-    '.nu-form label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px}.nu-bar{height:6px;background:var(--gray-bg);border-radius:3px;overflow:hidden;margin-top:3px}.nu-bar i{display:block;height:100%;background:#2f7d4f}';
+    '.nu-form label{font-size:14px;color:var(--muted);display:flex;flex-direction:column;gap:3px}.nu-bar{height:6px;background:var(--gray-bg);border-radius:3px;overflow:hidden;margin-top:3px}.nu-bar i{display:block;height:100%;background:#2f7d4f}';
 
   function lid() { return 'loc-' + Math.random().toString(36).slice(2, 10); }
   function ensure() {
@@ -216,7 +216,7 @@
     }
     h += '<div class="nu-meta">Vigente desde el ' + fmtDate(p.valid_from) + ' · escrito por ' + who(p) + (state.nutritionPlans.length > 1 ? ' · versión ' + state.nutritionPlans.length : '') + '</div>';
     h += '<div style="margin-top:6px">' + p.meals.map(function (m) {
-      return '<div class="nu-meal"><div class="nu-time">' + E(m.time || '—') + '</div><div><b style="font-size:13.5px">' + E(m.name) + '</b>' + (m.guide ? '<div class="nu-meta">' + E(m.guide) + '</div>' : '') + '</div></div>';
+      return '<div class="nu-meal"><div class="nu-time">' + E(m.time || '—') + '</div><div><b style="font-size:15.5px">' + E(m.name) + '</b>' + (m.guide ? '<div class="nu-meta">' + E(m.guide) + '</div>' : '') + '</div></div>';
     }).join('') + '</div>';
     if (p.notes) h += '<div class="tc-note" style="white-space:pre-wrap">' + E(p.notes) + '</div>';
     return h + '<div class="nu-actions"><button class="btn small" onclick="SizigiaNutricion.edit()">Editar plan</button></div></div>';
@@ -239,7 +239,7 @@
     var logs = state.mealLogs[day] || {};
     p.meals.forEach(function (m) {
       var v = logs[m.key];
-      h += '<div class="nu-log"><div><b style="font-size:13.5px">' + E(m.name) + '</b>' + (m.time ? ' <span class="nu-meta">' + E(m.time) + '</span>' : '') + '</div><div class="nu-st">' +
+      h += '<div class="nu-log"><div><b style="font-size:15.5px">' + E(m.name) + '</b>' + (m.time ? ' <span class="nu-meta">' + E(m.time) + '</span>' : '') + '</div><div class="nu-st">' +
         [2, 1, 0].map(function (s) { return '<button type="button" class="s' + s + (v === s ? ' on' : '') + '" aria-pressed="' + (v === s) + '" onclick="SizigiaNutricion.mark(\'' + E(m.key) + '\',' + s + ')">' + STATUS[s] + '</button>'; }).join('') + '</div></div>';
     });
     if (ui.logMsg) h += '<div class="nu-err">' + E(ui.logMsg) + '</div>';
@@ -253,7 +253,7 @@
     h += '<div class="nu-meta" style="margin:6px 0">' + E(adherenceText(a)) + '</div>';
     if (a.logged) {
       h += a.byMeal.map(function (b) {
-        return '<div style="font-size:12.5px;margin-top:6px"><div style="display:flex;justify-content:space-between"><span>' + E(b.name) + '</span><span class="nu-meta">' + (b.pct == null ? 'sin registro' : b.pct + ' % · ' + b.logged + '/' + b.expected) + '</span></div><div class="nu-bar"><i style="width:' + (b.pct || 0) + '%"></i></div></div>';
+        return '<div style="font-size:14.5px;margin-top:6px"><div style="display:flex;justify-content:space-between"><span>' + E(b.name) + '</span><span class="nu-meta">' + (b.pct == null ? 'sin registro' : b.pct + ' % · ' + b.logged + '/' + b.expected) + '</span></div><div class="nu-bar"><i style="width:' + (b.pct || 0) + '%"></i></div></div>';
       }).join('');
       if (root.SizigiaCharts && a.daily.length >= 2) h += '<div style="max-width:560px;margin-top:10px">' + root.SizigiaCharts.build(a.daily, { metric: 'recovery', days: ui.win, today: todayISO(), label: 'Adherencia por día (% de lo registrado)' }) + '</div>';
     }
@@ -266,7 +266,7 @@
     if (!any) return h + '<div class="tc-empty">Todavía no hay mediciones.</div><div class="nu-actions"><button class="btn small" onclick="setTab(\'medidas\')">Registrar medición</button></div></div>';
     h += '<div class="stat-chips">' + b.filter(function (x) { return x.last; }).map(function (x) {
       var sub = x.dMonth != null ? signed(x.dMonth, x.unit) + ' desde el ' + fmtDate(x.monthIso) : x.dPrev != null ? signed(x.dPrev, x.unit) + ' vs. medición anterior' : 'Primera medición';
-      return '<div class="stat-chip"><div class="num">' + dec(x.last.value, 1) + ' <span style="font-size:12px;font-weight:600;color:var(--muted);">' + E(x.unit) + '</span></div><div class="lbl">' + E(x.label) + ' · ' + fmtDate(x.last.iso) + '</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">' + E(sub) + '</div></div>';
+      return '<div class="stat-chip"><div class="num">' + dec(x.last.value, 1) + ' <span style="font-size:14px;font-weight:600;color:var(--muted);">' + E(x.unit) + '</span></div><div class="lbl">' + E(x.label) + ' · ' + fmtDate(x.last.iso) + '</div><div style="font-size:12.5px;color:var(--muted);margin-top:2px;">' + E(sub) + '</div></div>';
     }).join('') + '</div>';
     var w = b[0];
     if (root.SizigiaCharts && w.points.length >= 2) h += '<div style="max-width:560px">' + root.SizigiaCharts.build(w.points, { metric: 'weight', days: 90, today: todayISO(), label: 'Peso, últimos 90 días' }) + '</div>';

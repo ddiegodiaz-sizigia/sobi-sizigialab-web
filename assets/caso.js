@@ -186,18 +186,18 @@
   var ctl = null;
   var inbox = { sb: null, demo: false, rows: null, loading: false, seen: {} };
   var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
-  var css = '.cs-meta{font-size:12.5px;color:var(--muted);line-height:1.5}.cs-pill{font-size:11.5px;border-radius:999px;padding:2px 8px;background:#f1f0ee;white-space:nowrap;display:inline-block}' +
+  var css = '.cs-meta{font-size:14.5px;color:var(--muted);line-height:1.5}.cs-pill{font-size:13px;border-radius:999px;padding:2px 8px;background:#f1f0ee;white-space:nowrap;display:inline-block}' +
     '.cs-pill.new{background:#ccfbf1;color:#115e59}.cs-pill.men{background:#fef3c7;color:#92400e}.cs-pill.hv{background:#e0e7ff;color:#3730a3}' +
     '.cs-th{background:var(--paper,#fff);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}' +
-    '.cs-th-h{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;padding:11px 14px;cursor:pointer;background:none;border:0;width:100%;text-align:left;font-family:inherit;font-size:14px;color:inherit}' +
-    '.cs-th-h b{display:block;font-size:14px}.cs-msgs{border-top:1px solid var(--line);padding:4px 14px 12px}' +
+    '.cs-th-h{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;padding:11px 14px;cursor:pointer;background:none;border:0;width:100%;text-align:left;font-family:inherit;font-size:16px;color:inherit}' +
+    '.cs-th-h b{display:block;font-size:16px}.cs-msgs{border-top:1px solid var(--line);padding:4px 14px 12px}' +
     '.cs-m{padding:10px 0;border-top:1px dashed var(--line)}.cs-m:first-child{border-top:0}.cs-m.mine{background:linear-gradient(90deg,rgba(13,148,136,.06),transparent);margin:0 -14px;padding:10px 14px}' +
-    '.cs-m.unread{box-shadow:inset 3px 0 0 var(--accent,#0d9488);padding-left:10px}.cs-m.hid{color:var(--muted);font-size:12.5px;font-style:italic}' +
-    '.cs-body{font-size:13.5px;white-space:pre-wrap;margin:4px 0;line-height:1.5}.cs-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.cs-acts .btn{padding:4px 10px;font-size:12px}' +
-    '.cs-comp{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff;margin:10px 0}.cs-comp label.f{display:block;font-size:12px;color:var(--muted);margin-top:8px}' +
-    '.cs-comp input[type=text],.cs-comp select,.cs-comp textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-family:inherit;font-size:13.5px;margin:3px 0 0;box-sizing:border-box}' +
-    '.cs-comp textarea{min-height:90px;resize:vertical}.cs-opt{display:flex;gap:7px;align-items:flex-start;font-size:13px;padding:3px 0}.cs-opt input{margin-top:3px;width:auto}' +
-    '.cs-opt small{display:block;color:var(--muted);font-size:11.5px}.cs-who{margin:4px 0 0 22px}.cs-err{font-size:12.5px;color:#b91c1c;margin-top:6px}.cs-ok{font-size:12.5px;color:#065f46;margin-top:6px}' +
+    '.cs-m.unread{box-shadow:inset 3px 0 0 var(--accent,#0d9488);padding-left:10px}.cs-m.hid{color:var(--muted);font-size:14.5px;font-style:italic}' +
+    '.cs-body{font-size:15.5px;white-space:pre-wrap;margin:4px 0;line-height:1.5}.cs-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.cs-acts .btn{padding:4px 10px;font-size:14px}' +
+    '.cs-comp{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff;margin:10px 0}.cs-comp label.f{display:block;font-size:14px;color:var(--muted);margin-top:8px}' +
+    '.cs-comp input[type=text],.cs-comp select,.cs-comp textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-family:inherit;font-size:15.5px;margin:3px 0 0;box-sizing:border-box}' +
+    '.cs-comp textarea{min-height:90px;resize:vertical}.cs-opt{display:flex;gap:7px;align-items:flex-start;font-size:15px;padding:3px 0}.cs-opt input{margin-top:3px;width:auto}' +
+    '.cs-opt small{display:block;color:var(--muted);font-size:13px}.cs-who{margin:4px 0 0 22px}.cs-err{font-size:14.5px;color:#b91c1c;margin-top:6px}.cs-ok{font-size:14.5px;color:#065f46;margin-top:6px}' +
     '.cs-inbox{background:var(--paper,#fff);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px}.cs-inbox-row{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}.cs-inbox-row:first-of-type{border-top:0}';
 
   function ensureCss() { if (!document.getElementById('caso-css')) { var s = document.createElement('style'); s.id = 'caso-css'; s.textContent = css; document.head.appendChild(s); } }
@@ -237,7 +237,7 @@
 
   function compHTML() {
     var c = ctl.comp, x = ctx(), readers = readersFor(x.team, c.topic, x.me), r = recipients(c, x);
-    var h = '<div class="cs-comp">' + (c.thread ? '<b style="font-size:13px">Responder</b>' : '<b style="font-size:14px">Nuevo hilo</b>');
+    var h = '<div class="cs-comp">' + (c.thread ? '<b style="font-size:15px">Responder</b>' : '<b style="font-size:16px">Nuevo hilo</b>');
     if (!c.thread) {
       h += '<label class="f">Título<input type="text" maxlength="' + MAX_TITLE + '" value="' + E(c.title) + '" oninput="SizigiaCaso.set(\'title\',this.value)" placeholder="Ej.: Rodilla derecha, vuelta a los saltos"></label>';
       h += '<label class="f">Tema<select onchange="SizigiaCaso.setTopic(this.value)">' + topicsFor(x.mode, x.team, x.me).map(function (t) { return '<option value="' + t.key + '"' + (t.key === c.topic ? ' selected' : '') + '>' + E(t.label) + '</option>'; }).join('') + '</select></label>';
@@ -445,7 +445,7 @@
     var rows = inboxSort(inbox.rows || []);
     if (!rows.length) return '';
     ensureCss();
-    return '<div class="cs-inbox"><b style="font-size:14px">Mensajes del equipo</b>' + rows.map(function (r) {
+    return '<div class="cs-inbox"><b style="font-size:16px">Mensajes del equipo</b>' + rows.map(function (r) {
       return '<div class="cs-inbox-row"><span><b>' + E(r.patient_name) + '</b> <span class="cs-meta">' + r.unread + ' sin leer' + (Number(r.mentions) ? ' · <span class="cs-pill men">te mencionaron</span>' : '') + ' · ' + when(r.last_at) + '</span></span>' +
         '<button class="btn" onclick="SizigiaFicha.open(\'' + E(r.patient_id) + '\',\'equipo\')">Abrir caso</button></div>';
     }).join('') + '</div>';

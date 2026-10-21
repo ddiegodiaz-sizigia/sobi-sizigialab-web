@@ -76,12 +76,12 @@
   var flow = null;
   var E = function (s) { return escapeHtml(s == null ? '' : String(s)); };
   var css = '.eq-pro{padding:12px 0;border-top:1px solid var(--line)}.eq-pro:first-of-type{border-top:0}.eq-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:flex-start}' +
-    '.eq-meta{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5}.eq-scopes{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}' +
-    '.eq-tag{font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--gray-bg)}.eq-tag.soon{opacity:.7;font-style:italic}' +
-    '.eq-box{margin-top:10px;padding:14px;border:1px solid var(--line);border-radius:10px;background:#fff}.eq-opt{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-top:1px dashed var(--line);font-size:13px}' +
-    '.eq-opt small{display:block;color:var(--muted);font-size:11.5px;line-height:1.4}.eq-soon{font-size:10.5px;padding:1px 6px;border-radius:999px;background:#fef3c7;color:#92400e;margin-left:4px;font-style:normal}' +
-    '.eq-live{font-size:10.5px;padding:1px 6px;border-radius:999px;background:#dcfce7;color:#166534;margin-left:4px}.eq-warn{background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:10px}' +
-    '.eq-err{color:#b91c1c;font-size:12.5px;margin:6px 0}.eq-log{font-size:12.5px;padding:4px 0;border-top:1px solid var(--line)}.eq-form input,.eq-form select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:13px}';
+    '.eq-meta{font-size:14px;color:var(--muted);margin-top:2px;line-height:1.5}.eq-scopes{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}' +
+    '.eq-tag{font-size:13px;padding:2px 8px;border-radius:999px;background:var(--gray-bg)}.eq-tag.soon{opacity:.7;font-style:italic}' +
+    '.eq-box{margin-top:10px;padding:14px;border:1px solid var(--line);border-radius:10px;background:#fff}.eq-opt{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-top:1px dashed var(--line);font-size:15px}' +
+    '.eq-opt small{display:block;color:var(--muted);font-size:13px;line-height:1.4}.eq-soon{font-size:12px;padding:1px 6px;border-radius:999px;background:#fef3c7;color:#92400e;margin-left:4px;font-style:normal}' +
+    '.eq-live{font-size:12px;padding:1px 6px;border-radius:999px;background:#dcfce7;color:#166534;margin-left:4px}.eq-warn{background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:8px 10px;font-size:14px;margin-bottom:10px}' +
+    '.eq-err{color:#b91c1c;font-size:14.5px;margin:6px 0}.eq-log{font-size:14.5px;padding:4px 0;border-top:1px solid var(--line)}.eq-form input,.eq-form select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:15px}';
 
   function ensureCss() { if (document.getElementById('mi-equipo-css') == null) { var s = document.createElement('style'); s.id = 'mi-equipo-css'; s.textContent = css; document.head.appendChild(s); } }
 
@@ -136,9 +136,9 @@
     if (!c.isFinal) h += '<div class="eq-warn"><strong>Texto en borrador, pendiente de revisión legal.</strong> No usar con personas reales hasta tener la versión final.</div>';
     var body = consentBody(c.body, pro, flow.scopes);
     if (c.body.indexOf('{{DATOS}}') < 0) body += '\n\n**Datos que compartes:**\n' + consentBody('{{DATOS}}', pro, flow.scopes);
-    h += '<div style="font-size:13px;line-height:1.55;max-height:320px;overflow:auto">' + body.split('\n\n').map(function (p) { return '<p style="margin:0 0 9px">' + mdLite(p).replace(/\n/g, '<br>') + '</p>'; }).join('') + '</div>';
+    h += '<div style="font-size:15px;line-height:1.55;max-height:320px;overflow:auto">' + body.split('\n\n').map(function (p) { return '<p style="margin:0 0 9px">' + mdLite(p).replace(/\n/g, '<br>') + '</p>'; }).join('') + '</div>';
     h += '<div class="eq-meta" style="margin:6px 0 10px">Versión ' + E(c.version) + '. Se guarda con la fecha y hora en que aceptas y la lista de datos elegida.</div>';
-    h += '<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-bottom:10px"><input type="checkbox"' + (flow.checked ? ' checked' : '') + ' onchange="SizigiaEquipo.setChecked(this.checked)" style="margin-top:3px"> <span>Leí este texto y autorizo a ' + E(pro.name) + ' a ver los datos descritos, hasta que yo retire el permiso.</span></label>';
+    h += '<label style="display:flex;gap:8px;align-items:flex-start;font-size:15px;margin-bottom:10px"><input type="checkbox"' + (flow.checked ? ' checked' : '') + ' onchange="SizigiaEquipo.setChecked(this.checked)" style="margin-top:3px"> <span>Leí este texto y autorizo a ' + E(pro.name) + ' a ver los datos descritos, hasta que yo retire el permiso.</span></label>';
     return h;
   }
   function flowBox(pro) {

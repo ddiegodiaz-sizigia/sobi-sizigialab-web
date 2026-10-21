@@ -91,9 +91,9 @@
   var ui = { msg: '', formOpen: false, editing: null, painMsg: {}, loading: false, fetched: false };
   var E = function (s) { return escapeHtml(s == null ? '' : String(s)); };
   var css = '.les-card{border-left:3px solid var(--line)}.les-card.activa{border-left-color:#b3382c}.les-card.rehabilitacion{border-left-color:#c9921b}.les-card.alta{border-left-color:#2f7d4f}' +
-    '.les-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap}.les-meta{font-size:12.5px;color:var(--muted);margin:2px 0 6px;line-height:1.5}' +
+    '.les-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap}.les-meta{font-size:14.5px;color:var(--muted);margin:2px 0 6px;line-height:1.5}' +
     '.les-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.les-pain{background:var(--gray-bg);border-radius:10px;padding:8px 10px;margin:8px 0}' +
-    '.les-form label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px}.les-err{font-size:12px;color:#b91c1c;margin-top:6px}';
+    '.les-form label{font-size:14px;color:var(--muted);display:flex;flex-direction:column;gap:3px}.les-err{font-size:14px;color:#b91c1c;margin-top:6px}';
 
   function zones() { return typeof PAIN_ZONES !== 'undefined' ? PAIN_ZONES : ZONES_FALLBACK; }
   function lid() { return 'loc-' + Math.random().toString(36).slice(2, 10); }
@@ -165,9 +165,9 @@
     var today = todayISO(), logs = state.injuryPain[i.id] || [], ex = logs.filter(function (x) { return x.log_date === today; })[0];
     var sug = ex ? null : suggestEva(i, (typeof athleteLogs === 'function' ? athleteLogs() : {})[today]);
     var val = ex ? ex.eva : sug;
-    var h = '<div class="les-pain"><div class="p-row" style="margin:0"><b style="font-size:13px">Dolor de hoy en esta lesión</b><select id="lp_' + E(i.id) + '">' + opt('', 'EVA…', val == null) + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function (n) { return opt(n, n + '/10', val === n); }).join('') + '</select>';
+    var h = '<div class="les-pain"><div class="p-row" style="margin:0"><b style="font-size:15px">Dolor de hoy en esta lesión</b><select id="lp_' + E(i.id) + '">' + opt('', 'EVA…', val == null) + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function (n) { return opt(n, n + '/10', val === n); }).join('') + '</select>';
     h += '<button class="btn small primary" onclick="SizigiaLesiones.savePain(\'' + E(i.id) + '\')">' + (ex ? 'Actualizar' : 'Guardar') + '</button>';
-    if (ui.painMsg[i.id]) h += '<span style="font-size:12px;color:var(--muted)">' + E(ui.painMsg[i.id]) + '</span>';
+    if (ui.painMsg[i.id]) h += '<span style="font-size:14px;color:var(--muted)">' + E(ui.painMsg[i.id]) + '</span>';
     h += '</div>';
     if (sug != null) h += '<div class="tc-note">Sugerido desde tu registro diario de hoy (' + E(i.zone) + ', ' + sug + '/10). Confírmalo con Guardar.</div>';
     return h + '<div id="les-chart-' + E(i.id) + '"></div></div>';
@@ -179,7 +179,7 @@
     h += '<div class="les-meta">' + E(i.title) + '</div></div><span class="p-pill">' + E(STATUS[i.status]) + '</span></div>';
     h += '<div class="les-meta">Desde el ' + fmtDate(i.onset_date) + (i.status === 'alta' ? ' · alta el ' + fmtDate(i.discharge_date) + ' (' + s.days + ' días)' : ' · hace ' + s.days + (s.days === 1 ? ' día' : ' días')) +
       (i.treating ? ' · Tratante: ' + E(i.treating) : '') + '<br>' + E(s.text) + '</div>';
-    if (i.notes) h += '<div style="font-size:13px;white-space:pre-wrap;line-height:1.5">' + E(i.notes) + '</div>';
+    if (i.notes) h += '<div style="font-size:15px;white-space:pre-wrap;line-height:1.5">' + E(i.notes) + '</div>';
     if (ui.editing === i.id) {
       h += '<div style="margin-top:10px">' + formHTML(i) + '<div class="les-actions"><button class="btn small primary" onclick="SizigiaLesiones.saveEdit(\'' + E(i.id) + '\')">Guardar cambios</button><button class="btn small" onclick="SizigiaLesiones.edit(null)">Cancelar</button></div>';
       if (ui.msg) h += '<div class="les-err">' + E(ui.msg) + '</div>';
@@ -188,7 +188,7 @@
     if (isOpen(i)) h += painBox(i);
     h += '<div class="les-actions">';
     if (i.status === 'activa') h += '<button class="btn small" onclick="SizigiaLesiones.setStatus(\'' + E(i.id) + '\',\'rehabilitacion\')">Pasar a rehabilitación</button>';
-    if (isOpen(i)) h += '<input type="date" id="la_' + E(i.id) + '" value="' + todayISO() + '" max="' + todayISO() + '" style="border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12px"><button class="btn small" onclick="SizigiaLesiones.setStatus(\'' + E(i.id) + '\',\'alta\')">Dar de alta</button>';
+    if (isOpen(i)) h += '<input type="date" id="la_' + E(i.id) + '" value="' + todayISO() + '" max="' + todayISO() + '" style="border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:14px"><button class="btn small" onclick="SizigiaLesiones.setStatus(\'' + E(i.id) + '\',\'alta\')">Dar de alta</button>';
     else h += '<button class="btn small" onclick="SizigiaLesiones.setStatus(\'' + E(i.id) + '\',\'activa\')">Reabrir (recaída)</button>';
     h += '<button class="btn small" onclick="SizigiaLesiones.edit(\'' + E(i.id) + '\')">Editar</button></div>';
     if (ui.msg && ui.msgFor === i.id) h += '<div class="les-err">' + E(ui.msg) + '</div>';
