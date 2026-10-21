@@ -331,6 +331,13 @@
 
   root.SizigiaNutricion = Object.assign({}, core, {
     tab: tab, edit: edit, cancel: cancel, addMeal: addMeal, removeMeal: removeMeal, savePlan: savePlan, mark: mark,
+    // Plan de hoy para la pantalla Hoy (assets/hoy.js): comidas del plan vigente y cuántas ya registró. null si no hay plan.
+    todaySummary: function () {
+      ensure();
+      var p = planFor(state.nutritionPlans, todayISO()), logs = state.mealLogs[todayISO()] || {};
+      if (!p || !(p.meals || []).length) return null;
+      return { meals: p.meals.length, logged: p.meals.filter(function (m) { return logs[m.key] != null; }).length };
+    },
     setDay: function (d) { ui.day = d; ui.logMsg = ''; render(); },
     setWin: function (w) { ui.win = w; render(); }
   });

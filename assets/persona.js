@@ -14,7 +14,7 @@
     pain:    { label: 'Dolor',  get: function (l) { return l.pain_level; } },
     load:    { label: 'Carga',  get: function (l) { return typeof sessionLoad === 'function' ? sessionLoad(l) : null; } }
   };
-  var ui = { metric: 'sleep', filter: 'todos', msg: '', cycleMsg: '', profMsg: '' };
+  var ui = { metric: 'sleep', topic: 'todos', author: 'todos', adding: false, msg: '', cycleMsg: '', profMsg: '' };
   var E = function (s) { return escapeHtml(s == null ? '' : String(s)); };
 
   var css = '.tc-tabs{display:flex;gap:6px;margin:8px 0}.tc-tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;font-size:14px;cursor:pointer;font-family:inherit}.tc-tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}' +
@@ -30,7 +30,9 @@
     if (document.getElementById('persona-css') == null) { var s = document.createElement('style'); s.id = 'persona-css'; s.textContent = css; document.head.appendChild(s); }
     if (!state.profile) state.profile = { sex: isDemoMode ? 'femenino' : null, tracksCycle: !!isDemoMode };
     if (!state.cycleLogs) state.cycleLogs = isDemoMode ? demoCycle() : {};
-    if (!state.journal) state.journal = isDemoMode ? demoJournal() : [];
+    // Demo: siembra la hoja de vida una vez, aunque otro módulo (lesiones, registro) ya haya creado la lista vacía.
+    if (isDemoMode && !ui.demoJournal) { ui.demoJournal = true; state.journal = demoJournal().concat(state.journal || []); }
+    if (!state.journal) state.journal = [];
   }
   function uid() { return 'loc-' + Math.random().toString(36).slice(2, 10); }
   function demoCycle() {
@@ -41,7 +43,9 @@
   function demoJournal() {
     var t = todayISO();
     return [
+      { id: uid(), entry_date: addDaysISO(t, -1), kind: 'plan', title: 'Plan de alimentación actualizado', body: 'Colación de la tarde: yogur con avena en vez de barra.', author_kind: 'profesional', scope: 'nutricion' },
       { id: uid(), entry_date: addDaysISO(t, -3), kind: 'plan', title: 'Ajuste de carga por 2 semanas', body: 'Bajar volumen 20 % mientras mejora el sueño.', author_kind: 'profesional' },
+      { id: uid(), entry_date: addDaysISO(t, -9), kind: 'examen', title: 'Examen: Perfil bioquímico y hemograma', body: 'Ferritina bajo el rango del laboratorio.', author_kind: 'paciente', scope: 'examenes' },
       { id: uid(), entry_date: addDaysISO(t, -12), kind: 'lesion', title: 'Nueva lesión: Rodilla (lado derecho)', body: 'Molestia al aterrizar saltos (posible tendinopatía rotuliana). EVA inicial 5/10. Tratante: Kinesióloga del club', author_kind: 'paciente', scope: 'lesiones' },
       { id: uid(), entry_date: addDaysISO(t, -40), kind: 'objetivo', title: 'Llegar al torneo regional en forma', body: 'Foco: sueño y recuperación entre sesiones.', author_kind: 'paciente' }
     ];
@@ -131,24 +135,18 @@
   }
 
   // ---------- Hoja de vida ----------
-  function timeline() {
-    var items = state.journal.map(function (j) { return { date: j.entry_date, kind: j.kind, title: j.title, body: j.body, who: j.author_kind }; });
-    (state.sessions || []).forEach(function (s) { items.push({ date: s.date, kind: 'consulta', title: s.title || 'Consulta', body: s.summary || '', who: 'profesional' }); });
-    items.sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
-    return items;
-  }
+  // Línea de tiempo única (assets/linea-tiempo.js): hoja de vida y consultas, por mes, con tema y quién lo registró.
   function bitacoraTab() {
     ensure();
-    var all = timeline(), items = all.filter(function (i) { return ui.filter === 'todos' || i.kind === ui.filter; });
-    var h = '<div class="card" style="margin-bottom:16px;"><h3>Mi hoja de vida</h3><div class="card-sub">Todo lo que pasa con tu salud, en orden, desde el ' + fmtDate(state.patient.startDate) + '. Sin plazo: sigue mientras uses tu cuenta. ' + all.length + (all.length === 1 ? ' entrada.' : ' entradas.') + '</div></div>';
-    h += '<div class="card" style="margin-bottom:16px;"><h3>Agregar a mi bitácora</h3><div class="p-row"><select id="jr_kind">' + ADD_KINDS.map(function (k) { return '<option value="' + k + '">' + KINDS[k] + '</option>'; }).join('') + '</select><input type="date" id="jr_date" value="' + todayISO() + '"><input type="text" id="jr_title" placeholder="Título" style="flex:1;min-width:160px"></div>';
-    h += '<div class="p-row"><textarea id="jr_body" placeholder="Detalle (opcional)"></textarea></div><button class="btn small primary" onclick="SizigiaPersona.saveJournal()">Guardar</button>' + (ui.msg ? ' <span style="font-size:14px;color:#b91c1c">' + E(ui.msg) + '</span>' : '') + '</div>';
-    h += '<div class="card"><div class="p-chips">' + ['todos'].concat(Object.keys(KINDS)).map(function (k) { return '<button type="button" class="p-chip' + (ui.filter === k ? ' on' : '') + '" onclick="SizigiaPersona.setFilter(\'' + k + '\')">' + (k === 'todos' ? 'Todo' : KINDS[k]) + '</button>'; }).join('') + '</div>';
-    if (!items.length) return h + '<div class="tc-empty">Aún no hay entradas de este tipo.</div></div>';
-    h += '<div class="p-tl">' + items.map(function (i) {
-      return '<div class="p-item"><div class="meta"><span class="p-pill">' + E(KINDS[i.kind] || i.kind) + '</span> ' + fmtDate(i.date) + ' · ' + (i.who === 'paciente' ? 'Tú' : i.who === 'admin' ? 'Equipo Sizigia' : 'Tu equipo') + '</div><div class="ttl">' + E(i.title) + '</div>' + (i.body ? '<div class="bd">' + E(i.body) + '</div>' : '') + '</div>';
-    }).join('') + '</div></div>';
-    return h;
+    var L = root.SizigiaLinea; L.ensureCss();
+    var all = L.build(state.journal, state.sessions);
+    var h = '<div class="card" style="margin-bottom:16px;"><h3>Mi hoja de vida</h3><div class="card-sub" style="margin-bottom:10px">Todo lo que pasa con tu salud, en orden, desde el ' + fmtDate(state.patient.startDate) + '. Sin plazo: sigue mientras uses tu cuenta. ' + all.length + (all.length === 1 ? ' entrada.' : ' entradas.') + '</div>';
+    if (!ui.adding) h += '<button class="btn small" onclick="SizigiaPersona.setAdding(true)">Agregar una nota</button></div>';
+    else {
+      h += '<div class="p-row"><select id="jr_kind">' + ADD_KINDS.map(function (k) { return '<option value="' + k + '">' + KINDS[k] + '</option>'; }).join('') + '</select><input type="date" id="jr_date" value="' + todayISO() + '"><input type="text" id="jr_title" placeholder="Título" style="flex:1;min-width:160px"></div>';
+      h += '<div class="p-row"><textarea id="jr_body" placeholder="Detalle (opcional)"></textarea></div><button class="btn small primary" onclick="SizigiaPersona.saveJournal()">Guardar</button> <button class="btn small" onclick="SizigiaPersona.setAdding(false)">Cancelar</button>' + (ui.msg ? ' <span style="font-size:14px;color:#b91c1c">' + E(ui.msg) + '</span>' : '') + '</div>';
+    }
+    return h + L.html(all, { E: E, viewer: 'persona', filters: { topic: ui.topic, author: ui.author }, onTopic: 'SizigiaPersona.setTopic', onAuthor: 'SizigiaPersona.setAuthor' });
   }
 
   // ---------- Acciones ----------
@@ -199,7 +197,7 @@
       if (r.error) { ui.msg = 'No se pudo guardar. Reintenta.'; return render(); }
       row = r.data;
     }
-    state.journal.unshift(row); done();
+    state.journal.unshift(row); ui.adding = false; done();
   }
 
   root.SizigiaPersona = {
@@ -208,7 +206,9 @@
     bitacoraTab: bitacoraTab,
     afterRender: function () { if (state && state.ui && state.ui.tab === 'resumen') mountTrend(); if (state && state.ui && state.ui.tab === 'lesiones' && root.SizigiaLesiones) root.SizigiaLesiones.afterRender(); },
     setMetric: function (m) { ui.metric = m; render(); },
-    setFilter: function (f) { ui.filter = f; render(); },
+    setTopic: function (f) { ui.topic = f; render(); },
+    setAuthor: function (f) { ui.author = f; render(); },
+    setAdding: function (on) { ui.adding = on; ui.msg = ''; render(); },
     saveProfile: saveProfile, enableCycle: enableCycle, saveCycle: saveCycle, saveJournal: saveJournal,
     // Para la pantalla Hoy y el registro diario (assets/hoy.js, assets/registro-diario.js).
     tracksCycle: function () { ensure(); return state.profile.sex === 'femenino' || !!state.profile.tracksCycle; },

@@ -8,7 +8,7 @@
   // ---------- Núcleo puro ----------
   var SPACES = {
     hoy: { label: 'Hoy', subs: [] },
-    historia: { label: 'Mi historia', subs: [['bitacora', 'Hoja de vida'], ['tendencias', 'Tendencias'], ['sesiones', 'Consultas']] },
+    historia: { label: 'Mi historia', subs: [['bitacora', 'Línea de tiempo'], ['tendencias', 'Tendencias'], ['sesiones', 'Consultas']] },
     cuerpo: { label: 'Mi cuerpo', subs: [['medidas', 'Medidas'], ['examenes', 'Exámenes'], ['lesiones', 'Lesiones'], ['nutricion', 'Nutrición']] },
     equipo: { label: 'Mi equipo', subs: [['equipo', 'Equipo y permisos'], ['perfil', 'Mi registro y perfil'], ['recursos', 'Recursos'], ['data', 'Mis datos']] }
   };
@@ -65,7 +65,17 @@
     return 'animo';
   }
 
-  var core = { SPACES: SPACES, ORDER: ORDER, normalizeNav: normalizeNav, indicator: indicator, reading: reading, thirdMetric: thirdMetric };
+  // "Lo que viene": máximo tres pendientes concretos, cada uno con su destino. in: { unread, meals: {meals, logged}|null, profileMissing }
+  function upcoming(input) {
+    input = input || {};
+    var out = [], n = Number(input.unread) || 0, m = input.meals;
+    if (n > 0) out.push({ key: 'mensajes', text: n === 1 ? 'Tienes un mensaje nuevo de tu equipo' : 'Tienes ' + n + ' mensajes nuevos de tu equipo', space: 'equipo', sub: 'equipo' });
+    if (m && m.meals > 0 && m.logged < m.meals) out.push({ key: 'comidas', text: m.logged ? 'Registraste ' + m.logged + ' de ' + m.meals + ' comidas de tu plan de hoy' : 'Tu plan de hoy tiene ' + m.meals + (m.meals === 1 ? ' comida' : ' comidas') + ' por registrar', space: 'cuerpo', sub: 'nutricion' });
+    if (input.profileMissing) out.push({ key: 'perfil', text: 'Completa tu perfil para ajustar tus referencias', space: 'equipo', sub: 'perfil' });
+    return out.slice(0, 3);
+  }
+
+  var core = { SPACES: SPACES, ORDER: ORDER, normalizeNav: normalizeNav, indicator: indicator, reading: reading, thirdMetric: thirdMetric, upcoming: upcoming };
   if (typeof module !== 'undefined' && module.exports) { module.exports = core; return; }
 
   // ---------- Pantalla ----------
@@ -93,6 +103,8 @@
     '.v2-done{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:16px}' +
     '.v2-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:24px 0 8px}.v2-tile{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 12px}' +
     '.v2-tile .l{font-size:13.5px;color:var(--muted)}.v2-tile .v{font-size:26px;font-weight:700;margin:4px 0 2px}.v2-tile .v small{font-size:14px;font-weight:600;color:var(--muted)}' +
+    '.v2-h3{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:22px 0 8px}' +
+    '.v2-next{background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}.v2-next button{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;border:none;border-top:1px solid var(--line);background:none;padding:14px 16px;font-size:16px;text-align:left;cursor:pointer;font-family:inherit;color:var(--ink)}.v2-next button:first-child{border-top:none}.v2-next button span:last-child{color:var(--muted);font-size:20px}' +
     '.v2-tile .s{font-size:13px;color:var(--muted);line-height:1.35}.v2-link{border:none;background:none;color:var(--accent-dark);font-size:15px;font-weight:600;cursor:pointer;padding:8px 0;font-family:inherit}' +
     '@media (max-width:420px){.v2-tiles{gap:8px}.v2-tile{padding:12px 9px}.v2-tile .v{font-size:22px}}' +
     '.v2-sub{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 0 18px;padding-bottom:2px}.v2-sub::-webkit-scrollbar{display:none}' +
@@ -169,7 +181,21 @@
       : '<button class="v2-cta" onclick="SizigiaDiario.open()">Registrar mi ' + what + '<small>Menos de 30 segundos</small></button>';
     h += tiles();
     h += '<button class="v2-link" onclick="SizigiaHoy.go(\'historia\',\'tendencias\')">Ver mis tendencias →</button>';
+    var next = upcoming({ unread: unread(), meals: root.SizigiaNutricion ? root.SizigiaNutricion.todaySummary() : null, profileMissing: !!(state.profile && !state.profile.sex) });
+    if (next.length) h += '<h3 class="v2-h3">Lo que viene</h3><div class="v2-next">' + next.map(function (x) {
+      return '<button type="button" onclick="SizigiaHoy.go(\'' + x.space + '\',\'' + x.sub + '\')"><span>' + E(x.text) + '</span><span aria-hidden="true">›</span></button>';
+    }).join('') + '</div>';
     return h;
+  }
+  // Mensajes del equipo sin leer (my_case_unread, sin contenido ni registro de acceso). Se pide una vez por sesión.
+  var unreadState = { n: null, loading: false };
+  function unread() {
+    if (unreadState.n !== null || unreadState.loading) return unreadState.n || 0;
+    if (isDemoMode) { unreadState.n = 1; return 1; }
+    if (!currentPatientId) return 0;
+    unreadState.loading = true;
+    supabaseClient.rpc('my_case_unread').then(function (r) { unreadState.loading = false; unreadState.n = r.error ? 0 : Number(r.data) || 0; if (unreadState.n) render(); });
+    return 0;
   }
 
   function subHTML(sub) {
