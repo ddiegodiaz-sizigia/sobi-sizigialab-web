@@ -77,10 +77,9 @@ language sql stable security definer set search_path = public as $$
   select case when count(*) = 1 then (array_agg(o))[1] end from public.my_org_ids() o
 $$;
 
-create or replace function public.prof_visible_to_admin(p_prof uuid) returns boolean
+create or replace function public.prof_linked_to_my_org(p_prof uuid) returns boolean
 language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.professionals f where f.id = p_prof and public.is_org_admin(f.created_by_org))
-      or exists (select 1 from public.care_links l join public.patients p on p.id = l.patient_id
+  select exists (select 1 from public.care_links l join public.patients p on p.id = l.patient_id
                  where l.professional_id = p_prof and p.org_id in (select public.my_org_ids()))
 $$;
 
@@ -184,7 +183,8 @@ drop policy if exists professionals_admin_select on public.professionals;
 drop policy if exists professionals_admin_insert on public.professionals;
 drop policy if exists professionals_admin_update on public.professionals;
 drop policy if exists professionals_admin_delete on public.professionals;
-create policy professionals_admin_select on public.professionals for select using (public.prof_visible_to_admin(id));
+create policy professionals_admin_select on public.professionals for select
+  using (public.is_org_admin(created_by_org) or public.prof_linked_to_my_org(id));
 create policy professionals_admin_insert on public.professionals for insert with check (public.is_org_admin(created_by_org));
 create policy professionals_admin_update on public.professionals for update
   using (public.is_org_admin(created_by_org) and not public.prof_linked_outside(id, created_by_org))
