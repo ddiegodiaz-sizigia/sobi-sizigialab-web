@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sitio-local",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:/Users/diego/AppData/Local/Temp/claude/C--Dev-sobi-sizigialab-web-sobi-sizigialab-web/1790a946-168b-43b9-925e-f7693ae2e046/scratchpad/serve.ps1"],
+      "port": 8765
+    },
+    {
+      "name": "sitio-examenes",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:/Users/diego/AppData/Local/Temp/claude/C--Dev-sobi-sizigialab-web-sobi-sizigialab-web/aad7b445-7b5f-4e45-846b-eeb34136953d/scratchpad/serve.ps1", "-Port", "8766"],
+      "port": 8766
+    },
+    {
+      "name": "sitio-adjuntos",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:/Users/diego/AppData/Local/Temp/claude/C--Dev-sobi-sizigialab-web-sobi-sizigialab-web/3c750c7f-9dc8-4d68-9884-303827087c41/scratchpad/serve.ps1", "-Port", "8767"],
+      "port": 8767
+    }
+  ]
+}
