@@ -94,7 +94,7 @@
 
   var css = '.v2{max-width:720px;margin:0 auto;padding-bottom:110px}' +
     '.v2-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:18px}.v2-brand{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}' +
-    '.v2-brand .brand-mark{width:30px;height:30px;border-radius:8px}.v2-who{font-size:14px;color:var(--muted);text-align:right}' +
+    '.v2-brand .tok-mark{width:30px;height:30px}.v2-brand .tok-word{font-size:20px}.v2-who{font-size:14px;color:var(--muted);text-align:right}' +
     '.v2-hello{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0}.v2-date{color:var(--muted);font-size:15px;margin:2px 0 20px}' +
     '.v2-read{border-radius:16px;padding:20px;margin-bottom:16px}.v2-read .w{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}' +
     '.v2-read .dot{width:12px;height:12px;border-radius:50%}.v2-read h2{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:22px;line-height:1.3;margin:10px 0 6px}' +
@@ -227,7 +227,7 @@
     state.ui.tab = space === 'hoy' ? 'hoy' : sub; // compatibilidad con los afterRender de los módulos
     var h = '';
     if (isDemoMode) h += '<div style="background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:14px;font-weight:600;padding:8px 14px;border-radius:10px;margin-bottom:10px;text-align:center;">MODO DEMO — datos de prueba, no se guardan ni afectan pacientes reales</div>';
-    h += '<div class="v2"><div class="v2-head"><div class="v2-brand"><div class="brand-mark"><span>MH</span></div>Mi Bitácora · Medicina Humana</div>';
+    h += '<div class="v2"><div class="v2-head"><div class="v2-brand"><img class="tok-mark" src="assets/tok/tok-icon.svg" alt="Tok"><span class="tok-word">Tok</span></div>';
     h += '<div class="v2-who">' + E(state.patient.name || (currentUser ? currentUser.email : '')) + '</div></div>';
     if (space === 'hoy') h += hoyHTML();
     else {

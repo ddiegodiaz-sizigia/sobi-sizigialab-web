@@ -98,7 +98,7 @@
     opts = opts || {};
     var n = firstName(row.name), link = opts.link ? ' ' + opts.link : '', weekly = row.frequency === 'semanal', ad = row.adherence;
     var hola = 'Hola' + (n ? ' ' + n : '') + ', ';
-    if (key === 'recordatorio') return hola + '¿cómo vas? Te recuerdo cargar tu registro ' + (weekly ? 'de esta semana' : 'de hoy') + ' en Sizigia Lab: toma menos de un minuto.' + link;
+    if (key === 'recordatorio') return hola + '¿cómo vas? Te recuerdo cargar tu registro ' + (weekly ? 'de esta semana' : 'de hoy') + ' en Tok: toma menos de un minuto.' + link;
     if (key === 'alerta') {
       var why = alertText(row.sem);
       return hola + 'vi en tu registro' + (row.last ? ' del ' + dm(row.last) : '') + (why ? ': ' + why : '') + '. ¿Cómo te sientes? Si quieres lo conversamos antes de la próxima sesión.';
@@ -110,8 +110,8 @@
         (row.mode === 'comun' && !weekly ? '¿Te acomodaría más registrar una vez por semana? Lo ajusto yo.' : '¿Qué te lo hace difícil? Lo podemos simplificar.') + link;
     }
     if (key === 'habitos') {
-      if (!row.habits.length) return hola + '¿definimos juntos 2 o 3 hábitos para las próximas semanas? Después los marcas en tu registro de Sizigia Lab.';
-      return hola + 'tus hábitos para estas semanas: ' + row.habits.join(', ') + '. Márcalos en tu registro de Sizigia Lab.' + link;
+      if (!row.habits.length) return hola + '¿definimos juntos 2 o 3 hábitos para las próximas semanas? Después los marcas en tu registro de Tok.';
+      return hola + 'tus hábitos para estas semanas: ' + row.habits.join(', ') + '. Márcalos en tu registro de Tok.' + link;
     }
     return hola;
   }
@@ -192,7 +192,7 @@
   function topHTML() {
     var s = summary(ui.rows), f = ui.f;
     var chip = function (lv, n, label) { return '<button class="pc-chip' + (f.level === lv ? ' on' : '') + '" onclick="SizigiaCoach.setLevel(\'' + lv + '\')">' + (lv !== 'todos' ? '<span class="dot ' + lv + '"></span>' : '') + '<b>' + n + '</b> ' + label + '</button>'; };
-    var h = '<div class="top"><div><h1>Tus personas</h1><div class="tag">' + E(ui.email) + (ui.demo ? ' · demo sin datos reales · <a href="rueda_final.html?demo=1">ver la app de la persona</a>' : '') + '</div></div>' +
+    var h = '<div class="top"><div class="tok-top"><img src="assets/tok/tok-icon.svg" alt="Tok"><div><h1>Tus personas</h1><div class="tag">' + E(ui.email) + (ui.demo ? ' · demo sin datos reales · <a href="rueda_final.html?demo=1">ver la app de la persona</a>' : '') + '</div></div></div>' +
       (ui.demo ? '' : '<button class="btn" onclick="SizigiaCoach.signOut()">Salir</button>') + '</div>';
     h += '<div class="pc-sum">' + chip('todos', s.total, 'personas') + chip('rojo', s.rojo, 'rojo') + chip('amarillo', s.amarillo, 'amarillo') + chip('gris', s.gris, 'sin datos') + chip('verde', s.verde, 'verde') +
       '<button class="pc-chip' + (f.pending ? ' on' : '') + '" onclick="SizigiaCoach.togglePending()"><b>' + s.pending + '</b> con pendientes</button>' +

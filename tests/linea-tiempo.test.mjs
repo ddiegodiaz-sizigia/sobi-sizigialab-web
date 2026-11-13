@@ -22,7 +22,7 @@ assert.equal(L.authorLabel(items[0], 'persona'), 'Tú');
 assert.equal(L.authorLabel(items[0], 'pro'), 'La persona');
 assert.equal(L.authorLabel(items[1], 'pro'), 'Camila Soto (nutricionista)');
 assert.equal(L.authorLabel(items[2], 'persona'), 'Tu equipo');
-assert.equal(L.authorLabel(items[4], 'persona'), 'Equipo Sizigia Lab');
+assert.equal(L.authorLabel(items[4], 'persona'), 'Administración');
 
 // Filtros y facetas
 assert.deepEqual(L.filter(items, { topic: 'lesiones' }).map(i => i.id), ['c']);

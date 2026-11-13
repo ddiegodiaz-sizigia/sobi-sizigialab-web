@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Sizigia Lab · Panel del equipo</title>
+<title>Tok · Panel del equipo</title>
+<link rel="icon" type="image/svg+xml" href="assets/tok/tok-favicon.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="assets/semaforo.js"></script>
@@ -37,6 +38,12 @@
   input { width:100%; border:1px solid var(--line); border-radius:8px; padding:9px 11px; font-size:14px; margin:10px 0; font-family:inherit; }
   .msg { font-size:13px; margin-top:10px; } .err { color:#b91c1c; }
 </style>
+<link rel="stylesheet" href="assets/tok.css">
+<style>
+  .verde { background:#5E7A52; } .amarillo { background:#E9A33A; } .rojo { background:#B9502A; } .gris { background:#A8A699; }
+  .tok-top { display:flex; align-items:center; gap:10px; } .tok-top img { width:34px; height:34px; }
+  .login .tok-logo { display:block; height:56px; margin:0 0 18px; }
+</style>
 </head>
 <body>
 <div class="wrap" id="app"><div class="note">Cargando…</div></div>
@@ -49,8 +56,8 @@ const app = document.getElementById('app');
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 
 function loginScreen(msg, isErr) {
-  app.innerHTML = '<div class="login"><h1>Sizigia Lab</h1><div class="tag">Vista del equipo de entrenamiento y salud</div>' +
-    '<p class="note" style="margin-top:16px;">Entra con el correo con el que te registró el equipo de Sizigia Lab. Sin contraseña: te enviamos un link.</p>' +
+  app.innerHTML = '<div class="login"><img class="tok-logo" src="assets/tok/tok-lockup-horizontal-sin-bajada.svg" alt="Tok"><h1>Panel del equipo</h1><div class="tag">Tu equipo y tu rendimiento, conectados.</div>' +
+    '<p class="note" style="margin-top:16px;">Entra con el correo con el que te invitaron a Tok. Sin contraseña: te enviamos un link.</p>' +
     '<input type="email" id="email" placeholder="tucorreo@ejemplo.com"><button class="btn primary" style="width:100%" onclick="sendLink()">Enviar link de acceso</button>' +
     '<div class="msg ' + (isErr ? 'err' : '') + '">' + esc(msg || '') + '</div></div>';
 }
@@ -74,7 +81,7 @@ async function boot() {
   if (!data.session) return loginScreen();
   const { data: claimed, error: ce } = await sb.rpc('claim_professional');
   if (ce || !claimed) {
-    app.innerHTML = '<div class="login"><h1>Sin acceso</h1><p class="note">Este correo (' + esc(data.session.user.email) + ') no está registrado como profesional. Pide al equipo de Sizigia Lab que te dé de alta.</p><button class="btn" onclick="sb.auth.signOut().then(()=>location.reload())">Salir</button></div>';
+    app.innerHTML = '<div class="login"><h1>Sin acceso</h1><p class="note">Este correo (' + esc(data.session.user.email) + ') no está registrado como profesional. Pide a la persona o a la organización que te invitó que te dé de alta.</p><button class="btn" onclick="sb.auth.signOut().then(()=>location.reload())">Salir</button></div>';
     return;
   }
   // coach_feed_v2(): una fila por persona con su tipo de registro (deportivo o general), sus registros y tu último contacto.

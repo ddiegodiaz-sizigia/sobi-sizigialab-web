@@ -2,14 +2,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rueda de Adherencia SOBI · Admin</title>
+<title>Tok · Administración</title>
+<link rel="icon" type="image/svg+xml" href="assets/tok/tok-favicon.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="assets/semaforo.js"></script>
 <style>
   :root {
     color-scheme: light;
-    --ink: #131a17; --muted: #6b7280; --line: #e6e4e1; --accent: #0d9488; --accent-dark: #0f766e; --accent-bg: #f0fdfa;
+    --ink: #131a17; --muted: #6b7280; --line: #e6e4e1; --accent: #2F4A2C; --accent-dark: #233A21; --accent-bg: #EEF2EA;
     --green: #16a34a; --green-bg: #ecfdf5; --amber: #d97706; --amber-bg: #fffbeb; --red: #dc2626; --red-bg: #fef2f2;
     --gray-bg: #f8f7f5; --paper: #fffffe; --canvas: #faf9f7;
     --shadow-sm: 0 1px 2px rgba(19,26,23,0.05); --shadow-md: 0 8px 22px -6px rgba(19,26,23,0.14), 0 2px 6px rgba(19,26,23,0.05);
@@ -185,11 +186,12 @@
   .sem-reason { font-size:13px; margin:2px 0; } .sem-why { margin-top:6px; font-size:12.5px; } .sem-why summary { cursor:pointer; color:var(--muted); } .sem-why-text { margin:6px 0; } .sem-check { margin:2px 0; } .sem-check.warn,.sem-check.alert { font-weight:600; } .sem-check.nodata { color:var(--muted); } .sem-reason.muted { color:var(--muted); }
   .sem-label { font-size:11.5px; color:var(--muted); margin-top:2px; } .sem-src { font-size:11px; color:var(--muted); margin-top:5px; }
 </style>
+<link rel="stylesheet" href="assets/tok.css">
 </head>
 <body>
 <div class="wrap">
   <div id="app"></div>
-  <div class="site-footer"><b>SOBI</b> · Sistema de Adherencia — comunicación clínica planificada, mes a mes</div>
+  <div class="site-footer"><b>Tok</b> · de Sizigia Lab</div>
 </div>
 
 <div class="modal-overlay hidden" id="modalOverlay">
@@ -269,7 +271,7 @@ function renderLoginScreen() {
   document.getElementById('app').innerHTML = `
     <div class="login-wrap">
       <div class="top-brand" style="margin-bottom:20px;">
-        <div><h1 style="margin:0;font-size:19px;">Rueda de Adherencia SOBI</h1><div class="tagline">Panel del equipo clínico</div></div>
+        <img src="assets/tok/tok-icon.svg" alt="Tok" width="34" height="34"><div><h1 style="margin:0;font-size:19px;">Tok · Administración</h1><div class="tagline">Tu equipo y tu rendimiento, conectados.</div></div>
       </div>
       <div class="editor">
         <h3>Entrar</h3>
@@ -417,12 +419,8 @@ function renderDashboardHTML() {
 
   let html = `<div class="top">
     <div class="top-brand">
-      <svg class="brand-mark" width="34" height="34" viewBox="0 0 34 34">
-        <circle cx="17" cy="17" r="15" fill="none" stroke="#e6e4e1" stroke-width="2"/>
-        <circle cx="17" cy="17" r="15" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="15 79" stroke-linecap="round"/>
-        <circle cx="17" cy="17" r="4.5" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
-      </svg>
-      <div><h1>Rueda de Adherencia SOBI</h1><div class="tagline">${escapeHtml(session.user.email)} · datos en vivo, compartidos con todo el equipo</div></div>
+      <img class="brand-mark" src="assets/tok/tok-icon.svg" alt="Tok" width="34" height="34">
+      <div><h1>Tok · Administración</h1><div class="tagline">${escapeHtml(session.user.email)} · datos en vivo, compartidos con todo el equipo</div></div>
     </div>
     <div class="top-actions">
       <button class="btn" onclick="openStatusView()">Estado</button>

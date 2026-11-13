@@ -1,0 +1,30 @@
+/* TOK — marca de la plataforma (Tok · de Sizigia Lab). Se carga después de los estilos propios de cada pantalla. */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+:root {
+  --tok-bosque: #2F4A2C; --tok-bosque-dark: #233A21; --tok-salvia: #5E7A52; --tok-ocre: #E9A33A;
+  --tok-ladrillo: #B9502A; --tok-crema: #F8F6EF; --tok-tinta: #1C1C1A;
+  --tok-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  /* variables que ya usan rueda_final.html y los módulos */
+  --ink: #1C1C1A; --muted: #5E6A5A; --line: #E3DFD3;
+  --accent: #2F4A2C; --accent-dark: #233A21; --accent-bg: rgba(47,74,44,0.08);
+  --gold: #B9502A; --gold-bg: rgba(185,80,42,0.08);
+  --green: #5E7A52; --green-bg: rgba(94,122,82,0.11);
+  --gray-bg: #F1EEE4; --paper: #FFFFFF; --canvas: #F8F6EF;
+}
+html body { font-family: var(--tok-font); }
+html body button, html body input, html body select, html body textarea { font-family: inherit; }
+/* títulos: sin serif, Plus Jakarta Sans */
+html body .brand-title h1, html body .v2-hello, html body .v2-title, html body .v2-read h2, html body h1, html body h2 { font-family: var(--tok-font); font-weight: 700; letter-spacing: -0.02em; }
+/* marca */
+.tok-mark { width: 40px; height: 40px; flex-shrink: 0; display: block; }
+.v2-brand .tok-mark { width: 30px; height: 30px; }
+.tok-word { font-weight: 800; letter-spacing: -0.03em; color: var(--tok-bosque); }
+.tok-auth { max-width: 380px; margin: 72px auto; padding: 32px; text-align: center; }
+.tok-auth .tok-logo { display: block; height: 64px; margin: 0 auto 22px; }
+.tok-auth h2 { margin: 0 0 6px; font-size: 25px; }
+.tok-auth p { color: var(--muted); }
+.tok-auth input { width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 12px; font-size: 16px; box-sizing: border-box; background: #fff; }
+.tok-auth input:focus { outline: 2px solid var(--tok-salvia); outline-offset: 1px; border-color: transparent; }
+.tok-auth .tok-primary { width: 100%; padding: 13px; background: var(--tok-bosque); color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; }
+.tok-auth .tok-primary:hover { background: var(--tok-bosque-dark); }
+.tok-sub { color: var(--muted); font-size: 13px; }
