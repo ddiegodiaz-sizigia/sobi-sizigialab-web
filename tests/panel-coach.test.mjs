@@ -54,7 +54,7 @@ assert.ok(s.adherencePct > 0 && s.adherencePct <= 100);
 
 // Mensajes: nombre de pila, sin diagnóstico, enlace a la app
 const link = 'https://sizigialab.cl/rueda_final.html';
-assert.equal(C.message('recordatorio', gray, { link }), 'Hola Ben, ¿cómo vas? Te recuerdo cargar tu registro de hoy en Sizigia Lab: toma menos de un minuto. ' + link);
+assert.equal(C.message('recordatorio', gray, { link }), 'Hola Ben, ¿cómo vas? Te recuerdo cargar tu registro de hoy en Tok: toma menos de un minuto. ' + link);
 assert.match(C.message('alerta', red, { link }), /^Hola Matías, vi en tu registro del \d\d-\d\d: dolor 7\/10\. ¿Cómo te sientes\?/);
 assert.match(C.message('constancia', ok), /buena constancia! Llevas 7 de 7 registros en los últimos 7 días/);
 assert.match(C.message('constancia', C.buildRow(p('A', { mode: 'comun', habits: ['Caminar'], wellness: [0, 3].map(i => well(5)[i]) }), today)), /una vez por semana/);

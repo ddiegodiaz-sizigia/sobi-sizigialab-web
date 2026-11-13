@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mi Bitácora · Medicina Humana</title>
+<title>Tok · Mi bitácora</title>
+<link rel="icon" type="image/svg+xml" href="assets/tok/tok-favicon.svg">
+<meta name="theme-color" content="#2F4A2C">
 <style>
   :root {
     color-scheme: light;
@@ -287,11 +289,12 @@
   .site-footer { text-align: center; font-size: 12.5px; color: var(--muted); padding: 26px 0 6px; letter-spacing: 0.02em; }
   .site-footer b { color: var(--ink); }
 </style>
+<link rel="stylesheet" href="assets/tok.css">
 </head>
 <body>
 <div class="wrap">
   <div id="app"></div>
-  <div class="site-footer"><b>Medicina Humana</b> — Dr. Manuel Acuña Medina · Tus datos quedan guardados en tu cuenta, accesibles desde cualquier dispositivo</div>
+  <div class="site-footer"><b>Tok</b> · de Sizigia Lab — Tus datos quedan guardados en tu cuenta, accesibles desde cualquier dispositivo</div>
 </div>
 
 <div class="modal-overlay hidden" id="customModalOverlay">
@@ -337,18 +340,18 @@ let pendingAuthEmail = '';
 
 function renderAuthScreen(message, isError) {
   document.getElementById('app').innerHTML = `
-    <div style="max-width:380px;margin:80px auto;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:center;">
-      <div style="font-weight:800;letter-spacing:2px;color:#96543a;font-size:15px;margin-bottom:6px;">MEDICINA HUMANA</div>
-      <h2 style="margin:0 0 4px;font-size:26.5px;font-family:Georgia,'Times New Roman',serif;font-weight:400;">Mi Bitácora</h2>
-      <p style="color:#6b6558;font-size:16px;margin:0 0 28px;">Medicina Humana · Dr. Manuel Acuña</p>
+    <div class="tok-auth">
+      <img class="tok-logo" src="assets/tok/tok-lockup-horizontal-sin-bajada.svg" alt="Tok">
+      <h2>Entra a tu bitácora</h2>
+      <p style="font-size:16px;margin:0 0 28px;">Tu equipo y tu rendimiento, conectados.</p>
       <input id="authEmail" type="email" placeholder="tu@email.com" autocomplete="email"
-        style="width:100%;padding:12px 14px;border:1px solid #e5ded0;border-radius:8px;margin-bottom:12px;font-size:16px;box-sizing:border-box;"
+        style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:12px;font-size:16px;box-sizing:border-box;"
         onkeydown="if(event.key==='Enter'){ event.preventDefault(); handleMagicLink(); }" />
       <button onclick="handleMagicLink()"
-        style="width:100%;padding:12px;background:#B86B4B;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;">
+        class="tok-primary">
         Enviar link de acceso
       </button>
-      ${message ? `<p style="margin-top:16px;font-size:15px;color:${isError ? '#dc2626' : '#B86B4B'};">${message}</p>` : ''}
+      ${message ? `<p style="margin-top:16px;font-size:15px;color:${isError ? '#A13D2D' : 'var(--tok-bosque)'};">${message}</p>` : ''}
     </div>`;
   const emailInput = document.getElementById('authEmail');
   if (emailInput) emailInput.focus();
@@ -357,23 +360,23 @@ function renderAuthScreen(message, isError) {
 function renderCodeScreen(email, message, isError) {
   pendingAuthEmail = email;
   document.getElementById('app').innerHTML = `
-    <div style="max-width:380px;margin:80px auto;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:center;">
-      <div style="font-weight:800;letter-spacing:2px;color:#96543a;font-size:15px;margin-bottom:6px;">MEDICINA HUMANA</div>
-      <h2 style="margin:0 0 4px;font-size:25.5px;font-family:Georgia,'Times New Roman',serif;font-weight:400;">Revisa tu correo</h2>
+    <div class="tok-auth">
+      <img class="tok-logo" src="assets/tok/tok-lockup-horizontal-sin-bajada.svg" alt="Tok">
+      <h2>Revisa tu correo</h2>
       <p style="color:#6b6558;font-size:16px;margin:0 0 8px;">Te enviamos un link y un código de 8 dígitos a<br><b>${escapeHtml(email)}</b></p>
       <p style="color:#6b6558;font-size:15px;margin:0 0 20px;">Si el link del correo no abre o da error, escribe el código acá:</p>
       <input id="authCode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="12345678" maxlength="8" autocomplete="one-time-code"
-        style="width:100%;padding:12px 14px;border:1px solid #e5ded0;border-radius:8px;margin-bottom:12px;font-size:20.5px;letter-spacing:4px;text-align:center;box-sizing:border-box;"
+        style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:12px;font-size:20.5px;letter-spacing:4px;text-align:center;box-sizing:border-box;"
         onkeydown="if(event.key==='Enter'){ event.preventDefault(); handleVerifyCode(); }" />
       <button onclick="handleVerifyCode()"
-        style="width:100%;padding:12px;background:#B86B4B;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:10px;">
+        class="tok-primary" style="margin-bottom:10px;">
         Verificar código
       </button>
       <button onclick="renderAuthScreen()"
         style="width:100%;padding:10px;background:none;color:#6b6558;border:none;font-size:15px;cursor:pointer;text-decoration:underline;">
         Volver / usar otro correo
       </button>
-      ${message ? `<p style="margin-top:16px;font-size:15px;color:${isError ? '#dc2626' : '#B86B4B'};">${message}</p>` : ''}
+      ${message ? `<p style="margin-top:16px;font-size:15px;color:${isError ? '#A13D2D' : 'var(--tok-bosque)'};">${message}</p>` : ''}
     </div>`;
   const codeInput = document.getElementById('authCode');
   if (codeInput) codeInput.focus();
@@ -415,11 +418,11 @@ async function handleLogout() {
 
 function renderNotActivated(email) {
   document.getElementById('app').innerHTML = `
-    <div style="max-width:400px;margin:80px auto;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:center;">
-      <div style="font-weight:800;letter-spacing:2px;color:#96543a;font-size:15px;margin-bottom:6px;">MEDICINA HUMANA</div>
-      <h2 style="margin:0 0 4px;font-size:23px;font-family:Georgia,'Times New Roman',serif;font-weight:400;">Tu cuenta aun no esta activada</h2>
-      <p style="color:#6b6558;font-size:16px;margin:0 0 20px;">No encontramos un programa asociado a <b>${escapeHtml(email)}</b>. Esto se activa cuando Manuel confirma tu inscripcion.</p>
-      <p style="color:#6b6558;font-size:15px;margin:0 0 24px;">Si acabas de inscribirte, escribele para que active tu acceso.</p>
+    <div class="tok-auth">
+      <img class="tok-logo" src="assets/tok/tok-lockup-horizontal-sin-bajada.svg" alt="Tok">
+      <h2>Tu cuenta aún no está activada</h2>
+      <p style="font-size:16px;margin:0 0 20px;">No encontramos una cuenta asociada a <b>${escapeHtml(email)}</b>. Se activa cuando el profesional o la organización que te invitó confirma tu alta.</p>
+      <p style="font-size:15px;margin:0 0 24px;">Si te acabas de inscribir, avísale para que active tu acceso.</p>
       <button class="btn small" onclick="handleLogout()" style="padding:10px 18px;">Salir</button>
     </div>`;
 }
@@ -520,8 +523,8 @@ function defaultPillars() {
 /* Campos de composición corporal / rendimiento — pensados para el perfil de deportista de alto
    rendimiento, registro semanal. "headline: true" son los 3 que llevan gráfico de tendencia. */
 const MEASURE_FIELDS = [
-  { key: 'weight_kg', label: 'Peso', unit: 'kg', decimals: 1, headline: true, color: '#B86B4B' },
-  { key: 'body_fat_pct', label: '% Grasa corporal', unit: '%', decimals: 1, headline: true, color: '#344957' },
+  { key: 'weight_kg', label: 'Peso', unit: 'kg', decimals: 1, headline: true, color: '#2F4A2C' },
+  { key: 'body_fat_pct', label: '% Grasa corporal', unit: '%', decimals: 1, headline: true, color: '#B9502A' },
   { key: 'muscle_mass_kg', label: 'Masa muscular', unit: 'kg', decimals: 1, headline: true, color: '#68705B' },
   { key: 'waist_cm', label: 'Cintura', unit: 'cm', decimals: 1 },
   { key: 'hip_cm', label: 'Cadera', unit: 'cm', decimals: 1 },
@@ -1109,8 +1112,8 @@ function render() {
   }
   html += '<div class="head-top">';
   html += '  <div class="brand-row">';
-  html += '    <div class="brand-mark"><span>MH</span></div>';
-  html += '    <div class="brand-title"><h1>Mi Bitácora</h1><div class="sub">Medicina Humana · Dr. Manuel Acuña Medina</div></div>';
+  html += '    <img class="tok-mark" src="assets/tok/tok-icon.svg" alt="Tok">';
+  html += '    <div class="brand-title"><h1>Mi bitácora</h1><div class="sub"><span class="tok-word">Tok</span> · Tu equipo y tu rendimiento, conectados</div></div>';
   html += '  </div>';
   html += '  <div class="patient-chip"><b>' + escapeHtml(state.patient.name || (currentUser ? currentUser.email : '')) + '</b><span class="dim">· ' + dayLabel + '</span> <button class="btn small" onclick="handleLogout()" style="margin-left:8px;">Salir</button></div>';
   html += '</div>';
@@ -1195,7 +1198,7 @@ function renderAthleteLogCard() {
   const v = (k, d) => (ex && ex[k] != null ? ex[k] : d);
   let html = '<div class="card" style="margin-bottom:16px;">';
   html += '<h3>Registro deportivo de hoy</h3>';
-  html += '<div class="card-sub">Menos de 30 segundos. Lo ve el equipo clínico de Sizigia Lab y sirve para ajustar tu carga y recuperación.' + (ex ? ' <strong>Ya registrado hoy: puedes editarlo.</strong>' : '') + '</div>';
+  html += '<div class="card-sub">Menos de 30 segundos. Lo ve tu equipo en Tok y sirve para ajustar tu carga y recuperación.' + (ex ? ' <strong>Ya registrado hoy: puedes editarlo.</strong>' : '') + '</div>';
   html += '<div class="pillar-row"><div class="pillar-name">Horas de sueño anoche</div><div class="pillar-slider-wrap"><input type="number" id="ath_sleep_hours" min="0" max="16" step="0.5" value="' + v('sleep_hours', 7) + '" style="width:80px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;"></div></div>';
   html += athSliderRow('sleep_quality', 'Calidad del sueño', '1 = muy mala · 10 = excelente', v('sleep_quality', 6), 1);
   html += athSliderRow('fatigue', 'Fatiga', '1 = fresco · 10 = agotado', v('fatigue', 5), 1);
@@ -1681,7 +1684,7 @@ function buildRadarSVG(mstats) {
     coords.push([x,y]);
     dataPts += x.toFixed(1) + ',' + y.toFixed(1) + ' ';
   }
-  svg += '<polygon points="' + dataPts.trim() + '" fill="rgba(184,107,75,0.22)" stroke="#B86B4B" stroke-width="2"/>';
+  svg += '<polygon points="' + dataPts.trim() + '" fill="rgba(47,74,44,0.18)" stroke="#2F4A2C" stroke-width="2"/>';
 
   // points (interactive)
   for (let i = 0; i < n; i++) {
@@ -1689,7 +1692,7 @@ function buildRadarSVG(mstats) {
     const v = mstats.avgs[p.id];
     const cnt = mstats.counts[p.id];
     const label = v !== null ? (p.name + ': ' + v.toFixed(1) + '/10 (' + cnt + ' check-ins)') : (p.name + ': sin datos este mes');
-    svg += '<circle id="radarpt_' + p.id + '" class="radar-point" cx="' + coords[i][0].toFixed(1) + '" cy="' + coords[i][1].toFixed(1) + '" r="4.5" fill="#96543a" stroke="#fff" stroke-width="1.5" onclick="highlightPillar(\'' + p.id + '\')"><title>' + label + '</title></circle>';
+    svg += '<circle id="radarpt_' + p.id + '" class="radar-point" cx="' + coords[i][0].toFixed(1) + '" cy="' + coords[i][1].toFixed(1) + '" r="4.5" fill="#2F4A2C" stroke="#fff" stroke-width="1.5" onclick="highlightPillar(\'' + p.id + '\')"><title>' + label + '</title></circle>';
   }
 
   svg += '</svg>';
@@ -1930,7 +1933,7 @@ function renderCrossChartCard() {
     html += '<div class="no-data-msg">Necesitas al menos 2 datos de cada variable para cruzarlas. Sigue registrando check-ins y mediciones.</div>';
   } else {
     html += '<div class="chart-svg-wrap">' + buildDualTrendSVG(seriesA, seriesB, {
-      colorA: '#B86B4B', colorB: '#344957',
+      colorA: '#2F4A2C', colorB: '#B9502A',
       labelA: pillar.name, labelB: measureField.label + ' (' + measureField.unit + ')',
       decimalsA: 1, decimalsB: measureField.decimals,
       unitA: '/10', unitB: measureField.unit
@@ -1990,9 +1993,9 @@ function buildMonthlyOverallSVG(monthlyOverall) {
   if (pts.length > 1) {
     let path = 'M ' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
     for (let i = 1; i < pts.length; i++) path += ' L ' + pts[i][0].toFixed(1) + ' ' + pts[i][1].toFixed(1);
-    svg += '<path d="' + path + '" fill="none" stroke="#B86B4B" stroke-width="2.2"/>';
+    svg += '<path d="' + path + '" fill="none" stroke="#2F4A2C" stroke-width="2.2"/>';
   }
-  pts.forEach(p => { svg += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="4" fill="#96543a"><title>' + monthLabel(p[2]) + ': ' + p[3].toFixed(1) + '/10</title></circle>'; });
+  pts.forEach(p => { svg += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="4" fill="#2F4A2C"><title>' + monthLabel(p[2]) + ': ' + p[3].toFixed(1) + '/10</title></circle>'; });
   monthlyOverall.forEach((m, i) => {
     const x = padL + i*step;
     svg += '<text x="' + x.toFixed(1) + '" y="' + (h-8) + '" text-anchor="middle" font-size="9" fill="#6b6558" font-family="-apple-system,sans-serif">' + monthLabel(m.mk).slice(0,3) + '</text>';
@@ -2039,18 +2042,18 @@ function buildDualTrendSVG(seriesA, seriesB, opts) {
       svg += '<path d="' + path + '" fill="none" stroke="' + color + '" stroke-width="2.2"/>';
     }
   }
-  drawLine(ptsA, opts.colorA || '#B86B4B');
-  drawLine(ptsB, opts.colorB || '#344957');
-  ptsA.forEach(p => { svg += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="' + (opts.colorA || '#B86B4B') + '"><title>' + escapeHtml(opts.labelA || 'A') + ' · ' + fmtDate(p.iso) + ': ' + p.value.toFixed(opts.decimalsA || 1) + ' ' + (opts.unitA || '') + '</title></circle>'; });
-  ptsB.forEach(p => { svg += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="' + (opts.colorB || '#344957') + '"><title>' + escapeHtml(opts.labelB || 'B') + ' · ' + fmtDate(p.iso) + ': ' + p.value.toFixed(opts.decimalsB || 1) + ' ' + (opts.unitB || '') + '</title></circle>'; });
+  drawLine(ptsA, opts.colorA || '#2F4A2C');
+  drawLine(ptsB, opts.colorB || '#B9502A');
+  ptsA.forEach(p => { svg += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="' + (opts.colorA || '#2F4A2C') + '"><title>' + escapeHtml(opts.labelA || 'A') + ' · ' + fmtDate(p.iso) + ': ' + p.value.toFixed(opts.decimalsA || 1) + ' ' + (opts.unitA || '') + '</title></circle>'; });
+  ptsB.forEach(p => { svg += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="' + (opts.colorB || '#B9502A') + '"><title>' + escapeHtml(opts.labelB || 'B') + ' · ' + fmtDate(p.iso) + ': ' + p.value.toFixed(opts.decimalsB || 1) + ' ' + (opts.unitB || '') + '</title></circle>'; });
 
   svg += '<text x="' + padL + '" y="' + (h-8) + '" text-anchor="start" font-size="9.5" fill="#6b6558" font-family="-apple-system,sans-serif">' + fmtDate(minIso) + '</text>';
   svg += '<text x="' + (w-padR) + '" y="' + (h-8) + '" text-anchor="end" font-size="9.5" fill="#6b6558" font-family="-apple-system,sans-serif">' + fmtDate(maxIso) + '</text>';
   svg += '</svg>';
 
   let legend = '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--muted);">';
-  legend += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + (opts.colorA || '#B86B4B') + ';margin-right:5px;"></span>' + escapeHtml(opts.labelA || 'Serie A') + '</span>';
-  legend += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + (opts.colorB || '#344957') + ';margin-right:5px;"></span>' + escapeHtml(opts.labelB || 'Serie B') + '</span>';
+  legend += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + (opts.colorA || '#2F4A2C') + ';margin-right:5px;"></span>' + escapeHtml(opts.labelA || 'Serie A') + '</span>';
+  legend += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + (opts.colorB || '#B9502A') + ';margin-right:5px;"></span>' + escapeHtml(opts.labelB || 'Serie B') + '</span>';
   legend += '<span style="font-style:italic;">Cada serie normalizada a su propio rango — compara la forma de la tendencia, no la escala.</span>';
   legend += '</div>';
   return svg + legend;
@@ -2187,7 +2190,7 @@ function buildTrendSVG(isos, values, opts) {
   const pad = (hi - lo) * 0.15 || 1;
   lo -= pad; hi += pad;
   const step = isos.length > 1 ? plotW / (isos.length - 1) : 0;
-  const color = opts.color || '#B86B4B';
+  const color = opts.color || '#2F4A2C';
   const decimals = opts.decimals || 0;
 
   let svg = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
@@ -2361,10 +2364,10 @@ function buildHistorialSVG(isos) {
     for (let i = 1; i < pts.length; i++) path += ' L ' + pts[i][0].toFixed(1) + ' ' + pts[i][1].toFixed(1);
     let areaPath = path + ' L ' + pts[pts.length-1][0].toFixed(1) + ' ' + (padT+plotH) + ' L ' + pts[0][0].toFixed(1) + ' ' + (padT+plotH) + ' Z';
     svg += '<path d="' + areaPath + '" fill="rgba(184,107,75,0.14)" stroke="none"/>';
-    svg += '<path d="' + path + '" fill="none" stroke="#B86B4B" stroke-width="2"/>';
+    svg += '<path d="' + path + '" fill="none" stroke="#2F4A2C" stroke-width="2"/>';
   }
   pts.forEach(pt => {
-    svg += '<circle cx="' + pt[0].toFixed(1) + '" cy="' + pt[1].toFixed(1) + '" r="3" fill="#96543a"><title>' + fmtDate(pt[2]) + ': ' + pt[3].toFixed(1) + '/10</title></circle>';
+    svg += '<circle cx="' + pt[0].toFixed(1) + '" cy="' + pt[1].toFixed(1) + '" r="3" fill="#2F4A2C"><title>' + fmtDate(pt[2]) + ': ' + pt[3].toFixed(1) + '/10</title></circle>';
   });
 
   // x labels (thin out to avoid clutter)

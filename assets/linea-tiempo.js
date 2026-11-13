@@ -8,7 +8,7 @@
   var KINDS = { nota: 'Nota', consulta: 'Consulta', examen: 'Examen', lesion: 'Lesión', plan: 'Plan', hito: 'Hito', objetivo: 'Objetivo', suplemento: 'Suplemento', medicamento: 'Medicamento' };
   var TOPICS = { bitacora: 'General', lesiones: 'Lesiones', examenes: 'Exámenes', nutricion: 'Nutrición', salud_mental: 'Salud mental', ciclo: 'Ciclo' };
   var ROLES = { medico: 'médico', entrenador: 'entrenador', preparador: 'preparador físico', psicologo: 'psicólogo', nutricionista: 'nutricionista', kinesiologo: 'kinesiólogo', familia: 'familia', otro: '' };
-  var AUTHORS = { paciente: 'La persona', profesional: 'Profesional', admin: 'Sizigia Lab' };
+  var AUTHORS = { paciente: 'La persona', profesional: 'Profesional', admin: 'Administración' };
   var MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
   // Une entradas de la hoja de vida y consultas en una sola lista, de la más reciente a la más antigua.
@@ -29,7 +29,7 @@
   // Quién lo registró, según quién mira ('persona' o 'pro').
   function authorLabel(item, viewer) {
     if (item.author === 'paciente') return viewer === 'persona' ? 'Tú' : 'La persona';
-    if (item.author === 'admin') return 'Equipo Sizigia Lab';
+    if (item.author === 'admin') return 'Administración';
     var role = ROLES[item.authorRole] || '';
     if (item.authorName) return item.authorName + (role ? ' (' + role + ')' : '');
     return viewer === 'persona' ? 'Tu equipo' : 'Profesional';
@@ -65,7 +65,7 @@
     var chip = function (fn, k, label, on) { return '<button type="button" class="lt-chip' + (on ? ' on' : '') + '" onclick="' + fn + '(\'' + k + '\')">' + E(label) + '</button>'; };
     if (fc.topics.length > 1) h += '<div class="lt-chips" aria-label="Tema">' + chip(o.onTopic, 'todos', 'Todo', !f.topic || f.topic === 'todos') + fc.topics.map(function (k) { return chip(o.onTopic, k, TOPICS[k], f.topic === k); }).join('') + '</div>';
     if (fc.authors.length > 1) h += '<div class="lt-chips" aria-label="Quién">' + chip(o.onAuthor, 'todos', 'Todos', !f.author || f.author === 'todos') + fc.authors.map(function (k) {
-      return chip(o.onAuthor, k, k === 'paciente' ? (o.viewer === 'persona' ? 'Lo que registré' : 'La persona') : k === 'profesional' ? (o.viewer === 'persona' ? 'Mi equipo' : 'Profesionales') : 'Sizigia Lab', f.author === k);
+      return chip(o.onAuthor, k, k === 'paciente' ? (o.viewer === 'persona' ? 'Lo que registré' : 'La persona') : k === 'profesional' ? (o.viewer === 'persona' ? 'Mi equipo' : 'Profesionales') : 'Administración', f.author === k);
     }).join('') + '</div>';
     if (!list.length) return h + '<div class="lt-empty">' + (items.length ? 'Nada con estos filtros.' : 'Aún no hay entradas en la hoja de vida.') + '</div>';
     var shown = o.limit ? list.slice(0, o.limit) : list;

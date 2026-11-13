@@ -63,7 +63,7 @@
     catch (e) { return String(ts).slice(0, 10); }
   }
   function waLink(proName, patientName) {
-    var t = 'Hola ' + proName + ', te invité a mi equipo en Sizigia Lab para que veas los datos que elegí compartir. Entra con este correo en ' + LINK_EQUIPO + ' (te llega un link, sin contraseña).' + (patientName ? ' — ' + patientName : '');
+    var t = 'Hola ' + proName + ', te invité a mi equipo en Tok para que veas los datos que elegí compartir. Entra con este correo en ' + LINK_EQUIPO + ' (te llega un link, sin contraseña).' + (patientName ? ' — ' + patientName : '');
     return 'https://wa.me/?text=' + encodeURIComponent(t);
   }
 
@@ -132,7 +132,7 @@
   function mdLite(t) { return E(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
   function consentHTML(pro) {
     var c = data.consent, h = '';
-    if (!c) return '<div class="eq-err">No hay texto de consentimiento disponible. Pide al equipo de Sizigia Lab que lo publique.</div>';
+    if (!c) return '<div class="eq-err">No hay texto de consentimiento disponible. Pide a quien administra tu cuenta que lo publique.</div>';
     if (!c.isFinal) h += '<div class="eq-warn"><strong>Texto en borrador, pendiente de revisión legal.</strong> No usar con personas reales hasta tener la versión final.</div>';
     var body = consentBody(c.body, pro, flow.scopes);
     if (c.body.indexOf('{{DATOS}}') < 0) body += '\n\n**Datos que compartes:**\n' + consentBody('{{DATOS}}', pro, flow.scopes);
@@ -181,7 +181,7 @@
   function tab() {
     ensureCss();
     if (!data.loaded) { load(); if (!data.loaded) return '<div class="card"><h3>Mi equipo</h3><div class="tc-empty">Cargando…</div></div>'; }
-    var h = '<div class="card" style="margin-bottom:16px"><h3>Mi equipo y permisos</h3><div class="card-sub">Tu historia es tuya. Tú decides qué profesional ve qué dato, y puedes cambiarlo o retirarlo cuando quieras. Cada consulta queda registrada abajo. El equipo clínico de Sizigia Lab (Dr. Acuña) accede a tu ficha por su rol médico, aparte de estos permisos.</div>';
+    var h = '<div class="card" style="margin-bottom:16px"><h3>Mi equipo y permisos</h3><div class="card-sub">Tu historia es tuya. Tú decides qué profesional ve qué dato, y puedes cambiarlo o retirarlo cuando quieras. Cada consulta queda registrada abajo. La organización que administra tu cuenta accede a tu ficha por su rol, aparte de estos permisos.</div>';
     if (isDemoMode) h += '<div class="eq-meta">Modo demo: los cambios no se guardan. <a href="equipo.html?demo=1">Ver lo que ve tu profesional →</a></div>';
     if (data.error) return h + '<div class="eq-err">' + E(data.error) + '</div><button class="btn small" onclick="SizigiaEquipo.reload()">Reintentar</button></div>';
     var team = teamFromLinks(data.team);

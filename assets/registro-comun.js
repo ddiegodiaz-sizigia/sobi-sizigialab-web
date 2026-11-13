@@ -221,7 +221,7 @@
     return h + statsHTML(s) + configHTML(s) + '</div>';
   }
 
-  function whoSet(s) { return s.set_by === 'profesional' ? ' · definido por tu coach o profesional' : s.set_by === 'admin' ? ' · definido por el equipo de Sizigia Lab' : ''; }
+  function whoSet(s) { return s.set_by === 'profesional' ? ' · definido por tu coach o profesional' : s.set_by === 'admin' ? ' · definido por la administración' : ''; }
   function configHTML(s) {
     var h = '<div class="rc-line" style="margin-top:12px">Tu registro: <b>' + E(MODES[s.mode].toLowerCase() + ', ' + FREQS[s.frequency].toLowerCase()) + '</b>' + E(whoSet(s)) +
       (ui.cfg ? '' : ' <button class="btn small" onclick="SizigiaRegistro.openConfig(true)">Configurar mi registro</button>') + '</div>';

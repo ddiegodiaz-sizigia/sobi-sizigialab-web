@@ -138,7 +138,7 @@
   }
   // Aviso por WhatsApp sin contenido: solo que hay un mensaje y dónde verlo.
   function waNotify(names, patientName, link) {
-    var t = 'Hola ' + joinNames(names) + ', te escribí en el caso de ' + patientName + ' en Sizigia Lab. Lo ves en ' + (link || LINK_EQUIPO) + '.';
+    var t = 'Hola ' + joinNames(names) + ', te escribí en el caso de ' + patientName + ' en Tok. Lo ves en ' + (link || LINK_EQUIPO) + '.';
     return 'https://wa.me/?text=' + encodeURIComponent(t);
   }
   function inboxSort(rows) {
