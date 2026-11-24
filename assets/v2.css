@@ -100,3 +100,19 @@
 .line-tok .n{color:#5E7A52}
 @media(max-width:960px){.doors{grid-template-columns:1fr}}
 @media(max-width:560px){.doors .lines{grid-template-columns:1fr}}
+
+/* INICIO reordenado (23-11): hero corto, marcas arriba, bloques por marca, guía en franja */
+.hero.home .hero-in{padding-top:clamp(56px,8vw,104px);padding-bottom:clamp(48px,7vw,88px)}
+.hero.home h1{margin:16px 0 18px}
+.lineas-top{padding-top:clamp(56px,7vw,90px)}
+.emp-photo{min-height:380px;margin:0}
+.why-idea{margin-top:clamp(56px,7vw,90px)}
+.guide-band{padding:clamp(44px,6vw,64px) 0;border-top:1px solid var(--line-light);border-bottom:1px solid var(--line-light)}
+.guide-row{display:flex;align-items:center;justify-content:space-between;gap:28px;flex-wrap:wrap}
+.guide-row h3{font-family:var(--serif);font-weight:300;font-size:clamp(1.6rem,3vw,2.2rem);margin:10px 0 6px}
+.guide-row h3 em{font-style:italic;color:var(--terra)}
+.guide-row p{color:var(--on-light-dim)}
+.guide-row .cta-row{margin-top:0}
+.final h2 em{font-style:italic;color:var(--terra)}
+.how.three{grid-template-columns:repeat(3,1fr)}
+@media(max-width:900px){.how.three{grid-template-columns:1fr}}
