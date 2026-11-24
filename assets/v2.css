@@ -116,3 +116,21 @@
 .final h2 em{font-style:italic;color:var(--terra)}
 .how.three{grid-template-columns:repeat(3,1fr)}
 @media(max-width:900px){.how.three{grid-template-columns:1fr}}
+
+/* TOK como puente entre las dos puertas (inicio) */
+@media(min-width:961px){.doors{grid-template-columns:2fr 1fr}}
+.door{display:flex;flex-direction:column}
+.door .lines{flex:1}
+.doors .lines.one{grid-template-columns:1fr}
+.tok-bridge{margin-top:28px;background:#F8F6EF;border:1px solid rgba(47,74,44,.28);border-top:4px solid #2F4A2C;padding:30px 30px 26px;font-family:'Plus Jakarta Sans',var(--sans)}
+.tb-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.tb-head .n{font-size:12px;letter-spacing:.24em;color:#5E7A52;font-weight:500}
+.tb-head img{height:34px;width:auto}
+.tb-tag{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5E6A5A;font-weight:600}
+.tb-cols{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.tb-cols>div{display:flex;flex-direction:column;align-items:flex-start}
+.tb-cols h4{font-family:'Plus Jakarta Sans',var(--sans);font-weight:700;font-size:1.1rem;color:#1C1C1A;margin-bottom:8px}
+.tb-cols p{font-size:15px;color:#5E6A5A;margin-bottom:18px;flex-grow:1}
+.tb-more{display:inline-block;margin-top:20px;font-size:13.5px;font-weight:600;color:#2F4A2C;text-decoration:none}
+.tb-more:hover{color:#B9502A}
+@media(max-width:700px){.tb-cols{grid-template-columns:1fr}}

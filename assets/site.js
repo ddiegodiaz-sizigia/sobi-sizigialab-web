@@ -80,5 +80,13 @@ if (ft) {
   });
 }
 
+// tok.html?perfil=persona|profesional -> deja elegido el perfil en el formulario
+(function () {
+  var sel = document.getElementById('tk-perfil');
+  var m = /[?&]perfil=(persona|profesional)/.exec(location.search);
+  if (!sel || !m) return;
+  sel.value = m[1] === 'persona' ? 'Persona o atleta' : 'Profesional independiente (coach, kine, nutri, médico, psicólogo)';
+})();
+
 // Año del pie
 document.querySelectorAll('[data-year]').forEach(function (e) { e.textContent = new Date().getFullYear(); });
