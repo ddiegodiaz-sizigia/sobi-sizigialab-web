@@ -91,3 +91,12 @@
 .gm-err{color:#a33a2a;font-size:13px}
 .modal .btn{width:100%}
 @media(max-width:480px){.modal .row2{grid-template-columns:minmax(0,1fr)}}
+
+/* DOS PUERTAS (inicio): para personas / para profesionales y organizaciones */
+.doors{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.door-label{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--on-light-dim);font-weight:600;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line-light)}
+.doors .lines{grid-template-columns:1fr 1fr}
+.line-tok h3{font-family:'Plus Jakarta Sans',var(--sans);font-weight:800;letter-spacing:-.03em;color:#2F4A2C}
+.line-tok .n{color:#5E7A52}
+@media(max-width:960px){.doors{grid-template-columns:1fr}}
+@media(max-width:560px){.doors .lines{grid-template-columns:1fr}}
