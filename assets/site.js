@@ -60,5 +60,25 @@ if (f) {
   });
 }
 
+// Formulario de Tok (tok.html) -> WhatsApp con los datos ordenados
+var ft = document.getElementById('form-tok');
+if (ft) {
+  ft.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    if (!ft.reportValidity()) return;
+    var d = new FormData(ft);
+    var lines = [
+      'Hola, quiero solicitar acceso a Tok.',
+      'Nombre: ' + (d.get('nombre') || ''),
+      'Correo: ' + (d.get('email') || ''),
+      'Soy: ' + (d.get('perfil') || ''),
+      'Personas que acompaño (aprox.): ' + (d.get('personas') || ''),
+      'Organización: ' + (d.get('organizacion') || ''),
+      'Qué quiero resolver: ' + (d.get('mensaje') || '')
+    ];
+    window.open('https://wa.me/' + SIZIGIA.whatsapp + '?text=' + encodeURIComponent(lines.join('\n')), '_blank');
+  });
+}
+
 // Año del pie
 document.querySelectorAll('[data-year]').forEach(function (e) { e.textContent = new Date().getFullYear(); });

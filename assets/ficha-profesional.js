@@ -90,7 +90,7 @@
       { patient_id: 'demo-n2', patient_name: 'Tomás Herrera', scopes: ['nutricion'] }
     ]);
   }
-  // pid 'demo-1' (Matías, alerta roja por dolor 7/10 en el panel): su rodilla vuelve a subir hoy, para que panel y ficha cuenten lo mismo.
+  // pid 'demo-1' (Martín Soto, alerta roja por dolor 7/10 en el panel): su rodilla vuelve a subir hoy, para que panel y ficha cuenten lo mismo.
   function demoData(scope, today, pid) {
     var d = function (k) { return addDays(today, -k); };
     if (scope === 'lesiones') return {

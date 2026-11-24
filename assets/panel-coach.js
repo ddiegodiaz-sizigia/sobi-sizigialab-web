@@ -143,7 +143,7 @@
     var ago = function (k) { var x = new Date(Date.parse(d(k) + 'T12:00:00')); return x.toISOString(); };
     var p = function (i, name, o) { return Object.assign({ patient_id: 'demo-' + i, patient_name: name, mode: 'deportivo', frequency: 'diaria', habits: [], athlete: [], wellness: [], last_contact: null }, o); };
     return [
-      p(1, 'Matías Lacroix', { athlete: ath({ from: 0, to: 29 }, { pain_level: 7, pain_zone: 'Rodilla derecha' }) }),
+      p(1, 'Martín Soto', { athlete: ath({ from: 0, to: 29 }, { pain_level: 7, pain_zone: 'Rodilla derecha' }) }),
       p(2, 'Valentina Rojas', { athlete: ath({ from: 0, to: 29 }, { sleep_hours: 5.2 }) }),
       p(3, 'Joaquín Fuentes', { athlete: ath({ from: 1, to: 29 }, { fatigue: 8 }), last_contact: { at: ago(0), template: 'alerta' } }),
       p(4, 'Camila Herrera', { athlete: ath({ from: 0, to: 29 }) }),

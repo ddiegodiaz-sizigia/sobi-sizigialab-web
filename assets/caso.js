@@ -549,7 +549,7 @@
     if (inbox.loading) return;
     inbox.loading = true;
     await null; // el contenedor #cs_inbox se inserta después de que inboxHTML() devuelve
-    if (inbox.demo) inbox.rows = inbox.seen['demo-1'] ? [] : [{ patient_id: 'demo-1', patient_name: 'Matías Lacroix', unread: 2, mentions: 1, last_at: new Date(Date.now() - 20 * 3600000).toISOString() }];
+    if (inbox.demo) inbox.rows = inbox.seen['demo-1'] ? [] : [{ patient_id: 'demo-1', patient_name: 'Martín Soto', unread: 2, mentions: 1, last_at: new Date(Date.now() - 20 * 3600000).toISOString() }];
     else if (inbox.sb) { var r = await inbox.sb.rpc('my_case_inbox'); inbox.rows = r.error ? [] : r.data || []; }
     else inbox.rows = [];
     inbox.loading = false;
